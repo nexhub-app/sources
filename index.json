@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-12T12:17:50.738Z",
-  "count": 9,
+  "generatedAt": "2026-08-28T09:15:46.946Z",
+  "count": 10,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -71,6 +71,21 @@
       "version": 5,
       "baseUrl": "https://godamh.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_goda.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      }
+    },
+    {
+      "id": "manga/manga_nhentai",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "nhentai",
+      "version": 18,
+      "baseUrl": "https://nhentai.net",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_nhentai.json",
       "builtin": true,
       "desc": {
         "zh": "",
