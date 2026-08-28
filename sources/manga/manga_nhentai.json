@@ -1,0 +1,931 @@
+{
+  "id": "manga_nhentai",
+  "name": "nhentai",
+  "version": 18,
+  "type": "mangaSource",
+  "ageRating": "mature",
+  "author": "nexhub-community",
+  "enabled": true,
+  "useWebview": false,
+  "responseType": "json",
+  "description": "nhentai 漫画源（成人内容，默认隐藏）。基于站点公开 JSON API（/api/v2）实现。v9：修复图片地址缺少 https:// 协议头；修复评论选择器。v8：新增网站评论、相似推荐、网络收藏、排序筛选。v10：图床跟随激活镜像派生。v11：图床改走站点 CDN 探活——引擎拉取 i1-i4/t1-t4 图床列表并逐个探活选可达图床，注入 context.cdnImage/cdnThumb；脚本优先用探活结果，缺失时回退 i4/t4。v12：cdn.url 置空跳过 /api/v2/cdn 超时；新增标签筛选组。v13：筛选扩为 7 类共约 120 项带中文；多选标签逗号规范成空格。v14：①移除备用镜像（仅保留官方 nhentai.net）；②详情页标签中文翻译（tags 显示中文、tagUrls 跳转标签页）；③图片 Referer 改源站同源防盗链。v15：①筛选 Sheet 按分组独立重建，消除约 160 个候选勾选时的整页卡顿；②标签中文翻译字典由 195 条扩充至约 414 条（覆盖性爱/身体/发色/服饰/兽耳/人物关系/性格/语言等常见标签）。",
+  "site": {
+    "domain": "nhentai.net",
+    "baseUrl": "https://nhentai.net",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      "Accept": "application/json"
+    },
+    "mirrors": [
+      {
+        "name": "nhentai.net（官方）",
+        "domain": "nhentai.net",
+        "baseUrl": "https://nhentai.net"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net'); if (baseUrl.charAt(baseUrl.length - 1) === '/') baseUrl = baseUrl.slice(0, -1);\n//nhentai.net').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var sort = params.sort || ctx.sort || 'date';\n  var url = baseUrl + '/api/v2/search?query=*&page=' + page + '&sort=' + sort;\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parsePopular",
+        "script": "function parsePopular(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var url = baseUrl + '/api/v2/galleries/popular';\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory",
+        "script": "function parseCategory(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var cat = String(params.category || ctx.category || '0');\n  var sort = params.sort || ctx.sort || 'date';\n  var url;\n  if (cat === '0') {\n    url = baseUrl + '/api/v2/search?query=*&page=' + page + '&sort=' + sort;\n  } else {\n    url = baseUrl + '/api/v2/galleries/tagged?tag_id=' + encodeURIComponent(cat) + '&page=' + page + '&sort=' + sort;\n  }\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch",
+        "script": "function parseSearch(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var kw = (params.keyword || ctx.keyword || '').replace(/,/g, ' ');\n  var sort = params.sort || ctx.sort || '';\n  var url = baseUrl + '/api/v2/search?query=' + encodeURIComponent(kw) + '&page=' + page + (sort ? '&sort=' + sort : '');\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var id = ctx.id || params.id;\n  if (!id) throw new Error('parseDetail: missing id');\n  return { __meta: true, __fetchUrl: baseUrl + '/api/v2/galleries/' + id, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processDetail', __comicId: id };\n}\nfunction __processDetail(json, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net'); if (baseUrl.charAt(baseUrl.length - 1) === '/') baseUrl = baseUrl.slice(0, -1);;\n\n  var __TAG_ZH = {\"date\":\"最新\",\"popular\":\"最热\",\"chinese\":\"中文\",\"english\":\"English\",\"japanese\":\"日本語(原版)\",\"translated\":\"已翻译\",\"rewrite\":\"改写(性转)\",\"doujinshi\":\"同人志\",\"manga\":\"漫画\",\"artist-cg\":\"画师CG\",\"game-cg\":\"游戏CG\",\"western\":\"西方\",\"non-h\":\"非H\",\"image-set\":\"写真集\",\"cosplay\":\"Cosplay\",\"asian-porn\":\"亚洲AV\",\"misc\":\"其他\",\"big-breasts\":\"巨乳\",\"small-breasts\":\"贫乳\",\"paizuri\":\"乳交\",\"blowjob\":\"口交\",\"deepthroat\":\"深喉\",\"handjob\":\"手交\",\"footjob\":\"足交\",\"fingering\":\"指交\",\"facesitting\":\"骑乘颜面\",\"sole-female\":\"单人女\",\"sole-male\":\"单人男\",\"group\":\"群交\",\"gangbang\":\"轮奸\",\"anal\":\"肛交\",\"double-penetration\":\"双重插入\",\"creampie\":\"内射\",\"impregnation\":\"受孕\",\"pregnancy\":\"怀孕\",\"defloration\":\"破处\",\"virgin\":\"处女\",\"rape\":\"强奸\",\"forced\":\"强迫\",\"mind-break\":\"精神崩溃\",\"ahegao\":\"阿黑颜\",\"bondage\":\"束缚\",\"restraint\":\"拘束\",\"latex\":\"乳胶衣\",\"leather\":\"皮革\",\"swimsuit\":\"泳装\",\"schoolgirl\":\"女学生\",\"maid\":\"女仆\",\"nurse\":\"护士\",\"teacher\":\"教师\",\"office-lady\":\"职业女性\",\"glasses\":\"眼镜\",\"twintails\":\"双马尾\",\"ponytail\":\"马尾\",\"hair-bun\":\"团子头\",\"stockings\":\"长筒袜\",\"thigh-highs\":\"过膝袜\",\"pantyhose\":\"裤袜\",\"lingerie\":\"内衣\",\"naked-apron\":\"围裙\",\"cosplaying\":\"角色扮演\",\"full-color\":\"全彩\",\"monochrome\":\"单色\",\"uncensored\":\"无修正\",\"censored\":\"有修正\",\"femdom\":\"女王\",\"crossdressing\":\"异装\",\"tomboy\":\"伪郎\",\"futanari\":\"扶她\",\"yuri\":\"百合\",\"yaoi\":\"男男\",\"tentacles\":\"触手\",\"monster\":\"怪物\",\"demons\":\"恶魔\",\"elf\":\"精灵\",\"angel\":\"天使\",\"catgirl\":\"猫娘\",\"dog-girl\":\"狗娘\",\"fox-girl\":\"狐娘\",\"beast\":\"兽\",\"loli\":\"萝莉\",\"shotacon\":\"正太\",\"incest\":\"近亲相奸\",\"mother\":\"母亲\",\"daughter\":\"女儿\",\"sister\":\"姐妹\",\"netorare\":\"被绿(NTR)\",\"netori\":\"绿人\",\"cheating\":\"寝取\",\"harem\":\"后宫\",\"humiliation\":\"凌辱\",\"squirt\":\"潮吹\",\"bukkake\":\"颜射\",\"facial\":\"颜面\",\"sweat\":\"汗水\",\"kissing\":\"接吻\",\"ass\":\"臀\",\"thigh\":\"大腿\",\"foot\":\"足\",\"dildo\":\"按摩棒\",\"vibrator\":\"震动棒\",\"blindfold\":\"眼罩\",\"collar\":\"项圈\",\"rope\":\"绳缚\",\"wax\":\"蜡\",\"sleeping\":\"睡眠\",\"drunk\":\"醉酒\",\"x-ray\":\"透视\",\"invisible\":\"隐形\",\"body-swapping\":\"身体交换\",\"lactation\":\"泌乳\",\"muscle\":\"肌肉\",\"gym-uniform\":\"体操服\",\"bloomers\":\"死库水\",\"sailor-collar\":\"水手服\",\"uniform\":\"制服\",\"fate-stay-night\":\"Fate/stay night\",\"fate-grand-order\":\"Fate/Grand Order\",\"touhou\":\"东方\",\"kantai-collection\":\"舰队Collection\",\"azur-lane\":\"碧蓝航线\",\"genshin-impact\":\"原神\",\"vocaloid\":\"VOCALOID\",\"league-of-legends\":\"英雄联盟\",\"overwatch\":\"守望先锋\",\"pokemon\":\"宝可梦\",\"one-piece\":\"海贼王\",\"jojos-bizarre-adventure\":\"JOJO的奇妙冒险\",\"neon-genesis-evangelion\":\"新世纪福音战士\",\"nier-automata\":\"尼尔:自动人形\",\"blue-archive\":\"碧蓝档案\",\"arknights\":\"明日方舟\",\"type-moon\":\"TYPE-MOON\",\"t-rex\":\"T-REX\",\"trump\":\"TRUMP\",\"akabane\":\"赤羽\",\"cinema\":\"CINEMA×NATORI\",\"wanimag\":\"WANIMAG\",\"clockworks\":\"CLOCKWORKS\",\"kirikaze\":\"霧風\",\"aos\":\"AOS\",\"g-cup\":\"G-CUP\",\"niwamura\":\"丹羽村\",\"shindol\":\"しんどる\",\"asanagi\":\"朝凪\",\"waw\":\"WAW\",\"hiten\":\"ヒテン\",\"redcat\":\"レッドキャット\",\"kotetsu\":\"コテツ\",\"yokubo\":\"欲望\",\"ishikei\":\"石芸\",\"seven\":\"セブン\",\"mashumaro\":\"ましゅまろ\",\"hatsune-miku\":\"初音未来\",\"rem\":\"雷姆\",\"emilia\":\"艾米莉亚\",\"asuka\":\"明日香(EVA)\",\"zero-two\":\"02\",\"2b\":\"2B\",\"marin-kitagawa\":\"喜多川海梦(更衣人偶)\",\"saber\":\"Saber\",\"yor\":\" Yor(间谍过家家)\",\"yotsuba\":\"四叶(五等分)\",\"chika\":\"四宫辉夜(辉夜)\",\"rin\":\"凛(Fate)\",\"shota\":\"正太\",\"nakadashi\":\"中出\",\"netorase\":\"分享(NTR)\",\"threesome\":\"3P\",\"foxgirl\":\"狐娘\",\"dark-skin\":\"黑皮\",\"tanlines\":\"晒痕\",\"milf\":\"人妻\",\"pregnant\":\"孕\",\"exhibitionism\":\"露出\",\"pegging\":\"Strap-on\",\"sadism\":\"施虐\",\"masochism\":\"受虐\",\"robot\":\"机器人\",\"alien\":\"外星人\",\"squid\":\"乌贼\",\"doll\":\"人偶\",\"3d\":\"3D\",\"cg\":\"CG\",\"webtoon\":\"条漫\",\"comic\":\"漫画\",\"beauty-mark\":\"美人痣\",\"heterochromia\":\"异色瞳\",\"hairy\":\"体毛\",\"fate\":\"Fate\",\"konosuba\":\"为美好的世界献上祝福\",\"hololive\":\"hololive\",\"asuna\":\"亚丝娜\",\"miku\":\"初音未来\",\"rahmu\":\"雷姆\",\"cum\":\"射精\",\"cumshot\":\"射精\",\"gokkun\":\"吞精\",\"cunnilingus\":\"舔阴\",\"fellatio\":\"口交\",\"masturbation\":\"自慰\",\"sumata\":\"素股\",\"prostate-massage\":\"前列腺按摩\",\"oral\":\"口交\",\"boobjob\":\"乳交\",\"titjob\":\"乳交\",\"thighjob\":\"腿交\",\"fisting\":\"拳交\",\"prostate\":\"前列腺\",\"condom\":\"避孕套\",\"birth\":\"分娩\",\"dominance\":\"支配\",\"submissive\":\"顺从\",\"whip\":\"鞭打\",\"torture\":\"拷问\",\"gag\":\"口枷\",\"ball-gag\":\"口球\",\"shibari\":\"缚\",\"spread-pussy\":\"掰穴\",\"spread-legs\":\"张开双腿\",\"pussy-juice\":\"爱液\",\"cameltoe\":\"骆驼趾\",\"pubic-hair\":\"阴毛\",\"shaved\":\"剃毛\",\"hairjob\":\"发交\",\"armpit\":\"腋\",\"armpit-sex\":\"腋交\",\"feet\":\"脚\",\"sole\":\"脚底\",\"navel\":\"肚脐\",\"belly\":\"腹部\",\"stomach-bulge\":\"腹胀\",\"urination\":\"排尿\",\"enema\":\"灌肠\",\"defecation\":\"排便\",\"scat\":\"粪\",\"fart\":\"放屁\",\"vomiting\":\"呕吐\",\"saliva\":\"唾液\",\"tears\":\"泪\",\"blood\":\"血\",\"injury\":\"受伤\",\"wound\":\"伤口\",\"pierced-nipples\":\"乳头环\",\"nipples\":\"乳头\",\"areola\":\"乳晕\",\"big-areola\":\"大乳晕\",\"flat-chest\":\"贫乳\",\"no-bra\":\"不穿胸罩\",\"sideboob\":\"侧乳\",\"cleavage\":\"乳沟\",\"butt\":\"臀\",\"big-ass\":\"巨臀\",\"gigantic-breasts\":\"巨乳\",\"huge-breasts\":\"巨乳\",\"large-breasts\":\"巨乳\",\"muscle-girl\":\"肌肉女\",\"chubby\":\"微胖\",\"fat\":\"肥胖\",\"thin\":\"瘦\",\"tan\":\"晒黑\",\"pale-skin\":\"白肤\",\"mole\":\"痣\",\"freckles\":\"雀斑\",\"tattoo\":\"纹身\",\"piercing\":\"穿孔\",\"bodyhair\":\"体毛\",\"abs\":\"腹肌\",\"long-hair\":\"长发\",\"short-hair\":\"短发\",\"very-long-hair\":\"超长发\",\"blonde\":\"金发\",\"brunette\":\"棕发\",\"black-hair\":\"黑发\",\"white-hair\":\"白发\",\"silver-hair\":\"银发\",\"red-hair\":\"红发\",\"blue-hair\":\"蓝发\",\"pink-hair\":\"粉发\",\"green-hair\":\"绿发\",\"purple-hair\":\"紫发\",\"brown-hair\":\"棕发\",\"grey-hair\":\"灰发\",\"ahoge\":\"呆毛\",\"braid\":\"辫子\",\"drill-hair\":\"卷发\",\"bob-cut\":\"波波头\",\"side-tail\":\"侧马尾\",\"low-ponytail\":\"低马尾\",\"bald\":\"秃头\",\"sunglasses\":\"墨镜\",\"eyepatch\":\"眼罩\",\"eyelash\":\"睫毛\",\"big-penis\":\"巨根\",\"small-penis\":\"短小\",\"circumcised\":\"割礼\",\"uncircumcised\":\"未割\",\"bunny-girl\":\"兔女郎\",\"waitress\":\"女服务员\",\"policewoman\":\"女警\",\"cheerleader\":\"拉拉队\",\"idol\":\"偶像\",\"nun\":\"修女\",\"witch\":\"女巫\",\"kimono\":\"和服\",\"yukata\":\"浴衣\",\"bikini\":\"比基尼\",\"apron\":\"围裙\",\"corset\":\"束腰\",\"bodysuit\":\"连体衣\",\"garter\":\"吊袜带\",\"socks\":\"袜子\",\"barefoot\":\"赤脚\",\"gloves\":\"手套\",\"hood\":\"兜帽\",\"cape\":\"披风\",\"crown\":\"王冠\",\"tiara\":\"头饰\",\"ribbon\":\"丝带\",\"shirt\":\"衬衫\",\"sweater\":\"毛衣\",\"jacket\":\"夹克\",\"coat\":\"外套\",\"skirt\":\"裙子\",\"miniskirt\":\"迷你裙\",\"pantsu\":\"内裤\",\"panties\":\"内裤\",\"thong\":\"丁字裤\",\"kemonomimi\":\"兽耳\",\"animal-ears\":\"兽耳\",\"cat-ears\":\"猫耳\",\"dog-ears\":\"狗耳\",\"fox-ears\":\"狐耳\",\"rabbit-ears\":\"兔耳\",\"horns\":\"角\",\"tail\":\"尾巴\",\"wings\":\"翅膀\",\"halo\":\"光环\",\"devil\":\"恶魔\",\"ghost\":\"幽灵\",\"vampire\":\"吸血鬼\",\"werewolf\":\"狼人\",\"zombie\":\"僵尸\",\"mermaid\":\"美人鱼\",\"slime\":\"史莱姆\",\"android\":\"机器人\",\"cat\":\"猫\",\"dog\":\"狗\",\"fox\":\"狐\",\"rabbit\":\"兔\",\"wolf\":\"狼\",\"catboy\":\"猫男\",\"dog-boy\":\"狗男\",\"wife\":\"妻子\",\"husband\":\"丈夫\",\"father\":\"父亲\",\"son\":\"儿子\",\"brother\":\"兄弟\",\"aunt\":\"阿姨\",\"uncle\":\"叔叔\",\"grandmother\":\"祖母\",\"grandfather\":\"祖父\",\"granddaughter\":\"孙女\",\"grandson\":\"孙子\",\"stepmother\":\"继母\",\"stepsister\":\"继妹\",\"stepbrother\":\"继弟\",\"twins\":\"双胞胎\",\"triplets\":\"三胞胎\",\"family\":\"家族\",\"boss\":\"上司\",\"colleague\":\"同事\",\"classmate\":\"同学\",\"senpai\":\"前辈\",\"kouhai\":\"后辈\",\"student\":\"学生\",\"doctor\":\"医生\",\"patient\":\"病人\",\"stranger\":\"陌生人\",\"friend\":\"朋友\",\"child\":\"儿童\",\"girl\":\"女孩\",\"boy\":\"男孩\",\"woman\":\"女人\",\"man\":\"男人\",\"tsundere\":\"傲娇\",\"yamato-nadeshiko\":\"大和抚子\",\"kuudere\":\"冰山\",\"dandere\":\"沉默\",\"yandere\":\"病娇\",\"deredere\":\"甜\",\"ojou-sama\":\"大小姐\",\"tomgirl\":\"男装女\",\"feminization\":\"女体化\",\"sissification\":\"伪娘化\",\"genderswap\":\"性转\",\"trap\":\"伪娘\",\"effeminate\":\"娘娘腔\",\"futa\":\"扶她\",\"androphobia\":\"男性恐惧\",\"french\":\"法语\",\"korean\":\"韩语\",\"spanish\":\"西班牙语\",\"thai\":\"泰语\",\"german\":\"德语\",\"russian\":\"俄语\",\"speechless\":\"无台词\",\"textless\":\"无字\",\"official-translation\":\"官方翻译\",\"artbook\":\"画集\",\"full-censorship\":\"全马赛克\",\"digital\":\"数字\",\"colored\":\"上色\",\"sketch\":\"草图\"};\n  function __zhTagName(t) {\n    if (!t || !t.name) return '';\n    var key = String(t.name).toLowerCase().replace(/\\s+/g, '-');\n    var zh = __TAG_ZH[key];\n    if (zh) return zh;\n    return t.name;\n  }\n\n  var ctx = context || {};\n  var id = ctx.__comicId || ctx.id || (json && json.id);\n  if (!json) throw new Error('parseDetail: empty');\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  var title = (json.title && (json.title.pretty || json.title.english || json.title.japanese)) || String(id);\n  // 详情接口返回顶层 cover/thumbnail（非 images.*）\n  var coverPath = (json.cover && json.cover.path)\n    || (json.thumbnail && json.thumbnail.path)\n    || (json.images && json.images.cover && json.images.cover.path)\n    || (json.images && json.images.thumbnail && json.images.thumbnail.path) || '';\n  var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n  var tags = [];\n  var tagUrls = [];\n  var author = '';\n  (json.tags || []).forEach(function(t){\n    if (!t || !t.name) return;\n    tags.push(__zhTagName(t));\n    tagUrls.push(t.url ? (baseUrl + t.url) : '');\n    if (t.type === 'artist') author = t.name;\n  });\n  var desc = (json.tags || []).filter(function(t){ return t && t.type === 'tag' && t.name; })\n    .map(function(t){ return __zhTagName(t); }).join(', ');\n  var updateTime = '';\n  if (json.upload_date) { try { updateTime = new Date(Number(json.upload_date) * 1000).toISOString(); } catch (e) {} }\n  return { id: String(id), title: title, cover: cover, author: author, description: desc, tags: tags, tagUrls: tagUrls, updateTime: updateTime, status: '' };\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var id = ctx.id || params.id;\n  if (!id) throw new Error('parseChapters: missing id');\n  return { __meta: true, __fetchUrl: baseUrl + '/api/v2/galleries/' + id, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processChapters', __comicId: id };\n}\nfunction __processChapters(json, context) {\n  var ctx = context || {};\n  var id = ctx.__comicId || ctx.id || (json && json.id);\n  if (!json) return [];\n  var updateTime = '';\n  if (json.upload_date) { try { updateTime = new Date(Number(json.upload_date) * 1000).toISOString(); } catch (e) {} }\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  return [{ id: String(id), title: '全 ' + (json.num_pages || '?') + ' 页', url: baseUrl + '/api/v2/galleries/' + id, updatedAt: updateTime }];\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var id = ctx.id || params.comicId || params.id;\n  if (!id) throw new Error('parseImages: missing id');\n  return { __meta: true, __fetchUrl: baseUrl + '/api/v2/galleries/' + id, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processImages', __comicId: id };\n}\nfunction __processImages(json, context) {\n  // 详情接口返回顶层 pages（非 images.pages）\n  var pages = (json && json.pages) || (json && json.images && json.images.pages) || [];\n  if (!pages.length) return [];\n  var imgBase = (context && context.baseUrl ? context.baseUrl : 'https://nhentai.net').replace(/^https?:\\/\\//, '').split('/')[0];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return pages.map(function(p){\n    var path = (p && p.path) || '';\n    return path ? imgPage + '/' + path.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n  }).filter(Boolean);\n}"
+      },
+      "related": {
+        "type": "script",
+        "function": "parseRelated",
+        "script": "function parseRelated(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var id = ctx.id || params.id;\n  if (!id) throw new Error('parseRelated: missing id');\n  var url = baseUrl + '/api/v2/galleries/' + id + '/related';\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      },
+      "favorites": {
+        "type": "script",
+        "function": "parseFav",
+        "script": "function parseFav(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://nhentai.net').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var url = baseUrl + '/api/v2/favorites?page=' + page;\n  return { __meta: true, __fetchUrl: url, __fetchMethod: 'GET',\n    __fetchHeaders: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },\n    __processor: '__processList' };\n}\nfunction __processList(json, context) {\n  var arr = (json && json.result) ? json.result : (Array.isArray(json) ? json : []);\n  if (!arr || !arr.length) return [];\n  var imgHost = (context && context.baseUrl ? String(context.baseUrl) : 'https://nhentai.net').split('://')[1] || ''; imgHost = imgHost.split('/')[0] || 'nhentai.net'; var imgPage = 'https://i3.' + imgHost; var imgThumb = 'https://t3.' + imgHost;\n  return arr.map(function(it){\n    var coverPath = (it.images && it.images.cover && it.images.cover.path)\n      || (it.cover && it.cover.path)\n      || (typeof it.thumbnail === 'string' ? it.thumbnail : '')\n      || (it.images && it.images.thumbnail && it.images.thumbnail.path) || '';\n    var title = it.english_title || it.japanese_title || (it.title && (it.title.pretty || it.title.english || it.title.japanese)) || String(it.id);\n    var cover = coverPath ? imgThumb + '/' + coverPath.replace(/^\\//, '').replace(/(\\.[A-Za-z0-9]+)\\1$/i, '$1') : '';\n    return { id: String(it.id), title: title, cover: cover, detailUrl: '/g/' + it.id + '/' };\n  });\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/api/v2/search?query=*&page={page}&sort={sort}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "explore": {
+      "url": "/api/v2/galleries/popular",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/api/v2/galleries/tagged?tag_id={category}&page={page}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/api/v2/search?query={keyword}&page={page}&sort={sort}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/api/v2/galleries/{id}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "chapters": {
+      "url": "/api/v2/galleries/{id}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "images": {
+      "url": "/api/v2/galleries/{id}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "related": {
+      "url": "/api/v2/galleries/{id}/related",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "favorites": {
+      "url": "/api/v2/favorites?page={page}",
+      "method": "GET",
+      "responseType": "json"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "0",
+        "title": "全部"
+      },
+      {
+        "id": "12227",
+        "title": "English"
+      },
+      {
+        "id": "29963",
+        "title": "中文"
+      },
+      {
+        "id": "6346",
+        "title": "日本語"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 20
+    },
+    {
+      "id": "explore",
+      "title": "热门",
+      "route": "explore",
+      "style": "grid",
+      "limit": 20
+    }
+  ],
+  "comments": {
+    "provider": "source",
+    "routes": {
+      "list": {
+        "url": "/api/v2/galleries/{id}/comments",
+        "method": "GET",
+        "responseType": "json"
+      }
+    },
+    "selectors": {
+      "items": "$.result[*]",
+      "commentId": "$.id",
+      "author": "$.poster.username",
+      "avatar": "$.poster.avatar_url",
+      "content": "$.body",
+      "time": "$.post_date"
+    },
+    "login": {
+      "sendTokenAs": "key",
+      "authScheme": "Key",
+      "apiKeyParam": "apiKey",
+      "checkUrl": "https://nhentai.net/api/v2/user",
+      "loggedInSelector": "$.id"
+    }
+  },
+  "webFavorite": {
+    "enabled": true,
+    "title": "网络收藏",
+    "route": "favorites",
+    "url": "https://nhentai.net/favorites/",
+    "requireLogin": true
+  },
+  "cdn": {
+    "url": "",
+    "imageServers": "image_servers",
+    "thumbServers": "thumb_servers"
+  },
+  "filters": {
+    "groups": [
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {
+            "value": "date",
+            "label": "最新"
+          },
+          {
+            "value": "popular",
+            "label": "最热"
+          }
+        ]
+      },
+      {
+        "id": "language",
+        "title": "语言",
+        "route": "search",
+        "param": "keyword",
+        "options": [
+          {
+            "value": "language:chinese",
+            "label": "中文"
+          },
+          {
+            "value": "language:english",
+            "label": "English"
+          },
+          {
+            "value": "language:japanese",
+            "label": "日本語(原版)"
+          },
+          {
+            "value": "language:translated",
+            "label": "已翻译"
+          },
+          {
+            "value": "language:rewrite",
+            "label": "改写(性转)"
+          }
+        ]
+      },
+      {
+        "id": "category",
+        "title": "分类",
+        "route": "search",
+        "param": "keyword",
+        "options": [
+          {
+            "value": "category:doujinshi",
+            "label": "同人志"
+          },
+          {
+            "value": "category:manga",
+            "label": "漫画"
+          },
+          {
+            "value": "category:artist-cg",
+            "label": "画师CG"
+          },
+          {
+            "value": "category:game-cg",
+            "label": "游戏CG"
+          },
+          {
+            "value": "category:western",
+            "label": "西方"
+          },
+          {
+            "value": "category:non-h",
+            "label": "非H"
+          },
+          {
+            "value": "category:image-set",
+            "label": "写真集"
+          },
+          {
+            "value": "category:cosplay",
+            "label": "Cosplay"
+          },
+          {
+            "value": "category:asian-porn",
+            "label": "亚洲AV"
+          },
+          {
+            "value": "category:misc",
+            "label": "其他"
+          }
+        ]
+      },
+      {
+        "id": "tag",
+        "title": "题材",
+        "route": "search",
+        "param": "keyword",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "tag:big-breasts",
+            "label": "巨乳"
+          },
+          {
+            "value": "tag:small-breasts",
+            "label": "贫乳"
+          },
+          {
+            "value": "tag:paizuri",
+            "label": "奶交"
+          },
+          {
+            "value": "tag:blowjob",
+            "label": "口交"
+          },
+          {
+            "value": "tag:deepthroat",
+            "label": "深喉"
+          },
+          {
+            "value": "tag:handjob",
+            "label": "手交"
+          },
+          {
+            "value": "tag:footjob",
+            "label": "足交"
+          },
+          {
+            "value": "tag:fingering",
+            "label": "指交"
+          },
+          {
+            "value": "tag:facesitting",
+            "label": "骑乘颜面"
+          },
+          {
+            "value": "tag:sole-female",
+            "label": "单女主"
+          },
+          {
+            "value": "tag:sole-male",
+            "label": "单男主"
+          },
+          {
+            "value": "tag:group",
+            "label": "群交"
+          },
+          {
+            "value": "tag:gangbang",
+            "label": "轮奸"
+          },
+          {
+            "value": "tag:anal",
+            "label": "肛交"
+          },
+          {
+            "value": "tag:double-penetration",
+            "label": "双重插入"
+          },
+          {
+            "value": "tag:creampie",
+            "label": "内射"
+          },
+          {
+            "value": "tag:impregnation",
+            "label": "受孕"
+          },
+          {
+            "value": "tag:pregnancy",
+            "label": "怀孕"
+          },
+          {
+            "value": "tag:defloration",
+            "label": "破处"
+          },
+          {
+            "value": "tag:virgin",
+            "label": "处女"
+          },
+          {
+            "value": "tag:rape",
+            "label": "强奸"
+          },
+          {
+            "value": "tag:forced",
+            "label": "强迫"
+          },
+          {
+            "value": "tag:mind-break",
+            "label": "精神崩溃"
+          },
+          {
+            "value": "tag:ahegao",
+            "label": "阿黑颜"
+          },
+          {
+            "value": "tag:bondage",
+            "label": "紧缚"
+          },
+          {
+            "value": "tag:restraint",
+            "label": "拘束"
+          },
+          {
+            "value": "tag:latex",
+            "label": "乳胶衣"
+          },
+          {
+            "value": "tag:leather",
+            "label": "皮革"
+          },
+          {
+            "value": "tag:swimsuit",
+            "label": "泳装"
+          },
+          {
+            "value": "tag:schoolgirl",
+            "label": "女学生"
+          },
+          {
+            "value": "tag:maid",
+            "label": "女仆"
+          },
+          {
+            "value": "tag:nurse",
+            "label": "护士"
+          },
+          {
+            "value": "tag:teacher",
+            "label": "教师"
+          },
+          {
+            "value": "tag:office-lady",
+            "label": "职业女性"
+          },
+          {
+            "value": "tag:glasses",
+            "label": "眼镜"
+          },
+          {
+            "value": "tag:twintails",
+            "label": "双马尾"
+          },
+          {
+            "value": "tag:ponytail",
+            "label": "马尾"
+          },
+          {
+            "value": "tag:hair-bun",
+            "label": "团子头"
+          },
+          {
+            "value": "tag:stockings",
+            "label": "长筒袜"
+          },
+          {
+            "value": "tag:thigh-highs",
+            "label": "过膝袜"
+          },
+          {
+            "value": "tag:pantyhose",
+            "label": "裤袜"
+          },
+          {
+            "value": "tag:lingerie",
+            "label": "内衣"
+          },
+          {
+            "value": "tag:naked-apron",
+            "label": "围裙"
+          },
+          {
+            "value": "tag:cosplaying",
+            "label": "角色扮演"
+          },
+          {
+            "value": "tag:full-color",
+            "label": "全彩"
+          },
+          {
+            "value": "tag:monochrome",
+            "label": "单色"
+          },
+          {
+            "value": "tag:uncensored",
+            "label": "无修正"
+          },
+          {
+            "value": "tag:censored",
+            "label": "有修正"
+          },
+          {
+            "value": "tag:femdom",
+            "label": "女王"
+          },
+          {
+            "value": "tag:crossdressing",
+            "label": "异装"
+          },
+          {
+            "value": "tag:tomboy",
+            "label": "伪郎"
+          },
+          {
+            "value": "tag:futanari",
+            "label": "扶她"
+          },
+          {
+            "value": "tag:yuri",
+            "label": "百合"
+          },
+          {
+            "value": "tag:yaoi",
+            "label": "耽美"
+          },
+          {
+            "value": "tag:tentacles",
+            "label": "触手"
+          },
+          {
+            "value": "tag:monster",
+            "label": "怪物"
+          },
+          {
+            "value": "tag:demons",
+            "label": "恶魔"
+          },
+          {
+            "value": "tag:elf",
+            "label": "精灵"
+          },
+          {
+            "value": "tag:angel",
+            "label": "天使"
+          },
+          {
+            "value": "tag:catgirl",
+            "label": "猫娘"
+          },
+          {
+            "value": "tag:dog-girl",
+            "label": "狗娘"
+          },
+          {
+            "value": "tag:fox-girl",
+            "label": "狐娘"
+          },
+          {
+            "value": "tag:beast",
+            "label": "兽"
+          },
+          {
+            "value": "tag:loli",
+            "label": "萝莉"
+          },
+          {
+            "value": "tag:shotacon",
+            "label": "正太"
+          },
+          {
+            "value": "tag:incest",
+            "label": "近亲"
+          },
+          {
+            "value": "tag:mother",
+            "label": "母亲"
+          },
+          {
+            "value": "tag:daughter",
+            "label": "女儿"
+          },
+          {
+            "value": "tag:sister",
+            "label": "姐妹"
+          },
+          {
+            "value": "tag:netorare",
+            "label": "被绿(NTR)"
+          },
+          {
+            "value": "tag:netori",
+            "label": "绿人"
+          },
+          {
+            "value": "tag:cheating",
+            "label": "出轨"
+          },
+          {
+            "value": "tag:harem",
+            "label": "后宫"
+          },
+          {
+            "value": "tag:humiliation",
+            "label": "凌辱"
+          },
+          {
+            "value": "tag:squirt",
+            "label": "潮吹"
+          },
+          {
+            "value": "tag:bukkake",
+            "label": "颜射"
+          },
+          {
+            "value": "tag:facial",
+            "label": "颜面"
+          },
+          {
+            "value": "tag:sweat",
+            "label": "汗水"
+          },
+          {
+            "value": "tag:kissing",
+            "label": "接吻"
+          },
+          {
+            "value": "tag:ass",
+            "label": "臀"
+          },
+          {
+            "value": "tag:thigh",
+            "label": "大腿"
+          },
+          {
+            "value": "tag:foot",
+            "label": "足"
+          },
+          {
+            "value": "tag:dildo",
+            "label": "按摩棒"
+          },
+          {
+            "value": "tag:vibrator",
+            "label": "震动棒"
+          },
+          {
+            "value": "tag:blindfold",
+            "label": "眼罩"
+          },
+          {
+            "value": "tag:collar",
+            "label": "项圈"
+          },
+          {
+            "value": "tag:rope",
+            "label": "绳缚"
+          },
+          {
+            "value": "tag:wax",
+            "label": "蜡"
+          },
+          {
+            "value": "tag:sleeping",
+            "label": "睡眠"
+          },
+          {
+            "value": "tag:drunk",
+            "label": "醉酒"
+          },
+          {
+            "value": "tag:x-ray",
+            "label": "X光"
+          },
+          {
+            "value": "tag:invisible",
+            "label": "隐形"
+          },
+          {
+            "value": "tag:body-swapping",
+            "label": "身体交换"
+          },
+          {
+            "value": "tag:lactation",
+            "label": "泌乳"
+          },
+          {
+            "value": "tag:muscle",
+            "label": "肌肉"
+          },
+          {
+            "value": "tag:gym-uniform",
+            "label": "体操服"
+          },
+          {
+            "value": "tag:bloomers",
+            "label": "死库水"
+          },
+          {
+            "value": "tag:sailor-collar",
+            "label": "水手服"
+          },
+          {
+            "value": "tag:uniform",
+            "label": "制服"
+          }
+        ]
+      },
+      {
+        "id": "parody",
+        "title": "原作",
+        "route": "search",
+        "param": "keyword",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "parody:fate-stay-night",
+            "label": "Fate/stay night"
+          },
+          {
+            "value": "parody:fate-grand-order",
+            "label": "Fate/Grand Order"
+          },
+          {
+            "value": "parody:touhou",
+            "label": "东方Project"
+          },
+          {
+            "value": "parody:kantai-collection",
+            "label": "舰队Collection"
+          },
+          {
+            "value": "parody:azur-lane",
+            "label": "碧蓝航线"
+          },
+          {
+            "value": "parody:genshin-impact",
+            "label": "原神"
+          },
+          {
+            "value": "parody:vocaloid",
+            "label": "VOCALOID"
+          },
+          {
+            "value": "parody:league-of-legends",
+            "label": "英雄联盟"
+          },
+          {
+            "value": "parody:overwatch",
+            "label": "守望先锋"
+          },
+          {
+            "value": "parody:pokemon",
+            "label": "宝可梦"
+          },
+          {
+            "value": "parody:one-piece",
+            "label": "海贼王"
+          },
+          {
+            "value": "parody:jojos-bizarre-adventure",
+            "label": "JOJO的奇妙冒险"
+          },
+          {
+            "value": "parody:neon-genesis-evangelion",
+            "label": "新世纪福音战士"
+          },
+          {
+            "value": "parody:nier-automata",
+            "label": "尼尔:自动人形"
+          },
+          {
+            "value": "parody:blue-archive",
+            "label": "碧蓝档案"
+          },
+          {
+            "value": "parody:arknights",
+            "label": "明日方舟"
+          },
+          {
+            "value": "parody:type-moon",
+            "label": "TYPE-MOON"
+          }
+        ]
+      },
+      {
+        "id": "group",
+        "title": "社团",
+        "route": "search",
+        "param": "keyword",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "group:t-rex",
+            "label": "T-REX"
+          },
+          {
+            "value": "group:trump",
+            "label": "TRUMP"
+          },
+          {
+            "value": "group:akabane",
+            "label": "赤羽"
+          },
+          {
+            "value": "group:cinema",
+            "label": "CINEMA×NATORI"
+          },
+          {
+            "value": "group:wanimag",
+            "label": "WANIMAG"
+          },
+          {
+            "value": "group:clockworks",
+            "label": "CLOCKWORKS"
+          },
+          {
+            "value": "group:kirikaze",
+            "label": "霧風"
+          },
+          {
+            "value": "group:aos",
+            "label": "AOS"
+          },
+          {
+            "value": "group:g-cup",
+            "label": "G-CUP"
+          },
+          {
+            "value": "group:niwamura",
+            "label": "丹羽村"
+          }
+        ]
+      },
+      {
+        "id": "artist",
+        "title": "作者",
+        "route": "search",
+        "param": "keyword",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "artist:shindol",
+            "label": "しんどる"
+          },
+          {
+            "value": "artist:asanagi",
+            "label": "朝凪"
+          },
+          {
+            "value": "artist:waw",
+            "label": "WAW"
+          },
+          {
+            "value": "artist:hiten",
+            "label": "ヒテン"
+          },
+          {
+            "value": "artist:redcat",
+            "label": "レッドキャット"
+          },
+          {
+            "value": "artist:kotetsu",
+            "label": "コテツ"
+          },
+          {
+            "value": "artist:yokubo",
+            "label": "欲望"
+          },
+          {
+            "value": "artist:ishikei",
+            "label": "石芸"
+          },
+          {
+            "value": "artist:seven",
+            "label": "セブン"
+          },
+          {
+            "value": "artist:mashumaro",
+            "label": "ましゅまろ"
+          }
+        ]
+      },
+      {
+        "id": "character",
+        "title": "角色",
+        "route": "search",
+        "param": "keyword",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "character:hatsune-miku",
+            "label": "初音未来"
+          },
+          {
+            "value": "character:rem",
+            "label": "雷姆(Re:Zero)"
+          },
+          {
+            "value": "character:emilia",
+            "label": "艾米莉亚(Re:Zero)"
+          },
+          {
+            "value": "character:asuka",
+            "label": "明日香(EVA)"
+          },
+          {
+            "value": "character:zero-two",
+            "label": "02(达尔克弗兰克斯)"
+          },
+          {
+            "value": "character:2b",
+            "label": "2B(尼尔)"
+          },
+          {
+            "value": "character:marin-kitagawa",
+            "label": "喜多川海梦(更衣人偶)"
+          },
+          {
+            "value": "character:saber",
+            "label": "Saber(Fate)"
+          },
+          {
+            "value": "character:yor",
+            "label": " Yor(间谍过家家)"
+          },
+          {
+            "value": "character:yotsuba",
+            "label": "四叶(五等分)"
+          },
+          {
+            "value": "character:chika",
+            "label": "四宫辉夜(辉夜)"
+          },
+          {
+            "value": "character:rin",
+            "label": "凛(Fate)"
+          }
+        ]
+      }
+    ]
+  }
+}
