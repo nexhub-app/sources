@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-28T09:15:46.946Z",
-  "count": 10,
+  "generatedAt": "2026-08-29T12:36:20.820Z",
+  "count": 11,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -56,6 +56,21 @@
       "version": 6,
       "baseUrl": "https://www.baozimh.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_baozimh.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      }
+    },
+    {
+      "id": "manga/manga_eh",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "E-Hentai",
+      "version": 11,
+      "baseUrl": "https://e-hentai.org",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_eh.json",
       "builtin": true,
       "desc": {
         "zh": "",
