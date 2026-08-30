@@ -90,6 +90,7 @@ function main() {
       zh: disp.descZh || "",
       en: disp.descEn || ""
     };
+    const ageRating = raw.ageRating || "general";
     const rawUrl = `${RAW_BASE}/sources/${category}/${fileName}`;
 
     sources.push({
@@ -102,7 +103,8 @@ function main() {
       baseUrl,
       rawUrl,
       builtin: true, // 源库中的源均可导入
-      desc
+      desc,
+      ageRating
     });
   }
 

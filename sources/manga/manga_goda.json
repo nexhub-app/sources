@@ -1,5 +1,6 @@
 {
   "id": "manga_goda",
+  "ageRating": "general",
   "version": 5,
   "name": "GoDa漫画",
   "type": "mangaSource",

@@ -3,6 +3,7 @@
     "enabledExplore":  true,
     "enabled":  true,
     "bookSourceName":  "笔趣阁",
+    "ageRating": "general",
     "bookSourceUrl":  "https://m.biqubu3.com",
     "bookSourceType":  0,
     "exploreUrl":  "玄幻小说::https://m.biqubu3.com/xuanhuan/\n修真小说::https://m.biqubu3.com/xiuzhen/\n都市小说::https://m.biqubu3.com/dushi/\n历史小说::https://m.biqubu3.com/lishi/\n网游小说::https://m.biqubu3.com/wangyou/\n科幻小说::https://m.biqubu3.com/kehuan/\n言情小说::https://m.biqubu3.com/yanqing/",

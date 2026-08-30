@@ -2,6 +2,7 @@
     "header": "{\"Referer\":\"https://www.huanmengacg.com/\",\"User-Agent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36\"}",
     "enabled": true,
     "bookSourceName": "幻梦ACG轻小说",
+    "ageRating": "general",
     "bookSourceUrl": "https://www.huanmengacg.com",
     "bookSourceType": 0,
     "bookSourceGroup": "内置书源",

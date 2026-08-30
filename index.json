@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T02:55:38.179Z",
+  "generatedAt": "2026-08-30T07:16:16.450Z",
   "count": 11,
   "sources": [
     {
@@ -15,7 +15,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "anime/pms_dalvdm",
@@ -30,7 +31,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "anime/pms_girigirilove",
@@ -45,7 +47,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "manga/manga_baozimh",
@@ -60,7 +63,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "manga/manga_eh",
@@ -75,7 +79,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "mature"
     },
     {
       "id": "manga/manga_goda",
@@ -90,7 +95,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "manga/manga_nhentai",
@@ -105,37 +111,8 @@
       "desc": {
         "zh": "",
         "en": ""
-      }
-    },
-    {
-      "id": "novel/novel_linovelib",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "哔哩轻小说",
-      "version": 1,
-      "baseUrl": "https://www.linovelib.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_linovelib.json",
-      "builtin": true,
-      "desc": {
-        "zh": "哔哩轻小说(linovelib，原 bilinovel)，正文清晰，附「最近更新」发现入口。",
-        "en": "linovelib (formerly bilinovel) source with clean text and a latest-updates explore feed."
-      }
-    },
-    {
-      "id": "novel/novel_huanmengacg",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "幻梦ACG轻小说",
-      "version": 1,
-      "baseUrl": "https://www.huanmengacg.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_huanmengacg.json",
-      "builtin": true,
-      "desc": {
-        "zh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
-        "en": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
-      }
+      },
+      "ageRating": "mature"
     },
     {
       "id": "novel/novel_yamibo",
@@ -150,7 +127,8 @@
       "desc": {
         "zh": "百合会(yamibo)动漫之家轻小说区，提供「最新更新」浏览入口；书籍详情与正文无需登录。",
         "en": "Yamibo light-novel section; browse latest updates. Book detail & content need no login."
-      }
+      },
+      "ageRating": "general"
     },
     {
       "id": "novel/novel_biquge",
@@ -165,7 +143,40 @@
       "desc": {
         "zh": "笔趣阁综合网文站，支持玄幻/都市/言情等分类发现。",
         "en": "Biquge multi-category web-novel source with genre browsing."
-      }
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "novel/novel_linovelib",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "哔哩轻小说",
+      "version": 1,
+      "baseUrl": "https://www.linovelib.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_linovelib.json",
+      "builtin": true,
+      "desc": {
+        "zh": "哔哩轻小说(linovelib，原 bilinovel)，正文清晰，附「最近更新」发现入口。",
+        "en": "linovelib (formerly bilinovel) source with clean text and a latest-updates explore feed."
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "novel/novel_huanmengacg",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "幻梦ACG轻小说",
+      "version": 1,
+      "baseUrl": "https://www.huanmengacg.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_huanmengacg.json",
+      "builtin": true,
+      "desc": {
+        "zh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
+        "en": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
+      },
+      "ageRating": "general"
     }
   ]
 }

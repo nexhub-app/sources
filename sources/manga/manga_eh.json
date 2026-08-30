@@ -1,5 +1,6 @@
 {
   "id": "manga_eh",
+  "ageRating": "mature",
   "version": 11,
   "name": "E-Hentai",
   "type": "mangaSource",
