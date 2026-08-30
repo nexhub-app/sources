@@ -21,6 +21,8 @@ NexHub 的**公共源仓库**。这里集中存放所有可导入的源（漫画
 ├─ .github/workflows/
 │  └─ update-index.yml       # 推送后自动重新生成并提交 index.json
 ├─ index.json               # 自动生成的清单（网页读取它）
+├─ tools/
+│  └─ nexhub-source-gen/     # 源生成器辅助（AI Skill，按官网教程生成源 JSON）；不参与 index.json 索引
 └─ README.md
 ```
 
