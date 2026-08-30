@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T02:55:10.460Z",
+  "generatedAt": "2026-08-30T02:55:38.179Z",
   "count": 11,
   "sources": [
     {
@@ -108,36 +108,6 @@
       }
     },
     {
-      "id": "novel/novel_yamibo",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "百合会轻小说",
-      "version": 1,
-      "baseUrl": "https://www.yamibo.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_yamibo.json",
-      "builtin": true,
-      "desc": {
-        "zh": "百合会(yamibo)动漫之家轻小说区，提供「最新更新」浏览入口；书籍详情与正文无需登录。",
-        "en": "Yamibo light-novel section; browse latest updates. Book detail & content need no login."
-      }
-    },
-    {
-      "id": "novel/novel_biquge",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "笔趣阁",
-      "version": 1,
-      "baseUrl": "https://m.biqubu3.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_biquge.json",
-      "builtin": true,
-      "desc": {
-        "zh": "笔趣阁综合网文站，支持玄幻/都市/言情等分类发现。",
-        "en": "Biquge multi-category web-novel source with genre browsing."
-      }
-    },
-    {
       "id": "novel/novel_linovelib",
       "category": "novel",
       "type": "novel",
@@ -165,6 +135,36 @@
       "desc": {
         "zh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
         "en": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
+      }
+    },
+    {
+      "id": "novel/novel_yamibo",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "百合会轻小说",
+      "version": 1,
+      "baseUrl": "https://www.yamibo.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_yamibo.json",
+      "builtin": true,
+      "desc": {
+        "zh": "百合会(yamibo)动漫之家轻小说区，提供「最新更新」浏览入口；书籍详情与正文无需登录。",
+        "en": "Yamibo light-novel section; browse latest updates. Book detail & content need no login."
+      }
+    },
+    {
+      "id": "novel/novel_biquge",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "笔趣阁",
+      "version": 1,
+      "baseUrl": "https://m.biqubu3.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_biquge.json",
+      "builtin": true,
+      "desc": {
+        "zh": "笔趣阁综合网文站，支持玄幻/都市/言情等分类发现。",
+        "en": "Biquge multi-category web-novel source with genre browsing."
       }
     }
   ]
