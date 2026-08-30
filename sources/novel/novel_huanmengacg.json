@@ -176,5 +176,9 @@
                 ]
             }
         ]
+    },
+    "display": {
+        "descZh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
+        "descEn": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
     }
 }

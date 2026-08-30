@@ -65,5 +65,9 @@
                          "name":  "h1@text||h2@text",
                          "author":  "p:contains(作者)@text||.author@text",
                          "bookStatus":  "p:contains(状态) span@text||p:contains(状态)@text||.status@text"
-                     }
+                     },
+    "display": {
+        "descZh": "笔趣阁综合网文站，支持玄幻/都市/言情等分类发现。",
+        "descEn": "Biquge multi-category web-novel source with genre browsing."
+    }
 }

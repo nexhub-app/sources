@@ -94,5 +94,5 @@ RAW_BASE=https://你的镜像地址/main node scripts/generate_index.js
 
 网站 `sources.js` 改为 `fetch` 本仓库的 `index.json`，把每条映射成网页需要的字段后渲染。
 `index.json` 中每条 `id` 已带分类路径（如 `manga/manga_goda`），配合导入链接前缀
-`https://raw.githubusercontent.com/nexhub-app/sources/main/sources/`，网页的「导入」按钮
-能直接拼出正确的原始文件地址。详见 `website-patch/` 目录里的网页改造补丁。
+`https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/`，网页的「导入」按钮
+能直接拼出正确的原始文件地址（走 jsDelivr CDN，国内可访问）。详见 `website-patch/` 目录里的网页改造补丁。

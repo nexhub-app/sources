@@ -38,5 +38,9 @@
     "ruleContent": {
         "content": "#TextContent p@text||#TextContent@text",
         "nextContentUrl": "a:contains(下一页)@href"
+    },
+    "display": {
+        "descZh": "哔哩轻小说(linovelib，原 bilinovel)，正文清晰，附「最近更新」发现入口。",
+        "descEn": "linovelib (formerly bilinovel) source with clean text and a latest-updates explore feed."
     }
 }

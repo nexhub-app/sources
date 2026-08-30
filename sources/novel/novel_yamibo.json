@@ -28,5 +28,9 @@
     },
     "ruleContent": {
         "content": "#txt .panel-body@textNodes"
+    },
+    "display": {
+        "descZh": "百合会(yamibo)动漫之家轻小说区，提供「最新更新」浏览入口；书籍详情与正文无需登录。",
+        "descEn": "Yamibo light-novel section; browse latest updates. Book detail & content need no login."
     }
 }
