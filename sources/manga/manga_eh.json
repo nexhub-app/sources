@@ -1,6 +1,6 @@
 {
   "id": "manga_eh",
-  "version": 19,
+  "version": 20,
   "name": "E-Hentai",
   "type": "mangaSource",
   "responseType": "html",
@@ -62,7 +62,7 @@
       },
       "folders": {
         "function": "parseFolders",
-        "script": "function parseFolders(html, vars) {\n  var DQ = String.fromCharCode(34);\n  var SQ = String.fromCharCode(39);\n  var out = [];\n  var si = html.indexOf(\"name=\" + DQ + \"favcat\" + DQ);\n  if (si < 0) si = html.indexOf(\"name=\" + SQ + \"favcat\" + SQ);\n  if (si < 0) return out;\n  var se = html.indexOf(\"</select>\", si);\n  if (se < 0) return out;\n  var block = html.substring(si, se);\n  var parts = block.split(\"<option\");\n  function dec(s){s=s.split(\"&amp;\").join(\"&\");s=s.split(\"&lt;\").join(\"<\");s=s.split(\"&gt;\").join(\">\");s=s.split(\"&nbsp;\").join(\" \");return s;}\n  for (var i=1;i<parts.length;i++){\n    var p = parts[i];\n    var vq = p.indexOf(\"value=\");\n    if (vq<0) continue;\n    var rest = p.substring(vq+6);\n    var v = \"\";\n    if (rest.charAt(0)==DQ) { var ve=rest.indexOf(DQ,1); v=rest.substring(1,ve); }\n    else if (rest.charAt(0)==SQ) { var ve2=rest.indexOf(SQ,1); v=rest.substring(1,ve2); }\n    else { var ve3=rest.indexOf(\">\"); v=rest.substring(0,ve3).trim(); }\n    if (v===\"\") continue;\n    var ce = p.indexOf(\">\");\n    var te = p.indexOf(\"</option>\", ce);\n    var name = dec(p.substring(ce+1, te<0?p.length:te)).replace(/<[^>]+>/g,\"\").trim();\n    out.push({title:name, url:\"/favorites.php?favcat=\"+encodeURIComponent(v), value:v});\n  }\n  return out;\n}"
+        "script": "function parseFolders(html, vars) {\n  var out = [];\n  var DQ = String.fromCharCode(34);\n  var from = 0;\n  while (true) {\n    var q = html.indexOf('favorites.php?favcat=', from);\n    if (q < 0) break;\n    from = q + 1;\n    var s = q + 'favorites.php?favcat='.length;\n    var e = html.length;\n    var c1 = html.indexOf(\"'\", s);\n    var c2 = html.indexOf(DQ, s);\n    var c3 = html.indexOf('&', s);\n    if (c1 >= 0 && c1 < e) e = c1;\n    if (c2 >= 0 && c2 < e) e = c2;\n    if (c3 >= 0 && c3 < e) e = c3;\n    var fav = html.substring(s, e);\n    if (fav.length === 0) { continue; }\n    fav = decodeURIComponent(fav);\n    var dup = false;\n    for (var di = 0; di < out.length; di++) { if (out[di].value === fav) { dup = true; break; } }\n    if (dup) { continue; }\n    var name = '';\n    // 真实 e-hentai 侧栏：fp 块内最后一个 <div> 才是收藏夹名字（前面是排序/数量等）。\n    // 反向从 fp 块结尾之前找最后一个 <div>，避免串到下一个文件夹块。\n    var blockEnd = html.indexOf('</div></a>', q);\n    if (blockEnd < 0) blockEnd = html.indexOf('</div>', q + 200);\n    var nameOpen = html.lastIndexOf('<div', blockEnd);\n    if (nameOpen >= 0) {\n      var n0 = html.indexOf('>', nameOpen) + 1;\n      var n1 = html.indexOf('</div>', n0);\n      if (n1 > n0 && n1 <= blockEnd) { name = html.substring(n0, n1).trim(); }\n    }\n    if (!name) { name = 'Favorites ' + fav; }\n    var count = null;\n    var cp = name.indexOf('(');\n    if (cp >= 0) {\n      var cm = name.indexOf(')', cp);\n      if (cm > cp + 1) { var cn = parseInt(name.substring(cp + 1, cm), 10); if (!isNaN(cn)) count = cn; }\n    }\n    out.push({title: name, url: '/favorites.php?favcat=' + encodeURIComponent(fav), value: fav, count: count});\n  }\n  return out;\n}"
       }
     }
   },
