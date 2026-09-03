@@ -1,0 +1,244 @@
+{
+  "id": "manga_zaimanhua",
+  "name": "再漫画",
+  "type": "mangaSource",
+  "version": "2.0.0",
+  "author": "nexhub",
+  "description": "再漫画（manhua.zaimanhua.com）在线漫画源，直连站点 JSON API（更新列表 / 筛选分类 / 搜索 / 详情 / 章节 / 图片），无需渲染 HTML。",
+  "enabled": true,
+  "enabledExplore": true,
+  "site": {
+    "domain": "manhua.zaimanhua.com",
+    "baseUrl": "https://manhua.zaimanhua.com",
+    "mirrors": [
+      {
+        "name": "manhua.zaimanhua.com",
+        "domain": "manhua.zaimanhua.com",
+        "baseUrl": "https://manhua.zaimanhua.com"
+      },
+      {
+        "name": "m.zaimanhua.com",
+        "domain": "m.zaimanhua.com",
+        "baseUrl": "https://m.zaimanhua.com"
+      }
+    ]
+  },
+  "responseType": "json",
+  "useWebview": true,
+  "stealthMode": true,
+  "webviewConfig": {
+    "timeout": 30000,
+    "adBlocker": true,
+    "skipSSLVerification": true,
+    "useLegacyParser": false,
+    "extraUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var list = []; if (!data || !data.data) return list; var arr = data.data.comicList || []; for (var i = 0; i < arr.length; i++){ var it = arr[i]; if (!it || !it.id) continue; var cover = it.cover || ''; if (cover.indexOf('//') === 0) cover = 'https:' + cover; list.push({ id: String(it.id), title: it.name || '', cover: cover, detailUrl: 'https://manhua.zaimanhua.com/details/' + it.id, author: it.authors || '', status: it.status || '', tags: it.types || '', updateInfo: it.last_update_chapter_name || '', updateChapterId: String(it.last_update_chapter_id || '') }); } return list; }"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var list = []; if (!data || !data.data) return list; var arr = data.data.comicList || []; for (var i = 0; i < arr.length; i++){ var it = arr[i]; if (!it || !it.id) continue; var cover = it.cover || ''; if (cover.indexOf('//') === 0) cover = 'https:' + cover; list.push({ id: String(it.id), title: it.name || '', cover: cover, detailUrl: 'https://manhua.zaimanhua.com/details/' + it.id, author: it.authors || '', status: it.status || '', tags: it.types || '', updateInfo: it.last_update_chapter_name || '', updateChapterId: String(it.last_update_chapter_id || '') }); } return list; }"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory",
+        "script": "function parseCategory(html, context){ var ctx = context || {}; var base = ctx.baseUrl || 'https://manhua.zaimanhua.com'; var page = ctx.page || '1'; var theme = ctx.theme || '0'; var audience = ctx.audience || '0'; var status = ctx.status || '0'; var cate = ctx.cate || '0'; var firstLetter = ctx.firstLetter || ''; var url = base + '/api/v1/comic1/filter?channel=pc&app_name=zmh&version=1.0.0&sortType=0&page=' + page + '&size=18&status=' + status + '&audience=' + audience + '&theme=' + theme + '&cate=' + cate + '&firstLetter=' + firstLetter; return { __meta: true, __fetchUrl: url, __processor: '__processCategory' }; } function __processCategory(data){ var list = []; try { var arr = (data && data.data && data.data.comicList) || []; for (var i = 0; i < arr.length; i++){ var it = arr[i]; if (!it || !it.id) continue; var cover = it.cover || ''; if (cover.indexOf('//') === 0) cover = 'https:' + cover; list.push({ id: String(it.id), title: it.name || '', cover: cover, detailUrl: 'https://manhua.zaimanhua.com/details/' + it.id, author: it.authors || '', status: it.status || '', tags: it.types || '', updateInfo: it.last_update_chapter_name || '' }); } } catch(e){} return list; }"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch",
+        "script": "function parseSearch(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var list = []; if (!data || !data.data) return list; var arr = data.data.list || []; for (var i = 0; i < arr.length; i++){ var it = arr[i]; if (!it || !it.id) continue; var cover = it.cover || ''; if (cover.indexOf('//') === 0) cover = 'https:' + cover; list.push({ id: String(it.id), title: it.title || it.name || '', cover: cover, detailUrl: 'https://manhua.zaimanhua.com/details/' + it.id, author: it.authors || '', status: it.status || '', tags: it.types || '', updateInfo: it.last_update_chapter_name || '' }); } return list; }"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var info = (data && data.data && data.data.comicInfo) || null; if (!info) return { id: (context && context.id) || '', title: '', cover: '', description: '', author: '', status: '', tags: [] }; var cover = info.cover || ''; if (cover.indexOf('//') === 0) cover = 'https:' + cover; var tags = []; if (info.themeTagList && info.themeTagList.length){ for (var i = 0; i < info.themeTagList.length; i++){ if (info.themeTagList[i] && info.themeTagList[i].tagName) tags.push(info.themeTagList[i].tagName); } } else if (info.types){ tags = String(info.types).split(/[,，/]/); } var author = ''; if (info.authorsTagList && info.authorsTagList.length){ var a = []; for (var j = 0; j < info.authorsTagList.length; j++){ if (info.authorsTagList[j] && info.authorsTagList[j].tagName) a.push(info.authorsTagList[j].tagName); } author = a.join(', '); } else if (info.authors){ author = info.authors; } var status = ''; if (info.statusTagList && info.statusTagList.length && info.statusTagList[0] && info.statusTagList[0].tagName) status = info.statusTagList[0].tagName; else if (info.status) status = info.status; return { id: String(info.id), title: info.title || '', cover: cover, description: info.description || '', author: author, status: status, tags: tags, detailUrl: 'https://manhua.zaimanhua.com/details/' + info.id }; }"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var list = []; var info = (data && data.data && data.data.comicInfo) || null; if (!info) return list; var comicId = String(info.id); var comicPy = info.comicPy || ''; var groups = info.chapterList || []; for (var g = 0; g < groups.length; g++){ var grp = groups[g]; if (!grp || !grp.data) continue; for (var i = 0; i < grp.data.length; i++){ var ch = grp.data[i]; if (!ch || !ch.chapter_id) continue; var cid = String(ch.chapter_id); var title = ch.chapter_title || ('第' + (ch.chapter_order || '')); list.push({ id: comicId + '@' + cid, title: title, url: 'https://manhua.zaimanhua.com/view/' + comicPy + '/' + comicId + '/' + cid, updatedAt: ch.updatetime || 0 }); } } return list; }"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context){ var data = html; if (typeof html === 'string'){ try { data = JSON.parse(html); } catch(e){ data = null; } } var list = []; var info = (data && data.data && data.data.chapterInfo) || null; if (!info || !info.page_url) return list; for (var i = 0; i < info.page_url.length; i++){ var u = info.page_url[i]; if (!u) continue; list.push(String(u)); } return list; }"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/api/v1/comic2/update_list?page={page}&size=18",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "explore": {
+      "url": "/api/v1/comic1/filter?channel=pc&app_name=zmh&version=1.0.0&sortType=0&page={page}&size=18&status=0&audience=0&theme=0&cate=0&firstLetter=",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/api/v1/comic1/filter?channel=pc&app_name=zmh&version=1.0.0&sortType=0&page={page}&size=18&status={status}&audience={audience}&theme={theme}&cate={cate}&firstLetter={firstLetter}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/app/v1/search/index?keyword={keyword}&page={page}&size=18&app_name=zmh&version=1.0.0",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/api/v1/comic2/comic/detail?id={id}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "chapters": {
+      "url": "/api/v1/comic2/comic/detail?id={id}",
+      "method": "GET",
+      "responseType": "json"
+    },
+    "images": {
+      "url": "/api/v1/comic2/chapter/detail?comic_id={id}&chapter_id={cid}",
+      "method": "GET",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "category": {
+      "categories": [
+        { "id": "all", "name": "全部" }
+      ],
+      "tags": [
+        { "id": "1", "name": "冒险" },
+        { "id": "2", "name": "搞笑" },
+        { "id": "3", "name": "格斗" },
+        { "id": "4", "name": "科幻" },
+        { "id": "5", "name": "爱情" },
+        { "id": "6", "name": "侦探" },
+        { "id": "7", "name": "竞技" },
+        { "id": "8", "name": "魔法" },
+        { "id": "9", "name": "校园" },
+        { "id": "11", "name": "百合" },
+        { "id": "13", "name": "耽美" },
+        { "id": "14", "name": "历史" },
+        { "id": "15", "name": "战争" },
+        { "id": "16", "name": "宅系" },
+        { "id": "17", "name": "治愈" },
+        { "id": "18", "name": "仙侠" },
+        { "id": "19", "name": "武侠" },
+        { "id": "20", "name": "职场" },
+        { "id": "21", "name": "神鬼" },
+        { "id": "22", "name": "奇幻" },
+        { "id": "23", "name": "生活" },
+        { "id": "24", "name": "其他" }
+      ]
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      { "id": "all", "title": "全部" }
+    ]
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "theme",
+        "title": "题材",
+        "param": "theme",
+        "options": [
+          { "value": "0", "label": "全部" },
+          { "value": "1", "label": "冒险" },
+          { "value": "2", "label": "搞笑" },
+          { "value": "3", "label": "格斗" },
+          { "value": "4", "label": "科幻" },
+          { "value": "5", "label": "爱情" },
+          { "value": "6", "label": "侦探" },
+          { "value": "7", "label": "竞技" },
+          { "value": "8", "label": "魔法" },
+          { "value": "9", "label": "校园" },
+          { "value": "11", "label": "百合" },
+          { "value": "13", "label": "耽美" },
+          { "value": "14", "label": "历史" },
+          { "value": "15", "label": "战争" },
+          { "value": "16", "label": "宅系" },
+          { "value": "17", "label": "治愈" },
+          { "value": "18", "label": "仙侠" },
+          { "value": "19", "label": "武侠" },
+          { "value": "20", "label": "职场" },
+          { "value": "21", "label": "神鬼" },
+          { "value": "22", "label": "奇幻" },
+          { "value": "23", "label": "生活" },
+          { "value": "24", "label": "其他" }
+        ]
+      },
+      {
+        "id": "audience",
+        "title": "受众",
+        "param": "audience",
+        "options": [
+          { "value": "0", "label": "全部" },
+          { "value": "3262", "label": "少年" },
+          { "value": "3263", "label": "少女" },
+          { "value": "3264", "label": "青年" }
+        ]
+      },
+      {
+        "id": "status",
+        "title": "状态",
+        "param": "status",
+        "options": [
+          { "value": "0", "label": "全部" },
+          { "value": "1", "label": "连载" },
+          { "value": "2", "label": "完结" }
+        ]
+      },
+      {
+        "id": "cate",
+        "title": "类型",
+        "param": "cate",
+        "options": [
+          { "value": "0", "label": "全部" },
+          { "value": "1", "label": "故事漫画" },
+          { "value": "2", "label": "四格多格" }
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最近更新", "route": "latest", "style": "grid", "limit": 18 },
+    { "id": "explore", "title": "漫画大全", "route": "explore", "style": "grid", "limit": 18 }
+  ],
+  "comments": {
+    "provider": "source",
+    "routes": {
+      "list": {
+        "url": "/app/v1/comment/list?type=4&objId={id}&sort=1&page={page}&size=30",
+        "method": "GET",
+        "responseType": "json"
+      }
+    },
+    "selectors": {
+      "items": "$.data.commentList",
+      "commentId": "id",
+      "author": "nickname",
+      "avatar": "photo",
+      "content": "content",
+      "time": "create_time",
+      "likeCount": "like_amount",
+      "replyCount": "reply_amount"
+    }
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://manhua.zaimanhua.com"
+  }
+}
