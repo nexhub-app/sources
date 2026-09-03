@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-31T10:10:04.765Z",
-  "count": 11,
+  "generatedAt": "2026-09-03T23:47:20.298Z",
+  "count": 12,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -113,6 +113,22 @@
         "en": ""
       },
       "ageRating": "mature"
+    },
+    {
+      "id": "manga/manga_zaimanhua",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "再漫画",
+      "version": "2.0.0",
+      "baseUrl": "https://manhua.zaimanhua.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_zaimanhua.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
     },
     {
       "id": "novel/novel_linovelib",
