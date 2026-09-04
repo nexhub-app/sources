@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-04T07:22:40.297Z",
-  "count": 14,
+  "generatedAt": "2026-09-04T08:52:10.598Z",
+  "count": 15,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -145,6 +145,22 @@
         "en": ""
       },
       "ageRating": "general"
+    },
+    {
+      "id": "manga/manga_favcomic",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "喜漫漫画",
+      "version": 4,
+      "baseUrl": "https://www.favcomic.xyz",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_favcomic.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "mature"
     },
     {
       "id": "manga/manga_311s",
