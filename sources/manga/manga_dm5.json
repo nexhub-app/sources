@@ -1,383 +1,384 @@
 {
-    "id": "manga_dm5",
-    "name": "动漫屋",
-    "type": "mangaSource",
-    "version": "1.0.1",
-    "author": "plexhub",
-    "description": "动漫屋（www.dm5.com / www.dm5.cn）在線漫畫源，支持原創國漫、日漫、韓漫、歐美漫畫等分類，提供最新、搜索、詳情、章節與圖片閱讀功能。",
-    "enabled": true,
-    "enabledExplore": true,
-    "site": {
+  "id": "manga_dm5",
+  "name": "动漫屋",
+  "type": "mangaSource",
+  "version": "1.0.2",
+  "author": "plexhub",
+  "description": "动漫屋（www.dm5.com / www.dm5.cn）在線漫畫源，支持原創國漫、日漫、韓漫、歐美漫畫等分類，提供最新、搜索、詳情、章節與圖片閱讀功能。",
+  "ageRating": "teen",
+  "enabled": true,
+  "enabledExplore": true,
+  "site": {
+    "domain": "www.dm5.com",
+    "baseUrl": "https://www.dm5.com",
+    "mirrors": [
+      {
+        "name": "www.dm5.com",
         "domain": "www.dm5.com",
-        "baseUrl": "https://www.dm5.com",
-        "mirrors": [
-            {
-                "name": "www.dm5.com",
-                "domain": "www.dm5.com",
-                "baseUrl": "https://www.dm5.com"
-            },
-            {
-                "name": "www.dm5.cn",
-                "domain": "www.dm5.cn",
-                "baseUrl": "https://www.dm5.cn"
-            }
-        ]
-    },
-    "responseType": "html",
-    "useWebview": true,
-    "stealthMode": true,
-    "webviewConfig": {
-        "timeout": 30000,
-        "adBlocker": true,
-        "useLegacyParser": false,
-        "extraUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-        "skipSSLVerification": true
-    },
-    "parser": {
-        "type": "hybrid",
-        "engine": "css",
-        "overrides": {
-            "latest": {
-                "type": "script",
-                "function": "parseList",
-                "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
-            },
-            "search": {
-                "type": "script",
-                "function": "parseList",
-                "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
-            },
-            "explore": {
-                "type": "script",
-                "function": "parseList",
-                "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
-            },
-            "category": {
-                "type": "script",
-                "function": "parseList",
-                "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
-            },
-            "detail": {
-                "type": "script",
-                "function": "parseDetail",
-                "script": "function parseDetail(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string') html = '';\n  var stripTags = function(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\\\s+/g, ' ').replace(/\\u0020+/g, ' ').trim(); };\n  var abs = function(u) { if (!u) return ''; u = String(u).trim(); if (u.indexOf('//') === 0) return 'https:' + u; if (u.indexOf('/') === 0) return baseUrl + u; return u; };\n\n  var title = '';\n  var mName = html.match(/var\\s+DM5_COMIC_MNAME\\s*=\\s*[\"']([^\"']+)[\"']/i);\n  if (mName) title = mName[1].trim();\n  if (!title) {\n    // <p class=\"title\">..text..<span class=\"right\">..score..</span></p>\n    var p = html.match(/<p\\s+class=[\"']title[\"'][^>]*>([\\s\\S]*?)<span\\s+class=[\"']right[\"']/i);\n    if (p) title = p[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  if (!title) {\n    var og = html.match(/<meta[^>]*property=[\"']og:title[\"'][^>]*content=[\"']([^\"']+)[\"']/i);\n    if (og) title = og[1];\n  }\n  if (!title) {\n    var h1 = html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n    if (h1) title = stripTags(h1[1]);\n  }\n  if (!title) {\n    var t = html.match(/<title>([\\s\\S]*?)<\\/title>/i);\n    if (t) title = t[1].replace(/漫画.*/, '').replace(/_.*/, '').replace(/动漫屋.*/, '').trim();\n  }\n\n  var cover = '';\n  var coverM = html.match(/<div\\s+class=[\"']cover[\"']>\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i)\n      || html.match(/class=[\"']mh-cover[\"'][^>]*style=[\"'][^\"']*background-image\\s*:\\s*url\\(([^)]+)\\)/i)\n      || html.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i);\n  if (coverM) cover = abs(coverM[1].replace(/['\"]/g, '').trim());\n\n  var description = '';\n  var descMeta = html.match(/<meta[^>]*?name=[\"']Description[\"'][^>]*?content=[\"']([^\"']*?)[\"'][^>]*?>/i)\n      || html.match(/<meta[^>]*?content=[\"']([^\"']*?)[\"'][^>]*?name=[\"']Description[\"'][^>]*?>/i);\n  if (descMeta) description = stripTags(descMeta[1]);\n  // dm5 详情页简介以「漫画简介：」开头，取出冒号后正文\n  var intro = description.match(/漫画简介[：:]\\s*([\\s\\S]+)/);\n  if (intro) description = intro[1].trim();\n  else if (description && description.indexOf('提供') === 0) {\n    var seg = description.split('。');\n    description = seg.slice(1).join('。').trim();\n  }\n\n  var author = '';\n  var aMatch = html.match(/作者\\s*[：:]\\s*(?:<a[^>]*>)?([^<]{1,40})/i);\n  if (aMatch) author = aMatch[1].trim();\n\n  var status = '';\n  var stMatch = html.match(/状态\\s*[：:]\\s*(?:<\\/?span[^>]*>)*\\s*([^<\\/\\s][^<\\/\\n]{0,10})/i);\n  if (stMatch) status = stMatch[1].trim();\n  if (!status) {\n    var c = html.match(/(连载中|已完结|完结)/i);\n    if (c) status = c[1];\n  }\n\n  var tags = [];\n  var tagUrls = [];\n  var tagRe = /href=\"(\\/manhua-[a-z]+\\/)\">\\s*<span>([^<]+)<\\/span>\\s*<\\/a>/gi;\n  var tm;\n  while ((tm = tagRe.exec(html)) !== null) {\n    var tu = tm[1];\n    var tn = (tm[2] || '').trim();\n    if (tn && tags.indexOf(tn) === -1) {\n      tags.push(tn);\n      tagUrls.push(abs(tu));\n    }\n  }\n\n  var score = '';\n  var sc = html.match(/class=[\"']score[\"']>\\s*([\\d.]+)\\s*分/);\n  if (sc) score = sc[1];\n\n  var slug = '';\n  var slugM = html.match(/var\\s+DM5_COMIC_URL\\s*=\\s*[\"']\\/(manhua-[^\"'\\/]+)\\//i)\n      || html.match(/\\/manhua-([^\\/\"' \\s]+)\\//);\n  if (slugM) slug = slugM[1];\n\n  return {\n    title: title,\n    coverUrl: cover,\n    author: author,\n    description: description,\n    status: status,\n    tags: tags,\n    tagUrls: tagUrls,\n    score: score,\n    slug: slug\n  };\n}"
-            },
-            "chapters": {
-                "type": "script",
-                "function": "parseChapters",
-                "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string' || html.length < 50) return [];\n  var results = [];\n  var seen = {};\n  var chapterRe = /<a\\s+([^>]*)href=\"(\\/[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var match;\n  while ((match = chapterRe.exec(html)) !== null) {\n    var href = match[2];\n    var block = match[4];\n    if (!/^\\/m\\d/.test(href)) continue; // 仅匹配 /m开头+数字 的章节地址，排除 /manhua-<目錄>\n    if (seen[href]) continue;\n    var title = block.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title || title.length < 1) continue;\n    if (/^(开始阅读|收藏|分享|立即阅读)$/.test(title)) continue;\n    seen[href] = 1;\n    var fullUrl = href.indexOf('http') === 0 ? href : baseUrl + href;\n    results.push({ id: href.replace(/\\//g, ''), title: title, url: fullUrl, updatedAt: '' });\n  }\n  return results;\n}"
-            },
-            "images": {
-                "type": "script",
-                "function": "parseImages",
-                "script": "function parseImages(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  // 从阅读页内嵌变量抽出签名参数（dm5 图片为 JS 签名动态加载，HTML 本体不含图）\n  function grabStr(name) {\n    var m = h.match(new RegExp('var\\\\s+' + name + '\\\\s*=\\\\s*\"([^\"]+)\"'));\n    return m ? m[1] : '';\n  }\n  function grabNum(name) {\n    var m = h.match(new RegExp('var\\\\s+' + name + '\\\\s*=\\\\s*(\\\\d+)'));\n    return m ? m[1] : '';\n  }\n  var cid = grabNum('DM5_CID');\n  var mid = grabNum('DM5_MID');\n  var viewsign = grabStr('DM5_VIEWSIGN');\n  var viewsigndt = grabStr('DM5_VIEWSIGN_DT');\n  var count = parseInt(grabNum('DM5_IMAGE_COUNT'), 10) || 0;\n  // 部分章节的防热链 key 放在隐藏输入 #dm5_key；为空也兼容（接口允许）\n  var key = '';\n  var kM = h.match(/id=[\"']dm5_key[\"'][^>]*value=[\"']([^\"']*)[\"']/i);\n  if (kM) key = kM[1];\n  if (!cid || !viewsign || !viewsigndt || count < 1) return [];\n  var urls = [];\n  for (var i = 1; i <= count; i++) {\n    urls.push(baseUrl + '/chapterfun.ashx?cid=' + cid +\n      '&page=' + i +\n      '&key=' + encodeURIComponent(key) +\n      '&language=1&gtk=6' +\n      '&_cid=' + cid +\n      '&_mid=' + mid +\n      '&_dt=' + encodeURIComponent(viewsigndt) +\n      '&_sign=' + viewsign);\n  }\n  return {\n    __meta: true,\n    __fetchUrls: urls,\n    __fetchConcurrency: 8,\n    __fetchResponseType: 'text',\n    __processor: '__processDm5Images'\n  };\n}\nfunction __processDm5Images(pages, context) {\n  // pages 为接口原始 JS（packer 压缩包）；eval 后返回该页图片数组（arr）\n  var out = [];\n  for (var i = 0; i < pages.length; i++) {\n    var r = pages[i];\n    if (!r || typeof r !== 'string' || r.length < 10) continue;\n    var arr = null;\n    try { arr = eval(r); } catch (e) { arr = null; }\n    if (arr && typeof arr === 'object' && arr.length) {\n      for (var j = 0; j < arr.length; j++) {\n        var u = arr[j];\n        if (u && typeof u === 'string' && out.indexOf(u) === -1) out.push(u);\n      }\n    }\n  }\n  return out;\n}"
-            }
-        }
-    },
-    "routes": {
-        "latest": {
-            "url": "/",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "explore": {
-            "url": "/manhua-list/",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "category": {
-            "url": "{category}/",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "search": {
-            "url": "/search?title={keyword}&language=1&f=2",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "detail": {
-            "url": "{id}",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "chapters": {
-            "url": "{id}",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        },
-        "images": {
-            "url": "/{cid}",
-            "method": "GET",
-            "headers": {
-                "Referer": "https://www.dm5.com/",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
-            }
-        }
-    },
-    "selectors": {
-        "latest": {
-            "list": "a[href^=\"/manhua-\"]",
-            "title": "h2@text, h3@text, img@alt",
-            "cover": "img@src||data-src||data-original",
-            "id": "a@href"
-        },
-        "explore": {
-            "list": "a[href^=\"/manhua-\"]",
-            "title": "h2@text, h3@text, img@alt",
-            "cover": "img@src||data-src||data-original",
-            "id": "a@href"
-        },
-        "category": {
-            "list": "a[href^=\"/manhua-\"]",
-            "title": "h2@text, h3@text, img@alt",
-            "cover": "img@src||data-src||data-original",
-            "id": "a@href",
-            "categories": [
-                {
-                    "id": "manhua-list",
-                    "name": "全部"
-                },
-                {
-                    "id": "manhua-rexue",
-                    "name": "热血"
-                },
-                {
-                    "id": "manhua-aiqing",
-                    "name": "恋爱"
-                },
-                {
-                    "id": "manhua-xiaoyuan",
-                    "name": "校园"
-                },
-                {
-                    "id": "manhua-maoxian",
-                    "name": "冒险"
-                },
-                {
-                    "id": "manhua-hougong",
-                    "name": "后宫"
-                },
-                {
-                    "id": "manhua-kehuan",
-                    "name": "科幻"
-                },
-                {
-                    "id": "manhua-zhanzheng",
-                    "name": "战争"
-                },
-                {
-                    "id": "manhua-xuanyi",
-                    "name": "悬疑"
-                },
-                {
-                    "id": "manhua-zhentan",
-                    "name": "推理"
-                },
-                {
-                    "id": "manhua-gaoxiao",
-                    "name": "搞笑"
-                },
-                {
-                    "id": "manhua-qihuan",
-                    "name": "奇幻"
-                },
-                {
-                    "id": "manhua-mofa",
-                    "name": "魔法"
-                },
-                {
-                    "id": "manhua-dongfangshengui",
-                    "name": "神鬼"
-                },
-                {
-                    "id": "manhua-lishi",
-                    "name": "历史"
-                },
-                {
-                    "id": "manhua-tongren",
-                    "name": "同人"
-                },
-                {
-                    "id": "manhua-jingji",
-                    "name": "运动"
-                },
-                {
-                    "id": "manhua-jiecao",
-                    "name": "绅士"
-                },
-                {
-                    "id": "manhua-jizhan",
-                    "name": "机甲"
-                },
-                {
-                    "id": "manhua-original",
-                    "name": "原创"
-                }
-            ],
-            "area": [
-                {
-                    "id": "manhua-list",
-                    "name": "全部"
-                },
-                {
-                    "id": "manhua-hktw",
-                    "name": "港台"
-                },
-                {
-                    "id": "manhua-jpkr",
-                    "name": "日韩"
-                },
-                {
-                    "id": "manhua-china",
-                    "name": "大陆"
-                },
-                {
-                    "id": "manhua-euus",
-                    "name": "欧美"
-                }
-            ],
-            "status": [
-                {
-                    "id": "manhua-list",
-                    "name": "全部"
-                },
-                {
-                    "id": "manhua-list-st1",
-                    "name": "连载"
-                },
-                {
-                    "id": "manhua-list-st2",
-                    "name": "完结"
-                }
-            ]
-        },
-        "search": {
-            "list": "a[href^=\"/manhua-\"]",
-            "title": "h2@text, h3@text, img@alt",
-            "cover": "img@src||data-src||data-original",
-            "id": "a@href"
-        },
-        "detail": {
-            "title": "h1@text, meta[property=\"og:title\"]@content",
-            "cover": "meta[property=\"og:image\"]@content, img.cover@src",
-            "author": "a[href*=\"search?title=\"]@text",
-            "description": "meta[name=\"description\"]@content",
-            "tags": "a[href^=\"/manhua-\"]@text",
-            "status": "text:contains(\"连载中\"), text:contains(\"已完结\")"
-        },
-        "chapters": {
-            "list": "a[href^=\"/m\"]",
-            "title": "@text",
-            "id": "a@href",
-            "url": "a@href"
-        },
-        "images": {
-            "list": "#comic-page img, .comic-content img, #chapter-content img, .read-content img",
-            "fallbackUrl": "img@data-src||img@data-original||img@src",
-            "fallbackList": [
-                "#chapterContent img",
-                ".comic-page img",
-                ".read-content img",
-                ".chapter-page img",
-                "#page img",
-                "#cp_img img"
-            ],
-            "config": {
-                "skipPatterns": [
-                    "logo",
-                    "icon",
-                    "qrcode",
-                    "avatar",
-                    "banner",
-                    "loading",
-                    "spinner",
-                    "advertisement",
-                    "doubaocdn"
-                ],
-                "sizeFilter": {
-                    "minWidth": 100,
-                    "minHeight": 100
-                },
-                "referer": {
-                    "mode": "site"
-                },
-                "pagination": {
-                    "mode": "none"
-                }
-            }
-        }
-    },
-    "antiHotlinking": {
-        "enabled": true,
-        "referer": "https://www.dm5.com"
-    },
-    "filters": {
-        "route": "category",
-        "groups": [
-            {
-                "id": "area",
-                "title": "地区",
-                "param": "category",
-                "options": [
-                    {
-                        "value": "manhua-list",
-                        "label": "全部"
-                    },
-                    {
-                        "value": "manhua-hktw",
-                        "label": "港台"
-                    },
-                    {
-                        "value": "manhua-jpkr",
-                        "label": "日韩"
-                    },
-                    {
-                        "value": "manhua-china",
-                        "label": "大陆"
-                    },
-                    {
-                        "value": "manhua-euus",
-                        "label": "欧美"
-                    }
-                ]
-            },
-            {
-                "id": "status",
-                "title": "状态",
-                "param": "category",
-                "options": [
-                    {
-                        "value": "manhua-list",
-                        "label": "全部"
-                    },
-                    {
-                        "value": "manhua-list-st1",
-                        "label": "连载"
-                    },
-                    {
-                        "value": "manhua-list-st2",
-                        "label": "完结"
-                    }
-                ]
-            }
-        ]
+        "baseUrl": "https://www.dm5.com"
+      },
+      {
+        "name": "www.dm5.cn",
+        "domain": "www.dm5.cn",
+        "baseUrl": "https://www.dm5.cn"
+      }
+    ]
+  },
+  "responseType": "html",
+  "useWebview": true,
+  "stealthMode": true,
+  "webviewConfig": {
+    "timeout": 30000,
+    "adBlocker": true,
+    "useLegacyParser": false,
+    "extraUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+    "skipSSLVerification": true
+  },
+  "parser": {
+    "type": "hybrid",
+    "engine": "css",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  function abs(u) {\n    if (!u) return '';\n    u = String(u).replace(/['\"]/g, '').trim();\n    if (u.indexOf('//') === 0) return 'https:' + u;\n    if (u.indexOf('/') === 0) return baseUrl + u;\n    return u;\n  }\n  function clean(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); }\n  function idOf(u) { return u.replace(/^\\//, '').replace(/\\/$/, ''); }\n  var out = [], seen = {};\n  function push(href, title, cover) {\n    if (!href || href.indexOf('/manhua-') !== 0) return;\n    if (seen[href]) return;\n    if (!title) return;\n    seen[href] = 1;\n    out.push({ id: idOf(href), title: title, cover: abs(cover), detailUrl: baseUrl + href });\n  }\n\n  // A) 列表/分类/首页: <div class=\"mh-item ...\"> ... </div></li>\n  var itemRe = /<div[^>]*class=\"[^\"]*\\bmh-item\\b[^\"]*\"[^>]*>([\\s\\S]*?)?<\\/div>\\s*<\\/li>/gi;\n  var m;\n  while ((m = itemRe.exec(h)) !== null) {\n    var b = m[1] || '';\n    var cover = '';\n    var bg = b.match(/class=\"[^\"]*\\bmh-cover\\b[^\"]*\"[^>]*style=\"[^\"]*background-image\\s*:\\s*url\\(([^)]+)\\)/i);\n    if (bg) cover = bg[1];\n    if (!cover) {\n      var im = b.match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (im) cover = im[1];\n    }\n    var a = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*title=\"([^\"]*)\"[^>]*>/i);\n    var title = '', href = '';\n    if (a) { href = a[1]; title = (a[2] || '').trim(); }\n    if (!title) {\n      var a2 = b.match(/<a[^>]*href=\"(\\/manhua-[^\"]*)\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n      if (a2) { href = a2[1]; title = clean(a2[2]); }\n    }\n    push(href, title, cover);\n  }\n\n  // B) 搜索: <div class=\"banner_detail_form\"> 中的 .cover img + p.title a\n  if (out.length === 0) {\n    var covers = [];\n    var coverRe = /class=\"cover\">\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/gi;\n    while ((m = coverRe.exec(h)) !== null) covers.push(m[1]);\n    var tRe = /class=\"title\">\\s*<a[^>]*href=\"(\\/manhua-[^\"]+)\"[^>]*title=\"([^\"]*)\"[^>]*>/gi;\n    var ti = 0, tm;\n    while ((tm = tRe.exec(h)) !== null) {\n      push(tm[1], (tm[2] || '').trim(), covers[ti] || '');\n      ti++;\n    }\n  }\n\n  // C) 兜底: <a href=\"/manhua-...\"> 内含图片\n  if (out.length === 0) {\n    var aRe = /<a\\s+([^>]*?)href=\"(\\/manhua-[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n    while ((m = aRe.exec(h)) !== null) {\n      var href2 = m[2];\n      if (seen[href2]) continue;\n      var imgM = m[0].match(/<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i);\n      if (!imgM) continue;\n      var t = clean(m[4]);\n      if (!t) { var alt = m[0].match(/<img[^>]*?alt=[\"']([^\"']+)[\"']/i); if (alt) t = alt[1].trim(); }\n      if (!t) continue;\n      push(href2, t, imgM[1]);\n    }\n  }\n  return out;\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string') html = '';\n  var stripTags = function(s) { return String(s || '').replace(/<[^>]+>/g, '').replace(/\\\\s+/g, ' ').replace(/\\u0020+/g, ' ').trim(); };\n  var abs = function(u) { if (!u) return ''; u = String(u).trim(); if (u.indexOf('//') === 0) return 'https:' + u; if (u.indexOf('/') === 0) return baseUrl + u; return u; };\n\n  var title = '';\n  var mName = html.match(/var\\s+DM5_COMIC_MNAME\\s*=\\s*[\"']([^\"']+)[\"']/i);\n  if (mName) title = mName[1].trim();\n  if (!title) {\n    // <p class=\"title\">..text..<span class=\"right\">..score..</span></p>\n    var p = html.match(/<p\\s+class=[\"']title[\"'][^>]*>([\\s\\S]*?)<span\\s+class=[\"']right[\"']/i);\n    if (p) title = p[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  if (!title) {\n    var og = html.match(/<meta[^>]*property=[\"']og:title[\"'][^>]*content=[\"']([^\"']+)[\"']/i);\n    if (og) title = og[1];\n  }\n  if (!title) {\n    var h1 = html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n    if (h1) title = stripTags(h1[1]);\n  }\n  if (!title) {\n    var t = html.match(/<title>([\\s\\S]*?)<\\/title>/i);\n    if (t) title = t[1].replace(/漫画.*/, '').replace(/_.*/, '').replace(/动漫屋.*/, '').trim();\n  }\n\n  var cover = '';\n  var coverM = html.match(/<div\\s+class=[\"']cover[\"']>\\s*<img[^>]*?(?:src|data-src|data-original)=[\"']([^\"']+)[\"']/i)\n      || html.match(/class=[\"']mh-cover[\"'][^>]*style=[\"'][^\"']*background-image\\s*:\\s*url\\(([^)]+)\\)/i)\n      || html.match(/<meta[^>]*property=[\"']og:image[\"'][^>]*content=[\"']([^\"']+)[\"']/i);\n  if (coverM) cover = abs(coverM[1].replace(/['\"]/g, '').trim());\n\n  var description = '';\n  var descMeta = html.match(/<meta[^>]*?name=[\"']Description[\"'][^>]*?content=[\"']([^\"']*?)[\"'][^>]*?>/i)\n      || html.match(/<meta[^>]*?content=[\"']([^\"']*?)[\"'][^>]*?name=[\"']Description[\"'][^>]*?>/i);\n  if (descMeta) description = stripTags(descMeta[1]);\n  // dm5 详情页简介以「漫画简介：」开头，取出冒号后正文\n  var intro = description.match(/漫画简介[：:]\\s*([\\s\\S]+)/);\n  if (intro) description = intro[1].trim();\n  else if (description && description.indexOf('提供') === 0) {\n    var seg = description.split('。');\n    description = seg.slice(1).join('。').trim();\n  }\n\n  var author = '';\n  var aMatch = html.match(/作者\\s*[：:]\\s*(?:<a[^>]*>)?([^<]{1,40})/i);\n  if (aMatch) author = aMatch[1].trim();\n\n  var status = '';\n  var stMatch = html.match(/状态\\s*[：:]\\s*(?:<\\/?span[^>]*>)*\\s*([^<\\/\\s][^<\\/\\n]{0,10})/i);\n  if (stMatch) status = stMatch[1].trim();\n  if (!status) {\n    var c = html.match(/(连载中|已完结|完结)/i);\n    if (c) status = c[1];\n  }\n\n  var tags = [];\n  var tagUrls = [];\n  var tagRe = /href=\"(\\/manhua-[a-z]+\\/)\">\\s*<span>([^<]+)<\\/span>\\s*<\\/a>/gi;\n  var tm;\n  while ((tm = tagRe.exec(html)) !== null) {\n    var tu = tm[1];\n    var tn = (tm[2] || '').trim();\n    if (tn && tags.indexOf(tn) === -1) {\n      tags.push(tn);\n      tagUrls.push(abs(tu));\n    }\n  }\n\n  var score = '';\n  var sc = html.match(/class=[\"']score[\"']>\\s*([\\d.]+)\\s*分/);\n  if (sc) score = sc[1];\n\n  var slug = '';\n  var slugM = html.match(/var\\s+DM5_COMIC_URL\\s*=\\s*[\"']\\/(manhua-[^\"'\\/]+)\\//i)\n      || html.match(/\\/manhua-([^\\/\"' \\s]+)\\//);\n  if (slugM) slug = slugM[1];\n\n  return {\n    title: title,\n    coverUrl: cover,\n    author: author,\n    description: description,\n    status: status,\n    tags: tags,\n    tagUrls: tagUrls,\n    score: score,\n    slug: slug\n  };\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string' || html.length < 50) return [];\n  var results = [];\n  var seen = {};\n  var chapterRe = /<a\\s+([^>]*)href=\"(\\/[^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var match;\n  while ((match = chapterRe.exec(html)) !== null) {\n    var href = match[2];\n    var block = match[4];\n    if (!/^\\/m\\d/.test(href)) continue; // 仅匹配 /m开头+数字 的章节地址，排除 /manhua-<目錄>\n    if (seen[href]) continue;\n    var title = block.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title || title.length < 1) continue;\n    if (/^(开始阅读|收藏|分享|立即阅读)$/.test(title)) continue;\n    seen[href] = 1;\n    var fullUrl = href.indexOf('http') === 0 ? href : baseUrl + href;\n    results.push({ id: href.replace(/\\//g, ''), title: title, url: fullUrl, updatedAt: '' });\n  }\n  return results;\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.dm5.com').replace(/\\/$/, '');\n  var h = (typeof html === 'string') ? html : '';\n  if (!h || h.length < 50) return [];\n  // 从阅读页内嵌变量抽出签名参数（dm5 图片为 JS 签名动态加载，HTML 本体不含图）\n  function grabStr(name) {\n    var m = h.match(new RegExp('var\\\\s+' + name + '\\\\s*=\\\\s*\"([^\"]+)\"'));\n    return m ? m[1] : '';\n  }\n  function grabNum(name) {\n    var m = h.match(new RegExp('var\\\\s+' + name + '\\\\s*=\\\\s*(\\\\d+)'));\n    return m ? m[1] : '';\n  }\n  var cid = grabNum('DM5_CID');\n  var mid = grabNum('DM5_MID');\n  var viewsign = grabStr('DM5_VIEWSIGN');\n  var viewsigndt = grabStr('DM5_VIEWSIGN_DT');\n  var count = parseInt(grabNum('DM5_IMAGE_COUNT'), 10) || 0;\n  // 部分章节的防热链 key 放在隐藏输入 #dm5_key；为空也兼容（接口允许）\n  var key = '';\n  var kM = h.match(/id=[\"']dm5_key[\"'][^>]*value=[\"']([^\"']*)[\"']/i);\n  if (kM) key = kM[1];\n  if (!cid || !viewsign || !viewsigndt || count < 1) return [];\n  var urls = [];\n  for (var i = 1; i <= count; i++) {\n    urls.push(baseUrl + '/chapterfun.ashx?cid=' + cid +\n      '&page=' + i +\n      '&key=' + encodeURIComponent(key) +\n      '&language=1&gtk=6' +\n      '&_cid=' + cid +\n      '&_mid=' + mid +\n      '&_dt=' + encodeURIComponent(viewsigndt) +\n      '&_sign=' + viewsign);\n  }\n  return {\n    __meta: true,\n    __fetchUrls: urls,\n    __fetchConcurrency: 8,\n    __fetchResponseType: 'text',\n    __processor: '__processDm5Images'\n  };\n}\nfunction __processDm5Images(pages, context) {\n  // pages 为接口原始 JS（packer 压缩包）；eval 后返回该页图片数组（arr）\n  var out = [];\n  for (var i = 0; i < pages.length; i++) {\n    var r = pages[i];\n    if (!r || typeof r !== 'string' || r.length < 10) continue;\n    var arr = null;\n    try { arr = eval(r); } catch (e) { arr = null; }\n    if (arr && typeof arr === 'object' && arr.length) {\n      for (var j = 0; j < arr.length; j++) {\n        var u = arr[j];\n        if (u && typeof u === 'string' && out.indexOf(u) === -1) out.push(u);\n      }\n    }\n  }\n  return out;\n}"
+      }
     }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "explore": {
+      "url": "/manhua-list/",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "category": {
+      "url": "{category}/",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "search": {
+      "url": "/search?title={keyword}&language=1&f=2",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "detail": {
+      "url": "{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "chapters": {
+      "url": "{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    },
+    "images": {
+      "url": "/{cid}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.dm5.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+      }
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "a[href^=\"/manhua-\"]",
+      "title": "h2@text, h3@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "explore": {
+      "list": "a[href^=\"/manhua-\"]",
+      "title": "h2@text, h3@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "category": {
+      "list": "a[href^=\"/manhua-\"]",
+      "title": "h2@text, h3@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href",
+      "categories": [
+        {
+          "id": "manhua-list",
+          "name": "全部"
+        },
+        {
+          "id": "manhua-rexue",
+          "name": "热血"
+        },
+        {
+          "id": "manhua-aiqing",
+          "name": "恋爱"
+        },
+        {
+          "id": "manhua-xiaoyuan",
+          "name": "校园"
+        },
+        {
+          "id": "manhua-maoxian",
+          "name": "冒险"
+        },
+        {
+          "id": "manhua-hougong",
+          "name": "后宫"
+        },
+        {
+          "id": "manhua-kehuan",
+          "name": "科幻"
+        },
+        {
+          "id": "manhua-zhanzheng",
+          "name": "战争"
+        },
+        {
+          "id": "manhua-xuanyi",
+          "name": "悬疑"
+        },
+        {
+          "id": "manhua-zhentan",
+          "name": "推理"
+        },
+        {
+          "id": "manhua-gaoxiao",
+          "name": "搞笑"
+        },
+        {
+          "id": "manhua-qihuan",
+          "name": "奇幻"
+        },
+        {
+          "id": "manhua-mofa",
+          "name": "魔法"
+        },
+        {
+          "id": "manhua-dongfangshengui",
+          "name": "神鬼"
+        },
+        {
+          "id": "manhua-lishi",
+          "name": "历史"
+        },
+        {
+          "id": "manhua-tongren",
+          "name": "同人"
+        },
+        {
+          "id": "manhua-jingji",
+          "name": "运动"
+        },
+        {
+          "id": "manhua-jiecao",
+          "name": "绅士"
+        },
+        {
+          "id": "manhua-jizhan",
+          "name": "机甲"
+        },
+        {
+          "id": "manhua-original",
+          "name": "原创"
+        }
+      ],
+      "area": [
+        {
+          "id": "manhua-list",
+          "name": "全部"
+        },
+        {
+          "id": "manhua-hktw",
+          "name": "港台"
+        },
+        {
+          "id": "manhua-jpkr",
+          "name": "日韩"
+        },
+        {
+          "id": "manhua-china",
+          "name": "大陆"
+        },
+        {
+          "id": "manhua-euus",
+          "name": "欧美"
+        }
+      ],
+      "status": [
+        {
+          "id": "manhua-list",
+          "name": "全部"
+        },
+        {
+          "id": "manhua-list-st1",
+          "name": "连载"
+        },
+        {
+          "id": "manhua-list-st2",
+          "name": "完结"
+        }
+      ]
+    },
+    "search": {
+      "list": "a[href^=\"/manhua-\"]",
+      "title": "h2@text, h3@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "detail": {
+      "title": "h1@text, meta[property=\"og:title\"]@content",
+      "cover": "meta[property=\"og:image\"]@content, img.cover@src",
+      "author": "a[href*=\"search?title=\"]@text",
+      "description": "meta[name=\"description\"]@content",
+      "tags": "a[href^=\"/manhua-\"]@text",
+      "status": "text:contains(\"连载中\"), text:contains(\"已完结\")"
+    },
+    "chapters": {
+      "list": "a[href^=\"/m\"]",
+      "title": "@text",
+      "id": "a@href",
+      "url": "a@href"
+    },
+    "images": {
+      "list": "#comic-page img, .comic-content img, #chapter-content img, .read-content img",
+      "fallbackUrl": "img@data-src||img@data-original||img@src",
+      "fallbackList": [
+        "#chapterContent img",
+        ".comic-page img",
+        ".read-content img",
+        ".chapter-page img",
+        "#page img",
+        "#cp_img img"
+      ],
+      "config": {
+        "skipPatterns": [
+          "logo",
+          "icon",
+          "qrcode",
+          "avatar",
+          "banner",
+          "loading",
+          "spinner",
+          "advertisement",
+          "doubaocdn"
+        ],
+        "sizeFilter": {
+          "minWidth": 100,
+          "minHeight": 100
+        },
+        "referer": {
+          "mode": "site"
+        },
+        "pagination": {
+          "mode": "none"
+        }
+      }
+    }
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://www.dm5.com"
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "area",
+        "title": "地区",
+        "param": "category",
+        "options": [
+          {
+            "value": "manhua-list",
+            "label": "全部"
+          },
+          {
+            "value": "manhua-hktw",
+            "label": "港台"
+          },
+          {
+            "value": "manhua-jpkr",
+            "label": "日韩"
+          },
+          {
+            "value": "manhua-china",
+            "label": "大陆"
+          },
+          {
+            "value": "manhua-euus",
+            "label": "欧美"
+          }
+        ]
+      },
+      {
+        "id": "status",
+        "title": "状态",
+        "param": "category",
+        "options": [
+          {
+            "value": "manhua-list",
+            "label": "全部"
+          },
+          {
+            "value": "manhua-list-st1",
+            "label": "连载"
+          },
+          {
+            "value": "manhua-list-st2",
+            "label": "完结"
+          }
+        ]
+      }
+    ]
+  }
 }
