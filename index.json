@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-04T10:52:44.649Z",
-  "count": 15,
+  "generatedAt": "2026-09-04T10:55:02.719Z",
+  "count": 16,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -97,6 +97,22 @@
         "en": ""
       },
       "ageRating": "general"
+    },
+    {
+      "id": "manga/manga_komiic",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "Komiic",
+      "version": "1.0.4",
+      "baseUrl": "https://komiic.cc",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_komiic.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "teen"
     },
     {
       "id": "manga/manga_nhentai",
