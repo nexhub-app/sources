@@ -1,0 +1,191 @@
+{
+  "id": "manga_favcomic",
+  "name": "喜漫漫画",
+  "type": "mangaSource",
+  "version": 4,
+  "author": "plexhub",
+  "description": "喜漫漫画（favcomic）在线漫画源，涵盖少男/少女/韩漫/免费等分类（18+）。站点对封面与正文图做 AES 加密分发，源声明 imageTransform 解密规则，引擎在图片加载层统一解密。",
+  "ageRating": "mature",
+  "enabled": true,
+  "enabledExplore": true,
+  "site": {
+    "domain": "www.favcomic.xyz",
+    "baseUrl": "https://www.favcomic.xyz",
+    "mirrors": [
+      {
+        "name": "www.favcomic.xyz",
+        "domain": "www.favcomic.xyz",
+        "baseUrl": "https://www.favcomic.xyz"
+      },
+      {
+        "name": "www.favcomic.net",
+        "domain": "www.favcomic.net",
+        "baseUrl": "https://www.favcomic.net"
+      },
+      {
+        "name": "favcomic.net",
+        "domain": "favcomic.net",
+        "baseUrl": "https://favcomic.net"
+      },
+      {
+        "name": "favcomic.xyz",
+        "domain": "favcomic.xyz",
+        "baseUrl": "https://favcomic.xyz"
+      },
+      {
+        "name": "www.favcomic.com",
+        "domain": "www.favcomic.com",
+        "baseUrl": "https://www.favcomic.com"
+      }
+    ],
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+  },
+  "responseType": "html",
+  "stealthMode": true,
+  "imageTransform": {
+    "matchHosts": [
+      "cdn.favcomic.net",
+      "cdn.favcomic.xyz"
+    ],
+    "decrypt": {
+      "algo": "aes-cbc",
+      "key": "6X+b6.E>bsXb}+=N",
+      "keyEncoding": "utf8",
+      "ivSource": "prefixBytes",
+      "ivLength": 16,
+      "padding": "pkcs7"
+    }
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var results = [];\n  var seen = {};\n  var re = /<a\\s[^>]*href=\"(\\/comic\\/detail\\/(\\d+))\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var id = m[2];\n    if (seen[id]) continue;\n    var attrs = m[3];\n    var block = m[4];\n    var title = '';\n    var t = attrs.match(/title=\"([^\"]*)\"/i);\n    if (t) title = t[1];\n    if (!title) {\n      var tm = block.match(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n      if (tm) title = tm[1].replace(/<[^>]+>/g, '').trim();\n    }\n    if (!title) continue;\n    var cover = '';\n    var cm = block.match(/data-src=\"([^\"]+)\"/i);\n    if (cm) cover = cm[1];\n    if (cover && cover.indexOf('loading') >= 0) cover = '';\n    seen[id] = 1;\n    results.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + '/comic/detail/' + id\n    });\n  }\n  return results;\n}"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var results = [];\n  var seen = {};\n  var re = /<a\\s[^>]*href=\"(\\/comic\\/detail\\/(\\d+))\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var id = m[2];\n    if (seen[id]) continue;\n    var attrs = m[3];\n    var block = m[4];\n    var title = '';\n    var t = attrs.match(/title=\"([^\"]*)\"/i);\n    if (t) title = t[1];\n    if (!title) {\n      var tm = block.match(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n      if (tm) title = tm[1].replace(/<[^>]+>/g, '').trim();\n    }\n    if (!title) continue;\n    var cover = '';\n    var cm = block.match(/data-src=\"([^\"]+)\"/i);\n    if (cm) cover = cm[1];\n    if (cover && cover.indexOf('loading') >= 0) cover = '';\n    seen[id] = 1;\n    results.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + '/comic/detail/' + id\n    });\n  }\n  return results;\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var results = [];\n  var seen = {};\n  var re = /<a\\s[^>]*href=\"(\\/comic\\/detail\\/(\\d+))\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var id = m[2];\n    if (seen[id]) continue;\n    var attrs = m[3];\n    var block = m[4];\n    var title = '';\n    var t = attrs.match(/title=\"([^\"]*)\"/i);\n    if (t) title = t[1];\n    if (!title) {\n      var tm = block.match(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n      if (tm) title = tm[1].replace(/<[^>]+>/g, '').trim();\n    }\n    if (!title) continue;\n    var cover = '';\n    var cm = block.match(/data-src=\"([^\"]+)\"/i);\n    if (cm) cover = cm[1];\n    if (cover && cover.indexOf('loading') >= 0) cover = '';\n    seen[id] = 1;\n    results.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + '/comic/detail/' + id\n    });\n  }\n  return results;\n}"
+      },
+      "tagSearch": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var results = [];\n  var seen = {};\n  var re = /<a\\s[^>]*href=\"(\\/comic\\/detail\\/(\\d+))\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var id = m[2];\n    if (seen[id]) continue;\n    var attrs = m[3];\n    var block = m[4];\n    var title = '';\n    var t = attrs.match(/title=\"([^\"]*)\"/i);\n    if (t) title = t[1];\n    if (!title) {\n      var tm = block.match(/<span[^>]*class=\"[^\"]*title[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n      if (tm) title = tm[1].replace(/<[^>]+>/g, '').trim();\n    }\n    if (!title) continue;\n    var cover = '';\n    var cm = block.match(/data-src=\"([^\"]+)\"/i);\n    if (cm) cover = cm[1];\n    if (cover && cover.indexOf('loading') >= 0) cover = '';\n    seen[id] = 1;\n    results.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + '/comic/detail/' + id\n    });\n  }\n  return results;\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var strip = function (s) { return s.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); };\n  var out = {};\n  var m = doc.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n  if (m) out.title = strip(m[1]);\n  m = doc.match(/<img[^>]+class=\"[^\"]*comic_cover[^\"]*\"[^>]*data-src=\"([^\"]+)\"/i);\n  if (!m) m = doc.match(/<img[^>]+data-src=\"([^\"]+)\"[^>]*class=\"[^\"]*comic_cover[^\"]*\"/i);\n  if (m) out.cover = m[1];\n  m = doc.match(/<meta[^>]+name=\"description\"[^>]+content=\"([^\"]*)\"/i);\n  if (!m) m = doc.match(/<meta[^>]+content=\"([^\"]*)\"[^>]+name=\"description\"/i);\n  if (m) out.description = m[1].trim();\n  m = doc.match(/\"author\"\\s*:\\s*\\{[^{}]*\"name\"\\s*:\\s*\"([^\"]+)\"/i);\n  if (m) out.author = m[1];\n  m = doc.match(/<img[^>]+class=\"icon\"[^>]*alt=\"([^\"]*)\"/i);\n  if (m) out.status = m[1];\n  var tags = [];\n  var tr = /<a[^>]+href=\"[^\"]*\\?tag=\\d+\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n  while ((m = tr.exec(doc)) !== null) {\n    var tag = strip(m[1]);\n    if (tag && tags.indexOf(tag) < 0) tags.push(tag);\n  }\n  if (tags.length) out.tags = tags;\n  return out;\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var baseUrl = String(context.baseUrl || '').replace(/\\/+$/, '');\n  var doc = (typeof html === 'string') ? html : '';\n  var mid = (context.id == null) ? '' : String(context.id);\n  var results = [];\n  var seen = {};\n  var re = /\"name\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"\\s*,\\s*\"url\"\\s*:\\s*\"[^\"]*\\/comic\\/chapter\\/(\\d+)\"/g;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var cid = m[2];\n    if (seen[cid]) continue;\n    seen[cid] = 1;\n    var title = m[1].replace(/\\\\\"/g, '\"');\n    results.push({\n      id: mid ? mid + '@' + cid : cid,\n      title: title,\n      url: baseUrl + '/comic/chapter/' + cid\n    });\n  }\n  return results;\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  var doc = (typeof html === 'string') ? html : '';\n  var urls = [];\n  var seen = {};\n  var re = /data-src=\"([^\"]*\\/app\\/comic\\/[^\"]+)\"/gi;\n  var m;\n  while ((m = re.exec(doc)) !== null) {\n    var u = m[1];\n    if (seen[u]) continue;\n    seen[u] = 1;\n    urls.push(u);\n  }\n  return urls;\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/new?page={page}",
+      "method": "GET"
+    },
+    "search": {
+      "url": "/search?keyword={keyword}&page={page}",
+      "method": "GET"
+    },
+    "category": {
+      "url": "/{category}?page={page}",
+      "method": "GET"
+    },
+    "tagSearch": {
+      "url": "/new?tag={keyword}&page={page}",
+      "method": "GET"
+    },
+    "detail": {
+      "url": "/comic/detail/{id}",
+      "method": "GET"
+    },
+    "chapters": {
+      "url": "/comic/detail/{id}",
+      "method": "GET"
+    },
+    "images": {
+      "url": "/comic/chapter/{cid}",
+      "method": "GET"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "li.comic_li",
+      "title": ".brief_box .title a@text",
+      "cover": "img.cover@data-src",
+      "id": ".brief_box .title a@href"
+    },
+    "search": {
+      "list": "li.comic_li",
+      "title": ".brief_box .title a@text",
+      "cover": "img.cover@data-src",
+      "id": ".brief_box .title a@href"
+    },
+    "category": {
+      "list": "li.comic_li",
+      "title": ".brief_box .title a@text",
+      "cover": "img.cover@data-src",
+      "id": ".brief_box .title a@href",
+      "categories": [
+        {
+          "id": "boy",
+          "name": "少漫"
+        },
+        {
+          "id": "girl",
+          "name": "少女漫画"
+        },
+        {
+          "id": "webtoon",
+          "name": "韩漫"
+        },
+        {
+          "id": "free",
+          "name": "免费漫画"
+        },
+        {
+          "id": "r18",
+          "name": "成人漫画"
+        }
+      ]
+    },
+    "tagSearch": {
+      "list": "li.comic_li",
+      "title": ".brief_box .title a@text",
+      "cover": "img.cover@data-src",
+      "id": ".brief_box .title a@href"
+    },
+    "detail": {
+      "title": "h1@text",
+      "cover": "img.comic_cover@data-src",
+      "description": "meta[name=\"description\"]@content"
+    },
+    "images": {
+      "list": "img.encrypted-image",
+      "fallbackUrl": "img@data-src"
+    }
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://www.favcomic.xyz",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+  }
+}
