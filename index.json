@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-04T00:30:08.438Z",
-  "count": 13,
+  "generatedAt": "2026-09-04T07:22:40.297Z",
+  "count": 14,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -123,6 +123,22 @@
       "version": "2.0.0",
       "baseUrl": "https://manhua.zaimanhua.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_zaimanhua.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "manga/manga_dm5",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "动漫屋",
+      "version": "1.0.1",
+      "baseUrl": "https://www.dm5.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_dm5.json",
       "builtin": true,
       "desc": {
         "zh": "",
