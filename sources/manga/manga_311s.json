@@ -1,0 +1,1470 @@
+{
+  "id": "manga_311s",
+  "version": 2,
+  "name": "漫画社",
+  "type": "mangaSource",
+  "author": "plexhub",
+  "description": "漫画社（www.311s.com）在线漫画源：分类浏览 / 搜索 / 详情 / 章节 / 图片全链路，支持题材、连载状态、排序三维筛选。",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "www.311s.com",
+    "baseUrl": "https://www.311s.com",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+    "mirrors": [
+      {
+        "name": "www.311s.com",
+        "domain": "www.311s.com",
+        "baseUrl": "https://www.311s.com"
+      },
+      {
+        "name": "311s.com",
+        "domain": "311s.com",
+        "baseUrl": "https://311s.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "engine": "css",
+    "overrides": {
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (typeof html !== 'string' || html.length < 50) return [];\n  var out = [];\n  var seen = {};\n\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  function attr(tag, name) {\n    var m = tag.match(new RegExp(name + '\\\\s*=\\\\s*\"([^\"]*)\"', 'i'));\n    return m ? m[1] : '';\n  }\n  // 嵌套 <div> 配对切片：避免非贪婪正则在 comic-meta 处提前截断。\n  function sliceBlock(src, start) {\n    var depth = 1;\n    var re = /<\\/?div\\b/gi;\n    re.lastIndex = start;\n    var m;\n    while ((m = re.exec(src)) !== null) {\n      if (m[0].charAt(1) === '/') {\n        depth--;\n        if (depth === 0) return src.substring(start, m.index);\n      } else {\n        depth++;\n      }\n    }\n    return src.substring(start);\n  }\n  function push(id, title, cover, href, author, status) {\n    if (!id || !title || !cover || seen[id]) return;\n    seen[id] = 1;\n    out.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + href,\n      author: author || '',\n      status: status || ''\n    });\n  }\n\n  var openRe = /<div[^>]*class=\"[^\"]*comic-item[^\"]*\"[^>]*>/gi;\n  var om;\n  while ((om = openRe.exec(html)) !== null) {\n    var block = sliceBlock(html, om.index + om[0].length);\n    var linkM = block.match(/<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>/i);\n    if (!linkM) continue;\n    var href = linkM[1];\n    var id = linkM[2];\n\n    var cover = '';\n    var imgM = block.match(/<img[^>]+src=\"([^\"]+)\"/i);\n    if (imgM) cover = imgM[1];\n\n    var title = '';\n    var h3M = block.match(/<h3[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    if (h3M) {\n      var aM = h3M[1].match(/<a[^>]*title=\"([^\"]*)\"[^>]*>/i);\n      if (aM) title = strip(aM[1]);\n      if (!title) title = strip(h3M[1]);\n    }\n    if (!title && imgM) title = strip(attr(imgM[0], 'alt'));\n\n    var author = '';\n    var auM = block.match(/<p[^>]*class=\"[^\"]*comic-author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (auM) author = strip(auM[1]);\n\n    var status = '';\n    var stM = block.match(/<span[^>]*class=\"[^\"]*update-badge[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (stM) status = strip(stM[1]);\n\n    push(id, title, cover, href, author, status);\n  }\n\n  // 兜底：页面结构变化时直接扫漫画链接\n  if (out.length === 0) {\n    var aRe = /<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n    var am;\n    while ((am = aRe.exec(html)) !== null) {\n      var href2 = am[1];\n      var id2 = am[2];\n      var inner = am[3];\n      var title2 = strip(attr(am[0], 'title'));\n      if (!title2) title2 = strip(inner);\n      var cover2 = '';\n      var im = inner.match(/<img[^>]+src=\"([^\"]+)\"/i);\n      if (im) cover2 = im[1];\n      if (!title2 && im) title2 = strip(attr(im[0], 'alt'));\n      if (!cover2) continue;\n      push(id2, title2, cover2, href2, '', '');\n    }\n  }\n  return out;\n}"
+      },
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (typeof html !== 'string' || html.length < 50) return [];\n  var out = [];\n  var seen = {};\n\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  function attr(tag, name) {\n    var m = tag.match(new RegExp(name + '\\\\s*=\\\\s*\"([^\"]*)\"', 'i'));\n    return m ? m[1] : '';\n  }\n  // 嵌套 <div> 配对切片：避免非贪婪正则在 comic-meta 处提前截断。\n  function sliceBlock(src, start) {\n    var depth = 1;\n    var re = /<\\/?div\\b/gi;\n    re.lastIndex = start;\n    var m;\n    while ((m = re.exec(src)) !== null) {\n      if (m[0].charAt(1) === '/') {\n        depth--;\n        if (depth === 0) return src.substring(start, m.index);\n      } else {\n        depth++;\n      }\n    }\n    return src.substring(start);\n  }\n  function push(id, title, cover, href, author, status) {\n    if (!id || !title || !cover || seen[id]) return;\n    seen[id] = 1;\n    out.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + href,\n      author: author || '',\n      status: status || ''\n    });\n  }\n\n  var openRe = /<div[^>]*class=\"[^\"]*comic-item[^\"]*\"[^>]*>/gi;\n  var om;\n  while ((om = openRe.exec(html)) !== null) {\n    var block = sliceBlock(html, om.index + om[0].length);\n    var linkM = block.match(/<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>/i);\n    if (!linkM) continue;\n    var href = linkM[1];\n    var id = linkM[2];\n\n    var cover = '';\n    var imgM = block.match(/<img[^>]+src=\"([^\"]+)\"/i);\n    if (imgM) cover = imgM[1];\n\n    var title = '';\n    var h3M = block.match(/<h3[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    if (h3M) {\n      var aM = h3M[1].match(/<a[^>]*title=\"([^\"]*)\"[^>]*>/i);\n      if (aM) title = strip(aM[1]);\n      if (!title) title = strip(h3M[1]);\n    }\n    if (!title && imgM) title = strip(attr(imgM[0], 'alt'));\n\n    var author = '';\n    var auM = block.match(/<p[^>]*class=\"[^\"]*comic-author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (auM) author = strip(auM[1]);\n\n    var status = '';\n    var stM = block.match(/<span[^>]*class=\"[^\"]*update-badge[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (stM) status = strip(stM[1]);\n\n    push(id, title, cover, href, author, status);\n  }\n\n  // 兜底：页面结构变化时直接扫漫画链接\n  if (out.length === 0) {\n    var aRe = /<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n    var am;\n    while ((am = aRe.exec(html)) !== null) {\n      var href2 = am[1];\n      var id2 = am[2];\n      var inner = am[3];\n      var title2 = strip(attr(am[0], 'title'));\n      if (!title2) title2 = strip(inner);\n      var cover2 = '';\n      var im = inner.match(/<img[^>]+src=\"([^\"]+)\"/i);\n      if (im) cover2 = im[1];\n      if (!title2 && im) title2 = strip(attr(im[0], 'alt'));\n      if (!cover2) continue;\n      push(id2, title2, cover2, href2, '', '');\n    }\n  }\n  return out;\n}"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (typeof html !== 'string' || html.length < 50) return [];\n  var out = [];\n  var seen = {};\n\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  function attr(tag, name) {\n    var m = tag.match(new RegExp(name + '\\\\s*=\\\\s*\"([^\"]*)\"', 'i'));\n    return m ? m[1] : '';\n  }\n  // 嵌套 <div> 配对切片：避免非贪婪正则在 comic-meta 处提前截断。\n  function sliceBlock(src, start) {\n    var depth = 1;\n    var re = /<\\/?div\\b/gi;\n    re.lastIndex = start;\n    var m;\n    while ((m = re.exec(src)) !== null) {\n      if (m[0].charAt(1) === '/') {\n        depth--;\n        if (depth === 0) return src.substring(start, m.index);\n      } else {\n        depth++;\n      }\n    }\n    return src.substring(start);\n  }\n  function push(id, title, cover, href, author, status) {\n    if (!id || !title || !cover || seen[id]) return;\n    seen[id] = 1;\n    out.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + href,\n      author: author || '',\n      status: status || ''\n    });\n  }\n\n  var openRe = /<div[^>]*class=\"[^\"]*comic-item[^\"]*\"[^>]*>/gi;\n  var om;\n  while ((om = openRe.exec(html)) !== null) {\n    var block = sliceBlock(html, om.index + om[0].length);\n    var linkM = block.match(/<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>/i);\n    if (!linkM) continue;\n    var href = linkM[1];\n    var id = linkM[2];\n\n    var cover = '';\n    var imgM = block.match(/<img[^>]+src=\"([^\"]+)\"/i);\n    if (imgM) cover = imgM[1];\n\n    var title = '';\n    var h3M = block.match(/<h3[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    if (h3M) {\n      var aM = h3M[1].match(/<a[^>]*title=\"([^\"]*)\"[^>]*>/i);\n      if (aM) title = strip(aM[1]);\n      if (!title) title = strip(h3M[1]);\n    }\n    if (!title && imgM) title = strip(attr(imgM[0], 'alt'));\n\n    var author = '';\n    var auM = block.match(/<p[^>]*class=\"[^\"]*comic-author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (auM) author = strip(auM[1]);\n\n    var status = '';\n    var stM = block.match(/<span[^>]*class=\"[^\"]*update-badge[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (stM) status = strip(stM[1]);\n\n    push(id, title, cover, href, author, status);\n  }\n\n  // 兜底：页面结构变化时直接扫漫画链接\n  if (out.length === 0) {\n    var aRe = /<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n    var am;\n    while ((am = aRe.exec(html)) !== null) {\n      var href2 = am[1];\n      var id2 = am[2];\n      var inner = am[3];\n      var title2 = strip(attr(am[0], 'title'));\n      if (!title2) title2 = strip(inner);\n      var cover2 = '';\n      var im = inner.match(/<img[^>]+src=\"([^\"]+)\"/i);\n      if (im) cover2 = im[1];\n      if (!title2 && im) title2 = strip(attr(im[0], 'alt'));\n      if (!cover2) continue;\n      push(id2, title2, cover2, href2, '', '');\n    }\n  }\n  return out;\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (typeof html !== 'string' || html.length < 50) return [];\n  var out = [];\n  var seen = {};\n\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  function attr(tag, name) {\n    var m = tag.match(new RegExp(name + '\\\\s*=\\\\s*\"([^\"]*)\"', 'i'));\n    return m ? m[1] : '';\n  }\n  // 嵌套 <div> 配对切片：避免非贪婪正则在 comic-meta 处提前截断。\n  function sliceBlock(src, start) {\n    var depth = 1;\n    var re = /<\\/?div\\b/gi;\n    re.lastIndex = start;\n    var m;\n    while ((m = re.exec(src)) !== null) {\n      if (m[0].charAt(1) === '/') {\n        depth--;\n        if (depth === 0) return src.substring(start, m.index);\n      } else {\n        depth++;\n      }\n    }\n    return src.substring(start);\n  }\n  function push(id, title, cover, href, author, status) {\n    if (!id || !title || !cover || seen[id]) return;\n    seen[id] = 1;\n    out.push({\n      id: id,\n      title: title,\n      cover: cover,\n      detailUrl: baseUrl + href,\n      author: author || '',\n      status: status || ''\n    });\n  }\n\n  var openRe = /<div[^>]*class=\"[^\"]*comic-item[^\"]*\"[^>]*>/gi;\n  var om;\n  while ((om = openRe.exec(html)) !== null) {\n    var block = sliceBlock(html, om.index + om[0].length);\n    var linkM = block.match(/<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>/i);\n    if (!linkM) continue;\n    var href = linkM[1];\n    var id = linkM[2];\n\n    var cover = '';\n    var imgM = block.match(/<img[^>]+src=\"([^\"]+)\"/i);\n    if (imgM) cover = imgM[1];\n\n    var title = '';\n    var h3M = block.match(/<h3[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    if (h3M) {\n      var aM = h3M[1].match(/<a[^>]*title=\"([^\"]*)\"[^>]*>/i);\n      if (aM) title = strip(aM[1]);\n      if (!title) title = strip(h3M[1]);\n    }\n    if (!title && imgM) title = strip(attr(imgM[0], 'alt'));\n\n    var author = '';\n    var auM = block.match(/<p[^>]*class=\"[^\"]*comic-author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (auM) author = strip(auM[1]);\n\n    var status = '';\n    var stM = block.match(/<span[^>]*class=\"[^\"]*update-badge[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (stM) status = strip(stM[1]);\n\n    push(id, title, cover, href, author, status);\n  }\n\n  // 兜底：页面结构变化时直接扫漫画链接\n  if (out.length === 0) {\n    var aRe = /<a[^>]+href=\"(\\/comic_(\\d+)\\.html)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n    var am;\n    while ((am = aRe.exec(html)) !== null) {\n      var href2 = am[1];\n      var id2 = am[2];\n      var inner = am[3];\n      var title2 = strip(attr(am[0], 'title'));\n      if (!title2) title2 = strip(inner);\n      var cover2 = '';\n      var im = inner.match(/<img[^>]+src=\"([^\"]+)\"/i);\n      if (im) cover2 = im[1];\n      if (!title2 && im) title2 = strip(attr(im[0], 'alt'));\n      if (!cover2) continue;\n      push(id2, title2, cover2, href2, '', '');\n    }\n  }\n  return out;\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (typeof html !== 'string') html = '';\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/&quot;/g, '\"').replace(/&amp;/g, '&').replace(/&#37;/g, '%').replace(/\\s+/g, ' ').trim();\n  }\n  function decode(s) {\n    return String(s || '').replace(/&quot;/g, '\"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#37;/g, '%').replace(/&#39;/g, \"'\");\n  }\n\n  var title = '';\n  var h1 = html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n  if (h1) title = strip(h1[1]);\n  if (!title) {\n    var og = html.match(/<meta[^>]+property=[\"']og:title[\"'][^>]+content=[\"']([^\"']+)[\"']/i) ||\n             html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:title[\"']/i);\n    if (og) {\n      title = strip(og[1]).split(/[_|]/)[0].replace(/全集.*$/, '');\n    }\n  }\n\n  var cover = '';\n  var coverBox = html.match(/<div[^>]*class=\"[^\"]*comic-cover-large[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i);\n  if (coverBox) {\n    var ci = coverBox[1].match(/<img[^>]+src=\"([^\"]+)\"/i);\n    if (ci) cover = ci[1];\n  }\n  if (!cover) {\n    var ogi = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i) ||\n              html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);\n    if (ogi) cover = ogi[1];\n  }\n  if (cover && cover.indexOf('http') !== 0) {\n    cover = cover.charAt(0) === '/' ? baseUrl + cover : baseUrl + '/' + cover;\n  }\n\n  var author = '';\n  var au = html.match(/<span>\\s*作者[：:]\\s*([^<]*)<\\/span>/i) ||\n           html.match(/作者[：:]\\s*([^<\\n]{1,30})/);\n  if (au) author = strip(au[1]);\n\n  var tags = [];\n  var status = '';\n  var tagBox = html.match(/<div[^>]*class=\"[^\"]*comic-tags[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i);\n  if (tagBox) {\n    var spans = tagBox[1].match(/<span[^>]*class=\"[^\"]*tag[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/gi) || [];\n    for (var i = 0; i < spans.length; i++) {\n      var t = strip(spans[i].replace(/<\\/?span[^>]*>/gi, ''));\n      if (!t) continue;\n      if (/^(连载|完结|連載|完結)/.test(t)) {\n        if (!status) status = t;\n        continue;\n      }\n      var parts = t.split(/[\\s,，、]+/);\n      for (var p = 0; p < parts.length; p++) {\n        if (parts[p] && tags.indexOf(parts[p]) === -1) tags.push(parts[p]);\n      }\n    }\n  }\n  if (!status) {\n    var st = html.match(/<span[^>]*class=\"[^\"]*update-badge[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (st) status = strip(st[1]);\n  }\n\n  var description = '';\n  var descIdx = html.indexOf('comic-description');\n  if (descIdx >= 0) {\n    var p = html.slice(descIdx).match(/<p[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (p) description = decode(strip(p[1]));\n  }\n  if (!description) {\n    var md = html.match(/<meta[^>]+name=[\"']description[\"'][^>]+content=[\"']([^\"']+)[\"']/i);\n    if (md) description = decode(strip(md[1]));\n  }\n\n  return {\n    id: ctx.id || '',\n    title: title,\n    cover: cover,\n    author: author,\n    genre: tags.length > 0 ? tags[0] : '',\n    tags: tags,\n    status: status,\n    description: description\n  };\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://www.311s.com').replace(/\\/+$/, '');\n  if (!html || typeof html !== 'string' || html.length < 20) return [];\n  function strip(s) {\n    return String(s || '').replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n  }\n  var out = [];\n  var seen = {};\n  var re = /<a[^>]+href=\"\\/(chapter_\\d+_\\d+\\.html)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(html)) !== null) {\n    // id 不带前导斜杠：images 路由写成 /{chapterId} 时避免拼成双斜杠坏链。\n    var id = m[1];\n    if (seen[id]) continue;\n    var title = strip(m[2]);\n    if (!title) continue;\n    seen[id] = 1;\n    out.push({ id: id, title: title, url: baseUrl + '/' + id, updatedAt: '' });\n  }\n  return out;\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  if (!html || typeof html !== 'string') return [];\n  function sliceBlock(src, start) {\n    var depth = 1;\n    var re = /<\\/?div\\b/gi;\n    re.lastIndex = start;\n    var m;\n    while ((m = re.exec(src)) !== null) {\n      if (m[0].charAt(1) === '/') {\n        depth--;\n        if (depth === 0) return src.substring(start, m.index);\n      } else {\n        depth++;\n      }\n    }\n    return src.substring(start);\n  }\n  var out = [];\n  var seen = {};\n  function add(u) {\n    if (!u || u.indexOf('http') !== 0) return;\n    if (seen[u]) return;\n    var low = u.toLowerCase();\n    if (low.indexOf('logo') !== -1 || low.indexOf('icon') !== -1 ||\n        low.indexOf('avatar') !== -1 || low.indexOf('banner') !== -1 ||\n        low.indexOf('qrcode') !== -1) return;\n    seen[u] = 1;\n    out.push(u);\n  }\n\n  var openRe = /<div[^>]*class=\"[^\"]*comic-content[^\"]*\"[^>]*>/i;\n  var om = html.match(openRe);\n  if (om) {\n    var idx = html.indexOf(om[0]) + om[0].length;\n    var block = sliceBlock(html, idx);\n    var imgRe = /<img[^>]+src=\"([^\"]+)\"/gi;\n    var im;\n    while ((im = imgRe.exec(block)) !== null) add(im[1]);\n  }\n  if (out.length === 0) {\n    var gRe = /<img[^>]*class=\"[^\"]*comic-image[^\"]*\"[^>]*/gi;\n    var gm;\n    while ((gm = gRe.exec(html)) !== null) {\n      var s = gm[0].match(/src=\"([^\"]+)\"/i);\n      if (s) add(s[1]);\n    }\n  }\n  return out;\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/category/order/addtime/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "explore": {
+      "url": "/category/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "category": {
+      "url": "/category{category}{tag}{status}{sort}/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "search": {
+      "url": "/search?key={keyword}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "detail": {
+      "url": "/comic_{id}.html",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "chapters": {
+      "url": "/comic_{id}.html",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    },
+    "images": {
+      "url": "/{chapterId}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://www.311s.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9"
+      }
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "div.comic-item",
+      "title": "h3 a@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "explore": {
+      "list": "div.comic-item",
+      "title": "h3 a@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "search": {
+      "list": "div.comic-item",
+      "title": "h3 a@title",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "category": {
+      "list": "div.comic-item",
+      "title": "h3 a@title",
+      "cover": "img@src",
+      "id": "a@href",
+      "categories": [
+        {
+          "id": "",
+          "name": "全部"
+        },
+        {
+          "id": "/order/hits",
+          "name": "热门人气"
+        },
+        {
+          "id": "/order/addtime",
+          "name": "最新更新"
+        },
+        {
+          "id": "/finish/1",
+          "name": "连载中"
+        },
+        {
+          "id": "/finish/2",
+          "name": "已完结"
+        }
+      ]
+    },
+    "detail": {
+      "title": "h1@text",
+      "cover": "div.comic-cover-large img@src",
+      "description": "div.comic-description p@text"
+    },
+    "chapters": {
+      "list": "div.chapter-item",
+      "title": "a@text",
+      "id": "a@href",
+      "url": "a@href"
+    },
+    "images": {
+      "list": "div.comic-content img",
+      "fallbackUrl": "img@src"
+    }
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18
+    },
+    {
+      "id": "hot",
+      "title": "热门推荐",
+      "route": "category",
+      "params": {
+        "category": "/order/hits"
+      },
+      "style": "grid",
+      "limit": 18
+    },
+    {
+      "id": "recom",
+      "title": "连载中",
+      "route": "category",
+      "params": {
+        "category": "/finish/1"
+      },
+      "style": "grid",
+      "limit": 18
+    },
+    {
+      "id": "end",
+      "title": "完结漫画",
+      "route": "category",
+      "params": {
+        "category": "/finish/2"
+      },
+      "style": "grid",
+      "limit": 18
+    }
+  ],
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "tag",
+        "title": "题材",
+        "param": "tag",
+        "options": [
+          {
+            "value": "",
+            "label": "不限"
+          },
+          {
+            "value": "/tags/6",
+            "label": "热血"
+          },
+          {
+            "value": "/tags/7",
+            "label": "冒险"
+          },
+          {
+            "value": "/tags/8",
+            "label": "科幻"
+          },
+          {
+            "value": "/tags/9",
+            "label": "霸总"
+          },
+          {
+            "value": "/tags/10",
+            "label": "玄幻"
+          },
+          {
+            "value": "/tags/11",
+            "label": "校园"
+          },
+          {
+            "value": "/tags/12",
+            "label": "修真"
+          },
+          {
+            "value": "/tags/13",
+            "label": "搞笑"
+          },
+          {
+            "value": "/tags/14",
+            "label": "穿越"
+          },
+          {
+            "value": "/tags/15",
+            "label": "后宫"
+          },
+          {
+            "value": "/tags/16",
+            "label": "耽美"
+          },
+          {
+            "value": "/tags/17",
+            "label": "恋爱"
+          },
+          {
+            "value": "/tags/18",
+            "label": "悬疑"
+          },
+          {
+            "value": "/tags/19",
+            "label": "恐怖"
+          },
+          {
+            "value": "/tags/20",
+            "label": "战争"
+          },
+          {
+            "value": "/tags/21",
+            "label": "动作"
+          },
+          {
+            "value": "/tags/22",
+            "label": "同人"
+          },
+          {
+            "value": "/tags/23",
+            "label": "竞技"
+          },
+          {
+            "value": "/tags/24",
+            "label": "励志"
+          },
+          {
+            "value": "/tags/25",
+            "label": "架空"
+          },
+          {
+            "value": "/tags/26",
+            "label": "灵异"
+          },
+          {
+            "value": "/tags/27",
+            "label": "百合"
+          },
+          {
+            "value": "/tags/28",
+            "label": "古风"
+          },
+          {
+            "value": "/tags/29",
+            "label": "生活"
+          },
+          {
+            "value": "/tags/30",
+            "label": "真人"
+          },
+          {
+            "value": "/tags/31",
+            "label": "都市"
+          },
+          {
+            "value": "/tags/48",
+            "label": "日常"
+          },
+          {
+            "value": "/tags/49",
+            "label": "神鬼"
+          },
+          {
+            "value": "/tags/50",
+            "label": "幽默爆笑"
+          },
+          {
+            "value": "/tags/51",
+            "label": "推理"
+          },
+          {
+            "value": "/tags/52",
+            "label": "青春"
+          },
+          {
+            "value": "/tags/53",
+            "label": "爆笑"
+          },
+          {
+            "value": "/tags/54",
+            "label": "纯爱"
+          },
+          {
+            "value": "/tags/55",
+            "label": "剧情"
+          },
+          {
+            "value": "/tags/56",
+            "label": "逆袭"
+          },
+          {
+            "value": "/tags/57",
+            "label": "少年"
+          },
+          {
+            "value": "/tags/58",
+            "label": "奇幻冒险"
+          },
+          {
+            "value": "/tags/59",
+            "label": "美食"
+          },
+          {
+            "value": "/tags/60",
+            "label": "奇幻"
+          },
+          {
+            "value": "/tags/61",
+            "label": "唯美"
+          },
+          {
+            "value": "/tags/62",
+            "label": "治愈"
+          },
+          {
+            "value": "/tags/63",
+            "label": "爱情"
+          },
+          {
+            "value": "/tags/64",
+            "label": "TL"
+          },
+          {
+            "value": "/tags/65",
+            "label": "搞笑喜剧"
+          },
+          {
+            "value": "/tags/66",
+            "label": "合集"
+          },
+          {
+            "value": "/tags/67",
+            "label": "短篇"
+          },
+          {
+            "value": "/tags/68",
+            "label": "后宫·宮廷"
+          },
+          {
+            "value": "/tags/69",
+            "label": "格斗"
+          },
+          {
+            "value": "/tags/70",
+            "label": "魔幻"
+          },
+          {
+            "value": "/tags/71",
+            "label": "恐怖·惊悚"
+          },
+          {
+            "value": "/tags/72",
+            "label": "西幻"
+          },
+          {
+            "value": "/tags/73",
+            "label": "推理悬疑"
+          },
+          {
+            "value": "/tags/74",
+            "label": "韩漫"
+          },
+          {
+            "value": "/tags/75",
+            "label": "脑洞"
+          },
+          {
+            "value": "/tags/76",
+            "label": "暗黑"
+          },
+          {
+            "value": "/tags/77",
+            "label": "欢乐向"
+          },
+          {
+            "value": "/tags/78",
+            "label": "长条"
+          },
+          {
+            "value": "/tags/79",
+            "label": "武侠"
+          },
+          {
+            "value": "/tags/80",
+            "label": "大女主"
+          },
+          {
+            "value": "/tags/81",
+            "label": "异形"
+          },
+          {
+            "value": "/tags/82",
+            "label": "职场"
+          },
+          {
+            "value": "/tags/83",
+            "label": "总裁"
+          },
+          {
+            "value": "/tags/84",
+            "label": "异能"
+          },
+          {
+            "value": "/tags/85",
+            "label": "亲情"
+          },
+          {
+            "value": "/tags/86",
+            "label": "现代"
+          },
+          {
+            "value": "/tags/87",
+            "label": "异世界"
+          },
+          {
+            "value": "/tags/88",
+            "label": "复仇"
+          },
+          {
+            "value": "/tags/89",
+            "label": "西方"
+          },
+          {
+            "value": "/tags/90",
+            "label": "言情"
+          },
+          {
+            "value": "/tags/91",
+            "label": "其他"
+          },
+          {
+            "value": "/tags/92",
+            "label": "欧式宫廷"
+          },
+          {
+            "value": "/tags/93",
+            "label": "养成"
+          },
+          {
+            "value": "/tags/94",
+            "label": "重生"
+          },
+          {
+            "value": "/tags/95",
+            "label": "奇幻爱情"
+          },
+          {
+            "value": "/tags/96",
+            "label": "少女"
+          },
+          {
+            "value": "/tags/97",
+            "label": "萌系"
+          },
+          {
+            "value": "/tags/98",
+            "label": "悬疑灵异"
+          },
+          {
+            "value": "/tags/99",
+            "label": "青年"
+          },
+          {
+            "value": "/tags/100",
+            "label": "连载"
+          },
+          {
+            "value": "/tags/101",
+            "label": "游戏"
+          },
+          {
+            "value": "/tags/102",
+            "label": "少男"
+          },
+          {
+            "value": "/tags/103",
+            "label": "飒漫画"
+          },
+          {
+            "value": "/tags/104",
+            "label": "历史"
+          },
+          {
+            "value": "/tags/105",
+            "label": "日漫"
+          },
+          {
+            "value": "/tags/106",
+            "label": "浪漫"
+          },
+          {
+            "value": "/tags/107",
+            "label": "撒糖"
+          },
+          {
+            "value": "/tags/108",
+            "label": "浪漫爱情"
+          },
+          {
+            "value": "/tags/109",
+            "label": "战斗"
+          },
+          {
+            "value": "/tags/110",
+            "label": "宫廷"
+          },
+          {
+            "value": "/tags/111",
+            "label": "现言"
+          },
+          {
+            "value": "/tags/112",
+            "label": "惊悚"
+          },
+          {
+            "value": "/tags/113",
+            "label": "完结"
+          },
+          {
+            "value": "/tags/114",
+            "label": "系统"
+          },
+          {
+            "value": "/tags/115",
+            "label": "甜宠"
+          },
+          {
+            "value": "/tags/116",
+            "label": "体育"
+          },
+          {
+            "value": "/tags/117",
+            "label": "古装"
+          },
+          {
+            "value": "/tags/118",
+            "label": "综合"
+          },
+          {
+            "value": "/tags/119",
+            "label": "权谋"
+          },
+          {
+            "value": "/tags/120",
+            "label": "神仙"
+          },
+          {
+            "value": "/tags/121",
+            "label": "虐心"
+          },
+          {
+            "value": "/tags/122",
+            "label": "正能量"
+          },
+          {
+            "value": "/tags/123",
+            "label": "投稿"
+          },
+          {
+            "value": "/tags/124",
+            "label": "怪物"
+          },
+          {
+            "value": "/tags/125",
+            "label": "高甜"
+          },
+          {
+            "value": "/tags/126",
+            "label": "畅销"
+          },
+          {
+            "value": "/tags/127",
+            "label": "烧脑"
+          },
+          {
+            "value": "/tags/128",
+            "label": "机甲"
+          },
+          {
+            "value": "/tags/129",
+            "label": "末日"
+          },
+          {
+            "value": "/tags/130",
+            "label": "电竞"
+          },
+          {
+            "value": "/tags/131",
+            "label": "诡异"
+          },
+          {
+            "value": "/tags/132",
+            "label": "性转"
+          },
+          {
+            "value": "/tags/133",
+            "label": "金手指"
+          },
+          {
+            "value": "/tags/134",
+            "label": "修仙"
+          },
+          {
+            "value": "/tags/135",
+            "label": "科幻魔幻"
+          },
+          {
+            "value": "/tags/136",
+            "label": "黑白漫"
+          },
+          {
+            "value": "/tags/137",
+            "label": "ABO"
+          },
+          {
+            "value": "/tags/138",
+            "label": "非人类"
+          },
+          {
+            "value": "/tags/139",
+            "label": "橘里橘气"
+          },
+          {
+            "value": "/tags/140",
+            "label": "多女主"
+          },
+          {
+            "value": "/tags/141",
+            "label": "单女主"
+          },
+          {
+            "value": "/tags/142",
+            "label": "家庭"
+          },
+          {
+            "value": "/tags/143",
+            "label": "搞笑/生活"
+          },
+          {
+            "value": "/tags/144",
+            "label": "生存"
+          },
+          {
+            "value": "/tags/145",
+            "label": "少年热血"
+          },
+          {
+            "value": "/tags/146",
+            "label": "惊悚/恐怖"
+          },
+          {
+            "value": "/tags/147",
+            "label": "玄幻科幻"
+          },
+          {
+            "value": "/tags/148",
+            "label": "台湾原创作品"
+          },
+          {
+            "value": "/tags/149",
+            "label": "疗癒/萌系"
+          },
+          {
+            "value": "/tags/150",
+            "label": "LGBTQ+"
+          },
+          {
+            "value": "/tags/151",
+            "label": "性转换"
+          },
+          {
+            "value": "/tags/152",
+            "label": "美食家"
+          },
+          {
+            "value": "/tags/153",
+            "label": "影视化"
+          },
+          {
+            "value": "/tags/154",
+            "label": "穿越/转生"
+          },
+          {
+            "value": "/tags/155",
+            "label": "古代宫廷"
+          },
+          {
+            "value": "/tags/156",
+            "label": "现代/职场"
+          },
+          {
+            "value": "/tags/157",
+            "label": "武侠仙侠"
+          },
+          {
+            "value": "/tags/158",
+            "label": "冒险热血"
+          },
+          {
+            "value": "/tags/159",
+            "label": "悬疑推理"
+          },
+          {
+            "value": "/tags/160",
+            "label": "游戏竞技"
+          },
+          {
+            "value": "/tags/161",
+            "label": "大人系"
+          },
+          {
+            "value": "/tags/162",
+            "label": "妖怪"
+          },
+          {
+            "value": "/tags/163",
+            "label": "偶像"
+          },
+          {
+            "value": "/tags/164",
+            "label": "宫斗"
+          },
+          {
+            "value": "/tags/165",
+            "label": "探案"
+          },
+          {
+            "value": "/tags/166",
+            "label": "逆转"
+          },
+          {
+            "value": "/tags/167",
+            "label": "情感"
+          },
+          {
+            "value": "/tags/168",
+            "label": "运动"
+          },
+          {
+            "value": "/tags/169",
+            "label": "漫客栈"
+          },
+          {
+            "value": "/tags/170",
+            "label": "女神"
+          },
+          {
+            "value": "/tags/171",
+            "label": "资讯"
+          },
+          {
+            "value": "/tags/172",
+            "label": "少女爱情"
+          },
+          {
+            "value": "/tags/173",
+            "label": "强强"
+          },
+          {
+            "value": "/tags/174",
+            "label": "知音漫客"
+          },
+          {
+            "value": "/tags/175",
+            "label": "都市日常"
+          },
+          {
+            "value": "/tags/176",
+            "label": "神魔"
+          },
+          {
+            "value": "/tags/177",
+            "label": "古怪"
+          },
+          {
+            "value": "/tags/178",
+            "label": "魔法"
+          },
+          {
+            "value": "/tags/179",
+            "label": "东方神鬼"
+          },
+          {
+            "value": "/tags/180",
+            "label": "社会"
+          },
+          {
+            "value": "/tags/181",
+            "label": "萌娃"
+          },
+          {
+            "value": "/tags/182",
+            "label": "宠兽"
+          },
+          {
+            "value": "/tags/183",
+            "label": "丧尸"
+          },
+          {
+            "value": "/tags/184",
+            "label": "江湖"
+          },
+          {
+            "value": "/tags/185",
+            "label": "架空世界"
+          },
+          {
+            "value": "/tags/186",
+            "label": "克苏鲁"
+          },
+          {
+            "value": "/tags/187",
+            "label": "恶搞"
+          },
+          {
+            "value": "/tags/188",
+            "label": "反套路"
+          },
+          {
+            "value": "/tags/189",
+            "label": "原创"
+          },
+          {
+            "value": "/tags/190",
+            "label": "娱乐圈"
+          },
+          {
+            "value": "/tags/191",
+            "label": "经营"
+          },
+          {
+            "value": "/tags/192",
+            "label": "仙侠"
+          },
+          {
+            "value": "/tags/193",
+            "label": "神豪"
+          },
+          {
+            "value": "/tags/194",
+            "label": "萝莉"
+          },
+          {
+            "value": "/tags/195",
+            "label": "彩虹"
+          },
+          {
+            "value": "/tags/196",
+            "label": "绅士"
+          },
+          {
+            "value": "/tags/197",
+            "label": "都市脑洞"
+          },
+          {
+            "value": "/tags/198",
+            "label": "武侠格斗"
+          },
+          {
+            "value": "/tags/199",
+            "label": "节操"
+          },
+          {
+            "value": "/tags/200",
+            "label": "转生"
+          },
+          {
+            "value": "/tags/201",
+            "label": "女频"
+          },
+          {
+            "value": "/tags/202",
+            "label": "马甲"
+          },
+          {
+            "value": "/tags/203",
+            "label": "豪快"
+          },
+          {
+            "value": "/tags/204",
+            "label": "暖萌"
+          },
+          {
+            "value": "/tags/205",
+            "label": "兄弟情"
+          },
+          {
+            "value": "/tags/206",
+            "label": "动作冒险"
+          },
+          {
+            "value": "/tags/207",
+            "label": "恐怖灵异"
+          },
+          {
+            "value": "/tags/208",
+            "label": "欧风"
+          },
+          {
+            "value": "/tags/209",
+            "label": "BL/GL"
+          },
+          {
+            "value": "/tags/210",
+            "label": "悬疑恐怖"
+          },
+          {
+            "value": "/tags/211",
+            "label": "治愈/萌系"
+          },
+          {
+            "value": "/tags/212",
+            "label": "医术"
+          },
+          {
+            "value": "/tags/213",
+            "label": "女生"
+          },
+          {
+            "value": "/tags/214",
+            "label": "改编"
+          },
+          {
+            "value": "/tags/215",
+            "label": "幻想"
+          },
+          {
+            "value": "/tags/216",
+            "label": "橘味"
+          },
+          {
+            "value": "/tags/217",
+            "label": "惊险"
+          },
+          {
+            "value": "/tags/218",
+            "label": "惊奇"
+          },
+          {
+            "value": "/tags/219",
+            "label": "劇情"
+          },
+          {
+            "value": "/tags/220",
+            "label": "现代言情"
+          },
+          {
+            "value": "/tags/221",
+            "label": "逗比"
+          },
+          {
+            "value": "/tags/222",
+            "label": "黑暗"
+          },
+          {
+            "value": "/tags/223",
+            "label": "悬疑脑洞"
+          },
+          {
+            "value": "/tags/224",
+            "label": "生活漫画"
+          },
+          {
+            "value": "/tags/225",
+            "label": "运动竞技"
+          },
+          {
+            "value": "/tags/226",
+            "label": "少儿"
+          },
+          {
+            "value": "/tags/227",
+            "label": "耽美爱情"
+          },
+          {
+            "value": "/tags/228",
+            "label": "宅向"
+          },
+          {
+            "value": "/tags/229",
+            "label": "真人漫"
+          },
+          {
+            "value": "/tags/230",
+            "label": "权斗"
+          },
+          {
+            "value": "/tags/231",
+            "label": "限制级"
+          },
+          {
+            "value": "/tags/232",
+            "label": "日本"
+          },
+          {
+            "value": "/tags/233",
+            "label": "经典"
+          },
+          {
+            "value": "/tags/234",
+            "label": "神话"
+          },
+          {
+            "value": "/tags/235",
+            "label": "神界漫画"
+          },
+          {
+            "value": "/tags/236",
+            "label": "古風"
+          },
+          {
+            "value": "/tags/237",
+            "label": "穿书"
+          },
+          {
+            "value": "/tags/238",
+            "label": "机战"
+          },
+          {
+            "value": "/tags/239",
+            "label": "宅斗"
+          },
+          {
+            "value": "/tags/240",
+            "label": "其它"
+          },
+          {
+            "value": "/tags/241",
+            "label": "奇幻仙侠"
+          },
+          {
+            "value": "/tags/242",
+            "label": "橘系"
+          },
+          {
+            "value": "/tags/243",
+            "label": "侦探推理"
+          },
+          {
+            "value": "/tags/244",
+            "label": "致郁"
+          },
+          {
+            "value": "/tags/245",
+            "label": "无节操"
+          },
+          {
+            "value": "/tags/246",
+            "label": "古代言情"
+          },
+          {
+            "value": "/tags/247",
+            "label": "戀愛"
+          },
+          {
+            "value": "/tags/248",
+            "label": "装逼"
+          },
+          {
+            "value": "/tags/249",
+            "label": "男生"
+          },
+          {
+            "value": "/tags/250",
+            "label": "末世"
+          },
+          {
+            "value": "/tags/251",
+            "label": "漫改"
+          },
+          {
+            "value": "/tags/252",
+            "label": "智斗"
+          },
+          {
+            "value": "/tags/253",
+            "label": "迪化"
+          },
+          {
+            "value": "/tags/254",
+            "label": "猎奇"
+          },
+          {
+            "value": "/tags/255",
+            "label": "格鬥"
+          },
+          {
+            "value": "/tags/256",
+            "label": "无敌流"
+          },
+          {
+            "value": "/tags/257",
+            "label": "飒漫乐画"
+          },
+          {
+            "value": "/tags/258",
+            "label": "现言脑洞"
+          },
+          {
+            "value": "/tags/259",
+            "label": "种田"
+          },
+          {
+            "value": "/tags/260",
+            "label": "豪门总裁"
+          },
+          {
+            "value": "/tags/261",
+            "label": "玄幻脑洞"
+          },
+          {
+            "value": "/tags/262",
+            "label": "橘调"
+          },
+          {
+            "value": "/tags/263",
+            "label": "新作"
+          },
+          {
+            "value": "/tags/264",
+            "label": "熱血"
+          },
+          {
+            "value": "/tags/265",
+            "label": "氪金"
+          },
+          {
+            "value": "/tags/266",
+            "label": "蔷薇"
+          },
+          {
+            "value": "/tags/267",
+            "label": "冒險"
+          },
+          {
+            "value": "/tags/268",
+            "label": "虐恋"
+          },
+          {
+            "value": "/tags/269",
+            "label": "僵尸"
+          },
+          {
+            "value": "/tags/270",
+            "label": "国漫"
+          },
+          {
+            "value": "/tags/271",
+            "label": "断头岛"
+          },
+          {
+            "value": "/tags/272",
+            "label": "商战"
+          },
+          {
+            "value": "/tags/273",
+            "label": "现言萌宝"
+          },
+          {
+            "value": "/tags/274",
+            "label": "天上空"
+          },
+          {
+            "value": "/tags/275",
+            "label": "渡之鸟"
+          },
+          {
+            "value": "/tags/276",
+            "label": "阿衰"
+          },
+          {
+            "value": "/tags/277",
+            "label": "宫斗宅斗"
+          },
+          {
+            "value": "/tags/279",
+            "label": "腹黑"
+          },
+          {
+            "value": "/tags/280",
+            "label": "喜剧"
+          },
+          {
+            "value": "/tags/281",
+            "label": "多世界"
+          },
+          {
+            "value": "/tags/282",
+            "label": "婚宠"
+          },
+          {
+            "value": "/tags/283",
+            "label": "开挂"
+          },
+          {
+            "value": "/tags/284",
+            "label": "直播"
+          },
+          {
+            "value": "/tags/285",
+            "label": "明星"
+          },
+          {
+            "value": "/tags/286",
+            "label": "双男主"
+          },
+          {
+            "value": "/tags/287",
+            "label": "幽默"
+          },
+          {
+            "value": "/tags/288",
+            "label": "美型"
+          },
+          {
+            "value": "/tags/289",
+            "label": "犯罪"
+          },
+          {
+            "value": "/tags/290",
+            "label": "网游"
+          },
+          {
+            "value": "/tags/291",
+            "label": "萌宝"
+          },
+          {
+            "value": "/tags/292",
+            "label": "怀旧"
+          },
+          {
+            "value": "/tags/293",
+            "label": "楚楚"
+          },
+          {
+            "value": "/tags/294",
+            "label": "後宮"
+          },
+          {
+            "value": "/tags/295",
+            "label": "幻想言情"
+          },
+          {
+            "value": "/tags/296",
+            "label": "震撼"
+          },
+          {
+            "value": "/tags/297",
+            "label": "玄幻言情"
+          },
+          {
+            "value": "/tags/298",
+            "label": "神漫"
+          },
+          {
+            "value": "/tags/299",
+            "label": "福利"
+          },
+          {
+            "value": "/tags/300",
+            "label": "古风穿越"
+          },
+          {
+            "value": "/tags/301",
+            "label": "4"
+          },
+          {
+            "value": "/tags/302",
+            "label": "6"
+          },
+          {
+            "value": "/tags/303",
+            "label": "小僵尸"
+          },
+          {
+            "value": "/tags/304",
+            "label": "小说"
+          },
+          {
+            "value": "/tags/305",
+            "label": "都市大女主"
+          },
+          {
+            "value": "/tags/306",
+            "label": "美少女"
+          },
+          {
+            "value": "/tags/307",
+            "label": "人性"
+          },
+          {
+            "value": "/tags/308",
+            "label": "鬼怪"
+          },
+          {
+            "value": "/tags/309",
+            "label": "都市异能"
+          },
+          {
+            "value": "/tags/310",
+            "label": "歌舞"
+          },
+          {
+            "value": "/tags/311",
+            "label": "魔王"
+          },
+          {
+            "value": "/tags/312",
+            "label": "乙女"
+          },
+          {
+            "value": "/tags/313",
+            "label": "燃向"
+          },
+          {
+            "value": "/tags/314",
+            "label": "宅系"
+          }
+        ]
+      },
+      {
+        "id": "status",
+        "title": "状态",
+        "param": "status",
+        "options": [
+          {
+            "value": "",
+            "label": "不限"
+          },
+          {
+            "value": "/finish/1",
+            "label": "连载中"
+          },
+          {
+            "value": "/finish/2",
+            "label": "已完结"
+          }
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {
+            "value": "",
+            "label": "默认"
+          },
+          {
+            "value": "/order/hits",
+            "label": "人气"
+          },
+          {
+            "value": "/order/addtime",
+            "label": "最新更新"
+          }
+        ]
+      }
+    ]
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://www.311s.com/"
+  },
+  "enabled": true,
+  "enabledExplore": true
+}
