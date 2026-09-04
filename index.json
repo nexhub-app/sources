@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-04T10:55:02.719Z",
-  "count": 16,
+  "generatedAt": "2026-09-04T13:26:11.003Z",
+  "count": 17,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -177,6 +177,22 @@
         "en": ""
       },
       "ageRating": "mature"
+    },
+    {
+      "id": "manga/manga_mangacopy",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "拷贝漫画",
+      "version": 7,
+      "baseUrl": "https://www.copy4000.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_mangacopy.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "teen"
     },
     {
       "id": "manga/manga_311s",
