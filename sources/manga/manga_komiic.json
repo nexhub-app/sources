@@ -1,0 +1,359 @@
+{
+  "id": "manga_komiic",
+  "name": "Komiic",
+  "type": "mangaSource",
+  "version": "1.0.4",
+  "author": "plexhub",
+  "description": "Komiic（komiic.com / komiic.cc）漫畫源，基於 GraphQL API。",
+  "enabled": true,
+  "enabledExplore": true,
+  "ageRating": "teen",
+  "site": {
+    "domain": "komiic.com",
+    "baseUrl": "https://komiic.cc",
+    "mirrors": [
+      {
+        "name": "komiic.cc",
+        "domain": "komiic.cc",
+        "baseUrl": "https://komiic.cc"
+      },
+      {
+        "name": "komiic.com",
+        "domain": "komiic.com",
+        "baseUrl": "https://komiic.com"
+      }
+    ]
+  },
+  "responseType": "html",
+  "useWebview": true,
+  "stealthMode": true,
+  "webviewConfig": {
+    "timeout": 30000,
+    "adBlocker": true,
+    "useLegacyParser": false,
+    "skipSSLVerification": true
+  },
+  "parser": {
+    "type": "hybrid",
+    "engine": "css",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var queryStr = 'query recentUpdate($pagination: Pagination!) { recentUpdate(pagination: $pagination) { id title status year imageUrl authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } }';\n  var varsObj = { pagination: { limit: 20, offset: (page - 1) * 20, orderBy: 'DATE_UPDATED', status: '', asc: true } };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'recentUpdate', query: queryStr, variables: varsObj }),\n    __processor: '__processList'\n  };\n}\nfunction __processList(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data) return [];\n  var comics = graphqlJson.data.recentUpdate || [];\n  return comics.map(function(comic) {\n    return {\n      id: comic.id,\n      title: comic.title,\n      cover: coverProxy(comic.imageUrl),\n      detailUrl: baseUrl + '/comic/' + comic.id\n    };\n  });\n}"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var orderBy = params.orderBy || 'MONTH_VIEWS';\n  var queryStr = 'query hotComics($pagination: Pagination!) { hotComics(pagination: $pagination) { id title status year imageUrl authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } }';\n  var varsObj = { pagination: { limit: 20, offset: (page - 1) * 20, orderBy: orderBy, status: '', asc: true } };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'hotComics', query: queryStr, variables: varsObj }),\n    __processor: '__processList'\n  };\n}\nfunction __processList(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data) return [];\n  var comics = graphqlJson.data.hotComics || [];\n  return comics.map(function(comic) {\n    return {\n      id: comic.id,\n      title: comic.title,\n      cover: coverProxy(comic.imageUrl),\n      detailUrl: baseUrl + '/comic/' + comic.id\n    };\n  });\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var page = Number(params.page || ctx.page || 1);\n  if (page < 1) page = 1;\n  var category = String(params.category || ctx.category || '0');\n  var categoryId = category === '0' ? [] : [category];\n  var queryStr = 'query comicByCategories($categoryId: [ID!]!, $pagination: Pagination!) { comicByCategories(categoryId: $categoryId, pagination: $pagination) { id title status year imageUrl authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } }';\n  var varsObj = { categoryId: categoryId, pagination: { limit: 30, offset: (page - 1) * 30, orderBy: 'DATE_UPDATED', status: '', asc: false } };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'comicByCategories', query: queryStr, variables: varsObj }),\n    __processor: '__processList'\n  };\n}\nfunction __processList(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data) return [];\n  var comics = graphqlJson.data.comicByCategories || [];\n  return comics.map(function(comic) {\n    return {\n      id: comic.id,\n      title: comic.title,\n      cover: coverProxy(comic.imageUrl),\n      detailUrl: baseUrl + '/comic/' + comic.id\n    };\n  });\n}"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var keyword = params.keyword || ctx.keyword || '';\n  var queryStr = 'query searchComicAndAuthorQuery($keyword: String!) { searchComicsAndAuthors(keyword: $keyword) { comics { id title status year imageUrl authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } authors { id name chName enName wikiLink comicCount views __typename } __typename } }';\n  var varsObj = { keyword: keyword };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'searchComicAndAuthorQuery', query: queryStr, variables: varsObj }),\n    __processor: '__processList'\n  };\n}\nfunction __processList(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data || !graphqlJson.data.searchComicsAndAuthors) return [];\n  var comics = graphqlJson.data.searchComicsAndAuthors.comics || [];\n  return comics.map(function(comic) {\n    return {\n      id: comic.id,\n      title: comic.title,\n      cover: coverProxy(comic.imageUrl),\n      detailUrl: baseUrl + '/comic/' + comic.id\n    };\n  });\n}"
+      },
+      "authorSearch": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseList(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var keyword = params.keyword || ctx.keyword || '';\n  var queryStr = 'query searchComicAndAuthorQuery($keyword: String!) { searchComicsAndAuthors(keyword: $keyword) { comics { id title status year imageUrl authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } authors { id name chName enName wikiLink comicCount views __typename } __typename } }';\n  var varsObj = { keyword: keyword };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'searchComicAndAuthorQuery', query: queryStr, variables: varsObj }),\n    __processor: '__processList',\n    __extraKeyword: keyword\n  };\n}\nfunction __processList(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data || !graphqlJson.data.searchComicsAndAuthors) return [];\n  var comics = graphqlJson.data.searchComicsAndAuthors.comics || [];\n  var keyword = ctx.__extraKeyword || (ctx.params && ctx.params.keyword) || ctx.keyword || '';\n  var lowerKeyword = String(keyword).toLowerCase();\n  return comics.filter(function(comic) {\n    if (!comic.authors) return false;\n    return comic.authors.some(function(a) {\n      return a.name && String(a.name).toLowerCase() === lowerKeyword;\n    });\n  }).map(function(comic) {\n    return {\n      id: comic.id,\n      title: comic.title,\n      cover: coverProxy(comic.imageUrl),\n      detailUrl: baseUrl + '/comic/' + comic.id\n    };\n  });\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function coverProxy(u) {\n  if (!u) return u;\n  var s = String(u);\n  if (s.indexOf('images.weserv.nl') !== -1) return s;\n  return 'https://images.weserv.nl/?url=' + encodeURIComponent(s);\n}\nfunction parseDetail(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var comicId = ctx.id || params.id;\n  if (!comicId) throw new Error('parseDetail: missing comic id');\n  var queryStr = 'query detailCombo($comicId: ID!) { recommendComicById(comicId: $comicId) { id } chaptersByComicId(comicId: $comicId) { id serial type dateCreated dateUpdated size __typename } comicByIds(comicIds: [$comicId]) { id title status year imageUrl comicBrief authors { id name __typename } categories { id name __typename } dateUpdated monthViews views favoriteCount lastBookUpdate lastChapterUpdate __typename } }';\n  var varsObj = { comicId: comicId };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'detailCombo', query: queryStr, variables: varsObj }),\n    __processor: '__processDetail',\n    __comicId: comicId\n  };\n}\nfunction getTimeDifference(date) {\n  var now = new Date();\n  var diff = now - date;\n  var msHour = 1000 * 60 * 60;\n  var msDay = msHour * 24;\n  if (diff < msHour) return '剛剛更新';\n  if (diff < msDay) return Math.floor(diff / msHour) + '小時前更新';\n  return Math.floor(diff / msDay) + '天前更新';\n}\nfunction __processDetail(graphqlJson, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var comicId = ctx.__comicId || ctx.id || params.id;\n  if (!graphqlJson || !graphqlJson.data) throw new Error('parseDetail: empty response');\n  var d = graphqlJson.data;\n  var recIds = (d.recommendComicById || []).map(function(x) { return String(x && typeof x === 'object' ? x.id : x); });\n  var allIds = recIds.slice();\n  allIds.push(comicId);\n  var comics = d.comicByIds || [];\n  var chapters = d.chaptersByComicId || [];\n  var info = null;\n  var idStr = String(comicId);\n  var recComics = [];\n  for (var i = 0; i < comics.length; i++) {\n    var c = comics[i];\n    if (String(c.id) === idStr) {\n      info = c;\n    } else if (recIds.indexOf(String(c.id)) !== -1) {\n      recComics.push(c);\n    }\n  }\n  if (!info && comics.length > 0) info = comics[0];\n  if (!info) throw new Error('parseDetail: comic not found');\n  var chapterMap = {};\n  chapters.forEach(function(c) {\n    chapterMap[c.id] = c.type === 'book' ? '卷' + c.serial : String(c.serial);\n  });\n  var author = '';\n  if (info.authors && info.authors.length > 0) author = info.authors[0].name;\n  var authorSlug = author;\n  var genre = '';\n  if (info.categories && info.categories.length > 0) genre = info.categories[0].name;\n  var tags = [];\n  if (info.categories) info.categories.forEach(function(c) { if (c.name && tags.indexOf(c.name) === -1) tags.push(c.name); });\n  var updatedAt = '';\n  if (info.dateUpdated) {\n    var ud = info.dateUpdated;\n    if (typeof ud === 'number') {\n      var ts = ud;\n      if (ts < 1000000000000) ts = ts * 1000;\n      updatedAt = new Date(ts).toISOString();\n    } else {\n      updatedAt = String(ud);\n    }\n  }\n  var description = '';\n  if (info.comicBrief) description = String(info.comicBrief).trim();\n  if (!description && info.dateUpdated) {\n    try { description = getTimeDifference(new Date(updatedAt || info.dateUpdated)); } catch (e) {}\n  }\n  var recommendations = recComics.map(function(rc) {\n    return {\n      title: rc.title,\n      coverUrl: coverProxy(rc.imageUrl),\n      comicId: rc.id,\n      url: baseUrl + '/comic/' + rc.id\n    };\n  });\n  return {\n    title: info.title,\n    coverUrl: coverProxy(info.imageUrl),\n    status: info.status,\n    author: author,\n    authorSlug: authorSlug,\n    genre: genre,\n    tags: tags,\n    description: description,\n    updatedAt: updatedAt,\n    chapters: chapterMap,\n    recommendations: recommendations\n  };\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var comicId = ctx.id || params.id;\n  if (!comicId) throw new Error('parseChapters: missing comic id');\n  var queryStr = 'query chapterByComicId($comicId: ID!) { chaptersByComicId(comicId: $comicId) { id serial type dateCreated dateUpdated size __typename } }';\n  var varsObj = { comicId: comicId };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'chapterByComicId', query: queryStr, variables: varsObj }),\n    __processor: '__processChapters',\n    __comicId: comicId\n  };\n}\nfunction __processChapters(graphqlJson, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var comicId = ctx.__comicId || ctx.id || params.id;\n  if (!graphqlJson || !graphqlJson.data) return [];\n  var all = graphqlJson.data.chaptersByComicId || [];\n  return all.map(function(c) {\n    var updatedAt = null;\n    if (c.dateUpdated) {\n      try { var ts = typeof c.dateUpdated === 'number' ? (c.dateUpdated < 1000000000000 ? c.dateUpdated * 1000 : c.dateUpdated) : Date.parse(c.dateUpdated); updatedAt = new Date(ts).toISOString(); } catch (e) {}\n    }\n    return {\n      id: c.id,\n      title: c.type === 'book' ? '卷' + c.serial : String(c.serial),\n      url: baseUrl + '/comic/' + comicId + '/chapter/' + c.id + '/images/all',\n      updatedAt: updatedAt\n    };\n  });\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  var ctx = context || {};\n  var params = ctx.params || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  var chapterId = ctx.chapterId || ctx.cid || ctx.id;\n  var comicId = params.comicId;\n  if (!chapterId) throw new Error('parseImages: missing chapter id');\n  var queryStr = 'query imagesByChapterId($chapterId: ID!) { imagesByChapterId(chapterId: $chapterId) { id kid height width __typename } }';\n  var varsObj = { chapterId: chapterId };\n  return {\n    __meta: true,\n    __fetchUrl: baseUrl + '/api/query',\n    __fetchMethod: 'POST',\n    __fetchHeaders: { 'Content-Type': 'application/json', 'Referer': baseUrl + '/' },\n    __fetchBody: JSON.stringify({ operationName: 'imagesByChapterId', query: queryStr, variables: varsObj }),\n    __processor: '__processImages'\n  };\n}\nfunction __processImages(graphqlJson, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://komiic.cc').replace(/\\/$/, '');\n  if (!graphqlJson || !graphqlJson.data) return [];\n  var images = graphqlJson.data.imagesByChapterId || [];\n  return images.map(function(i) { return baseUrl + '/api/image/' + i.kid; });\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "explore": {
+      "url": "/explore/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "category": {
+      "url": "/category/{category}/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "search": {
+      "url": "/search/{keyword}/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "authorSearch": {
+      "url": "/search/{keyword}/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "detail": {
+      "url": "/comic/{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "chapters": {
+      "url": "/comic/{id}/chapters",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    },
+    "images": {
+      "url": "/comic/{id}/chapter/{cid}/images/all",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://komiic.cc/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      }
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "div.comic",
+      "title": "h3@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "explore": {
+      "list": "div.comic",
+      "title": "h3@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "category": {
+      "list": "div.comic",
+      "title": "h3@text",
+      "cover": "img@src",
+      "id": "a@href",
+      "categories": [
+        {
+          "id": "0",
+          "name": "全部"
+        },
+        {
+          "id": "1",
+          "name": "愛情"
+        },
+        {
+          "id": "3",
+          "name": "神鬼"
+        },
+        {
+          "id": "4",
+          "name": "校園"
+        },
+        {
+          "id": "5",
+          "name": "搞笑"
+        },
+        {
+          "id": "6",
+          "name": "生活"
+        },
+        {
+          "id": "7",
+          "name": "懸疑"
+        },
+        {
+          "id": "8",
+          "name": "冒險"
+        },
+        {
+          "id": "10",
+          "name": "職場"
+        },
+        {
+          "id": "11",
+          "name": "魔幻"
+        },
+        {
+          "id": "2",
+          "name": "後宮"
+        },
+        {
+          "id": "12",
+          "name": "魔法"
+        },
+        {
+          "id": "13",
+          "name": "格鬥"
+        },
+        {
+          "id": "14",
+          "name": "宅男"
+        },
+        {
+          "id": "15",
+          "name": "勵志"
+        },
+        {
+          "id": "16",
+          "name": "耽美"
+        },
+        {
+          "id": "17",
+          "name": "科幻"
+        },
+        {
+          "id": "18",
+          "name": "百合"
+        },
+        {
+          "id": "19",
+          "name": "治癒"
+        },
+        {
+          "id": "20",
+          "name": "萌系"
+        },
+        {
+          "id": "21",
+          "name": "熱血"
+        },
+        {
+          "id": "22",
+          "name": "競技"
+        },
+        {
+          "id": "23",
+          "name": "推理"
+        },
+        {
+          "id": "24",
+          "name": "雜誌"
+        },
+        {
+          "id": "25",
+          "name": "偵探"
+        },
+        {
+          "id": "26",
+          "name": "偽娘"
+        },
+        {
+          "id": "27",
+          "name": "美食"
+        },
+        {
+          "id": "9",
+          "name": "恐怖"
+        },
+        {
+          "id": "28",
+          "name": "四格"
+        },
+        {
+          "id": "31",
+          "name": "社會"
+        },
+        {
+          "id": "32",
+          "name": "歷史"
+        },
+        {
+          "id": "33",
+          "name": "戰爭"
+        },
+        {
+          "id": "34",
+          "name": "舞蹈"
+        },
+        {
+          "id": "35",
+          "name": "武俠"
+        },
+        {
+          "id": "36",
+          "name": "機戰"
+        },
+        {
+          "id": "37",
+          "name": "音樂"
+        },
+        {
+          "id": "40",
+          "name": "體育"
+        },
+        {
+          "id": "42",
+          "name": "黑道"
+        }
+      ]
+    },
+    "search": {
+      "list": "div.comic",
+      "title": "h3@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "authorSearch": {
+      "list": "div.comic",
+      "title": "h3@text",
+      "cover": "img@src",
+      "id": "a@href"
+    },
+    "detail": {
+      "title": "h1@text",
+      "cover": "img@src",
+      "author": "span.author@text",
+      "description": "p.desc@text"
+    },
+    "chapters": {
+      "list": "div.chapter",
+      "title": "span.title@text",
+      "id": "a@href",
+      "url": "a@href"
+    },
+    "images": {
+      "list": "img.page",
+      "fallbackUrl": "img@src",
+      "config": {
+        "pagination": {
+          "mode": "none"
+        }
+      }
+    }
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://komiic.cc"
+  }
+}
