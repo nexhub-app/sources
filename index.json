@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T08:52:10.598Z",
+  "generatedAt": "2026-09-04T10:52:44.649Z",
   "count": 15,
   "sources": [
     {
@@ -136,7 +136,7 @@
       "type": "manga",
       "format": "nexhub",
       "name": "动漫屋",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "baseUrl": "https://www.dm5.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_dm5.json",
       "builtin": true,
@@ -144,7 +144,7 @@
         "zh": "",
         "en": ""
       },
-      "ageRating": "general"
+      "ageRating": "teen"
     },
     {
       "id": "manga/manga_favcomic",
