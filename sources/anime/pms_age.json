@@ -1,0 +1,744 @@
+{
+  "id": "pms_age",
+  "version": 3,
+  "name": "Age动漫",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "www.agedm.io",
+    "baseUrl": "https://www.agedm.io",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.agedm.io",
+        "baseUrl": "https://www.agedm.io"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "webview",
+        "script": "(function(){try{var h=document.documentElement.outerHTML;var host=location.host||'';if(host.indexOf('agedm')===-1){var m=h.indexOf('.m3u8');if(m>=0){var a=h.lastIndexOf('http',m);if(a>=0&&a<m){var e=a;while(e<h.length){var c=h.charCodeAt(e);if(c===34||c===39||c===60||c===62||c===32||c===10||c===13||c===9)break;e++;}var u=h.substring(a,e);if(u.indexOf('.m3u8')>=0)return u;}}var v=document.querySelector('video');if(v&&v.src)return v.src;var s=document.querySelector('source');if(s&&s.src)return s.src;return '';}var f=document.getElementById('iframeForVideo');if(!f){var fl=document.getElementsByTagName('iframe');for(var i=0;i<fl.length;i++){var sc=fl[i].getAttribute('src')||'';if(sc.indexOf('url=')>=0){f=fl[i];break;}}}if(f){var su=f.getAttribute('src')||f.src||'';if(su.indexOf('http')===0)return 'webview:'+su;}return '';}catch(e){return '';}})();"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/recommend/{page}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search?query={keyword}&page={page}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/catalog/{type}-{year}-{letter}-{class}-{version}-{sort}-{page}-{region}-{month}-{status}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "div.video_list_box--bd div.video_item",
+      "id": "a@href",
+      "title": "a",
+      "cover": "img@data-original",
+      "description": "span.video_item--info"
+    },
+    "search": {
+      "list": "div.card.cata_video_item",
+      "id": "a@href",
+      "title": "h5.card-title",
+      "cover": "img.video_thumbs@data-original"
+    },
+    "detail": {
+      "title": "div.video_detail_right h2",
+      "cover": "div.video_detail_cover img@data-original",
+      "description": "div.video_detail_desc"
+    },
+    "episodes": {
+      "lineList": "div.tab-pane",
+      "lineName": "ul.nav.nav-pills li",
+      "list": "ul.video_detail_episode li a"
+    },
+    "category": {
+      "list": "div.card.cata_video_item",
+      "id": "a@href",
+      "title": "h5.card-title",
+      "cover": "img.video_thumbs@data-original"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      },
+      {
+        "id": "TV",
+        "title": "TV"
+      },
+      {
+        "id": "剧场版",
+        "title": "剧场版"
+      },
+      {
+        "id": "OVA",
+        "title": "OVA"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "今日推荐",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://www.agedm.io"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v3：修复分类列表选择器（目录页条目为 div.card.cata_video_item，与搜索页一致；推荐页的 video_list_box 结构不适用于 /catalog）。v2：新增分类（全部/TV/剧场版/OVA）与九维筛选（版本/年份/首字母/类型/资源/排序/地区/季度/状态，走 /catalog 十段路径路由，未选维度以 all 兜底）。v1：初版；播放走 WebView 抽取解析站直链。",
+  "filters": {
+    "groups": [
+      {
+        "id": "type",
+        "title": "版本",
+        "param": "type",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "TV",
+            "label": "TV"
+          },
+          {
+            "value": "剧场版",
+            "label": "剧场版"
+          },
+          {
+            "value": "OVA",
+            "label": "OVA"
+          }
+        ]
+      },
+      {
+        "id": "year",
+        "title": "年份",
+        "param": "year",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "2026",
+            "label": "2026"
+          },
+          {
+            "value": "2025",
+            "label": "2025"
+          },
+          {
+            "value": "2024",
+            "label": "2024"
+          },
+          {
+            "value": "2023",
+            "label": "2023"
+          },
+          {
+            "value": "2022",
+            "label": "2022"
+          },
+          {
+            "value": "2021",
+            "label": "2021"
+          },
+          {
+            "value": "2020",
+            "label": "2020"
+          },
+          {
+            "value": "2019",
+            "label": "2019"
+          },
+          {
+            "value": "2018",
+            "label": "2018"
+          },
+          {
+            "value": "2017",
+            "label": "2017"
+          },
+          {
+            "value": "2016",
+            "label": "2016"
+          },
+          {
+            "value": "2015",
+            "label": "2015"
+          },
+          {
+            "value": "2014",
+            "label": "2014"
+          },
+          {
+            "value": "2013",
+            "label": "2013"
+          },
+          {
+            "value": "2012",
+            "label": "2012"
+          },
+          {
+            "value": "2011",
+            "label": "2011"
+          },
+          {
+            "value": "2010",
+            "label": "2010"
+          },
+          {
+            "value": "2009",
+            "label": "2009"
+          },
+          {
+            "value": "2008",
+            "label": "2008"
+          },
+          {
+            "value": "2007",
+            "label": "2007"
+          },
+          {
+            "value": "2006",
+            "label": "2006"
+          },
+          {
+            "value": "2005",
+            "label": "2005"
+          },
+          {
+            "value": "2004",
+            "label": "2004"
+          },
+          {
+            "value": "2003",
+            "label": "2003"
+          },
+          {
+            "value": "2002",
+            "label": "2002"
+          },
+          {
+            "value": "2001",
+            "label": "2001"
+          },
+          {
+            "value": "2000以前",
+            "label": "2000以前"
+          }
+        ]
+      },
+      {
+        "id": "letter",
+        "title": "首字母",
+        "param": "letter",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "A",
+            "label": "A"
+          },
+          {
+            "value": "B",
+            "label": "B"
+          },
+          {
+            "value": "C",
+            "label": "C"
+          },
+          {
+            "value": "D",
+            "label": "D"
+          },
+          {
+            "value": "E",
+            "label": "E"
+          },
+          {
+            "value": "F",
+            "label": "F"
+          },
+          {
+            "value": "H",
+            "label": "H"
+          },
+          {
+            "value": "I",
+            "label": "I"
+          },
+          {
+            "value": "J",
+            "label": "J"
+          },
+          {
+            "value": "K",
+            "label": "K"
+          },
+          {
+            "value": "L",
+            "label": "L"
+          },
+          {
+            "value": "M",
+            "label": "M"
+          },
+          {
+            "value": "N",
+            "label": "N"
+          },
+          {
+            "value": "O",
+            "label": "O"
+          },
+          {
+            "value": "P",
+            "label": "P"
+          },
+          {
+            "value": "Q",
+            "label": "Q"
+          },
+          {
+            "value": "R",
+            "label": "R"
+          },
+          {
+            "value": "S",
+            "label": "S"
+          },
+          {
+            "value": "T",
+            "label": "T"
+          },
+          {
+            "value": "U",
+            "label": "U"
+          },
+          {
+            "value": "V",
+            "label": "V"
+          },
+          {
+            "value": "W",
+            "label": "W"
+          },
+          {
+            "value": "X",
+            "label": "X"
+          },
+          {
+            "value": "Y",
+            "label": "Y"
+          },
+          {
+            "value": "Z",
+            "label": "Z"
+          }
+        ]
+      },
+      {
+        "id": "class",
+        "title": "类型",
+        "param": "class",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "搞笑",
+            "label": "搞笑"
+          },
+          {
+            "value": "运动",
+            "label": "运动"
+          },
+          {
+            "value": "励志",
+            "label": "励志"
+          },
+          {
+            "value": "热血",
+            "label": "热血"
+          },
+          {
+            "value": "战斗",
+            "label": "战斗"
+          },
+          {
+            "value": "竞技",
+            "label": "竞技"
+          },
+          {
+            "value": "校园",
+            "label": "校园"
+          },
+          {
+            "value": "青春",
+            "label": "青春"
+          },
+          {
+            "value": "爱情",
+            "label": "爱情"
+          },
+          {
+            "value": "恋爱",
+            "label": "恋爱"
+          },
+          {
+            "value": "冒险",
+            "label": "冒险"
+          },
+          {
+            "value": "后宫",
+            "label": "后宫"
+          },
+          {
+            "value": "百合",
+            "label": "百合"
+          },
+          {
+            "value": "治愈",
+            "label": "治愈"
+          },
+          {
+            "value": "萝莉",
+            "label": "萝莉"
+          },
+          {
+            "value": "魔法",
+            "label": "魔法"
+          },
+          {
+            "value": "悬疑",
+            "label": "悬疑"
+          },
+          {
+            "value": "推理",
+            "label": "推理"
+          },
+          {
+            "value": "奇幻",
+            "label": "奇幻"
+          },
+          {
+            "value": "科幻",
+            "label": "科幻"
+          },
+          {
+            "value": "游戏",
+            "label": "游戏"
+          },
+          {
+            "value": "神魔",
+            "label": "神魔"
+          },
+          {
+            "value": "恐怖",
+            "label": "恐怖"
+          },
+          {
+            "value": "血腥",
+            "label": "血腥"
+          },
+          {
+            "value": "机战",
+            "label": "机战"
+          },
+          {
+            "value": "战争",
+            "label": "战争"
+          },
+          {
+            "value": "犯罪",
+            "label": "犯罪"
+          },
+          {
+            "value": "历史",
+            "label": "历史"
+          },
+          {
+            "value": "社会",
+            "label": "社会"
+          },
+          {
+            "value": "职场",
+            "label": "职场"
+          },
+          {
+            "value": "剧情",
+            "label": "剧情"
+          },
+          {
+            "value": "伪娘",
+            "label": "伪娘"
+          },
+          {
+            "value": "耽美",
+            "label": "耽美"
+          },
+          {
+            "value": "童年",
+            "label": "童年"
+          },
+          {
+            "value": "教育",
+            "label": "教育"
+          },
+          {
+            "value": "亲子",
+            "label": "亲子"
+          },
+          {
+            "value": "真人",
+            "label": "真人"
+          },
+          {
+            "value": "歌舞",
+            "label": "歌舞"
+          },
+          {
+            "value": "肉番",
+            "label": "肉番"
+          },
+          {
+            "value": "美少女",
+            "label": "美少女"
+          },
+          {
+            "value": "轻小说",
+            "label": "轻小说"
+          },
+          {
+            "value": "吸血鬼",
+            "label": "吸血鬼"
+          },
+          {
+            "value": "女性向",
+            "label": "女性向"
+          },
+          {
+            "value": "泡面番",
+            "label": "泡面番"
+          },
+          {
+            "value": "欢乐向",
+            "label": "欢乐向"
+          }
+        ]
+      },
+      {
+        "id": "version",
+        "title": "资源",
+        "param": "version",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "BDRIP",
+            "label": "BDRIP"
+          },
+          {
+            "value": "AGE-RIP",
+            "label": "AGE-RIP"
+          }
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {
+            "value": "time",
+            "label": "时间排序"
+          },
+          {
+            "value": "点击量",
+            "label": "点击量"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "title": "地区",
+        "param": "region",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "日本",
+            "label": "日本"
+          },
+          {
+            "value": "中国",
+            "label": "中国"
+          },
+          {
+            "value": "欧美",
+            "label": "欧美"
+          }
+        ]
+      },
+      {
+        "id": "month",
+        "title": "季度",
+        "param": "month",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "1",
+            "label": "1月"
+          },
+          {
+            "value": "4",
+            "label": "4月"
+          },
+          {
+            "value": "7",
+            "label": "7月"
+          },
+          {
+            "value": "10",
+            "label": "10月"
+          }
+        ]
+      },
+      {
+        "id": "status",
+        "title": "状态",
+        "param": "status",
+        "options": [
+          {
+            "value": "all",
+            "label": "全部"
+          },
+          {
+            "value": "连载",
+            "label": "连载"
+          },
+          {
+            "value": "完结",
+            "label": "完结"
+          },
+          {
+            "value": "未播放",
+            "label": "未播放"
+          }
+        ]
+      }
+    ],
+    "defaults": {
+      "all": {
+        "type": "all",
+        "year": "all",
+        "letter": "all",
+        "class": "all",
+        "version": "all",
+        "sort": "time",
+        "region": "all",
+        "month": "all",
+        "status": "all"
+      },
+      "TV": {
+        "type": "TV",
+        "year": "all",
+        "letter": "all",
+        "class": "all",
+        "version": "all",
+        "sort": "time",
+        "region": "all",
+        "month": "all",
+        "status": "all"
+      },
+      "剧场版": {
+        "type": "剧场版",
+        "year": "all",
+        "letter": "all",
+        "class": "all",
+        "version": "all",
+        "sort": "time",
+        "region": "all",
+        "month": "all",
+        "status": "all"
+      },
+      "OVA": {
+        "type": "OVA",
+        "year": "all",
+        "letter": "all",
+        "class": "all",
+        "version": "all",
+        "sort": "time",
+        "region": "all",
+        "month": "all",
+        "status": "all"
+      }
+    }
+  }
+}
