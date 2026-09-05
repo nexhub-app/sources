@@ -1,0 +1,659 @@
+{
+  "id": "manga_wmh1234",
+  "name": "漫画1234",
+  "type": "mangaSource",
+  "version": "1.1.0",
+  "ageRating": "16+",
+  "author": "plexhub",
+  "description": "漫画1234（m.wmh1234.com）在線漫畫源，支持手機端瀏覽，提供最新、搜索、詳情、章節與圖片閱讀功能。",
+  "enabled": true,
+  "enabledExplore": true,
+  "site": {
+    "domain": "m.wmh1234.com",
+    "baseUrl": "https://m.wmh1234.com",
+    "mirrors": [
+      {
+        "name": "m.wmh1234.com",
+        "domain": "m.wmh1234.com",
+        "baseUrl": "https://m.wmh1234.com"
+      },
+      {
+        "name": "wmh1234.com",
+        "domain": "wmh1234.com",
+        "baseUrl": "https://wmh1234.com"
+      },
+      {
+        "name": "www.wmh1234.com",
+        "domain": "www.wmh1234.com",
+        "baseUrl": "https://www.wmh1234.com"
+      }
+    ]
+  },
+  "responseType": "html",
+  "useWebview": true,
+  "stealthMode": true,
+  "webviewConfig": {
+    "timeout": 30000,
+    "adBlocker": true,
+    "skipSSLVerification": true,
+    "useLegacyParser": false,
+    "extraUserAgent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+  },
+  "parser": {
+    "type": "hybrid",
+    "engine": "css",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (typeof html !== 'string') return [];\n  // 只取“推荐漫画”区之前的内容，避免把推荐卡片混入结果\n  var cut = html.indexOf('推荐漫画');\n  if (cut > 0) html = html.substring(0, cut);\n  var results = [];\n  var seen = {};\n  var aRe = /<a\\s+([^>]*)>/gi;\n  var m;\n  while ((m = aRe.exec(html)) !== null) {\n    var attrs = m[1];\n    if (!/class=\"[^\"]*comic-card__link/.test(attrs)) continue;\n    var hrefM = attrs.match(/href=\"([^\"]+)\"/);\n    if (!hrefM) continue;\n    var href = hrefM[1];\n    if (href.indexOf('/comic/') !== 0) continue;\n    if (seen[href]) continue;\n    var start = m.index + m[0].length;\n    var end = html.indexOf('</a>', start);\n    if (end < 0) continue;\n    var block = html.substring(start, end);\n    var title = '';\n    var tMatch = block.match(/class=\"comic-card__title\"[^>]*>([\\s\\S]*?)<\\/h[0-9]>/i) || block.match(/<img[^>]+alt=\"([^\"]+)\"/i);\n    if (tMatch) title = tMatch[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title) continue;\n    var cover = '';\n    var dsMatch = block.match(/<img[^>]+data-src=\"([^\"]+)\"[^>]*>/i);\n    if (dsMatch) cover = dsMatch[1];\n    else { var sMatch = block.match(/<img[^>]+src=\"([^\"]+)\"[^>]*>/i); if (sMatch) cover = sMatch[1]; }\n    if (cover && cover.indexOf('placeholder') >= 0) cover = '';\n    if (cover && cover.indexOf('/') === 0) cover = baseUrl + cover;\n    seen[href] = 1;\n    results.push({ id: href, title: title, cover: cover, detailUrl: baseUrl + href });\n  }\n  return results;\n}"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (typeof html !== 'string') return [];\n  // 只取“推荐漫画”区之前的内容，避免把推荐卡片混入结果\n  var cut = html.indexOf('推荐漫画');\n  if (cut > 0) html = html.substring(0, cut);\n  var results = [];\n  var seen = {};\n  var aRe = /<a\\s+([^>]*)>/gi;\n  var m;\n  while ((m = aRe.exec(html)) !== null) {\n    var attrs = m[1];\n    if (!/class=\"[^\"]*comic-card__link/.test(attrs)) continue;\n    var hrefM = attrs.match(/href=\"([^\"]+)\"/);\n    if (!hrefM) continue;\n    var href = hrefM[1];\n    if (href.indexOf('/comic/') !== 0) continue;\n    if (seen[href]) continue;\n    var start = m.index + m[0].length;\n    var end = html.indexOf('</a>', start);\n    if (end < 0) continue;\n    var block = html.substring(start, end);\n    var title = '';\n    var tMatch = block.match(/class=\"comic-card__title\"[^>]*>([\\s\\S]*?)<\\/h[0-9]>/i) || block.match(/<img[^>]+alt=\"([^\"]+)\"/i);\n    if (tMatch) title = tMatch[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title) continue;\n    var cover = '';\n    var dsMatch = block.match(/<img[^>]+data-src=\"([^\"]+)\"[^>]*>/i);\n    if (dsMatch) cover = dsMatch[1];\n    else { var sMatch = block.match(/<img[^>]+src=\"([^\"]+)\"[^>]*>/i); if (sMatch) cover = sMatch[1]; }\n    if (cover && cover.indexOf('placeholder') >= 0) cover = '';\n    if (cover && cover.indexOf('/') === 0) cover = baseUrl + cover;\n    seen[href] = 1;\n    results.push({ id: href, title: title, cover: cover, detailUrl: baseUrl + href });\n  }\n  return results;\n}"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (typeof html !== 'string') return [];\n  // 只取“推荐漫画”区之前的内容，避免把推荐卡片混入结果\n  var cut = html.indexOf('推荐漫画');\n  if (cut > 0) html = html.substring(0, cut);\n  var results = [];\n  var seen = {};\n  var aRe = /<a\\s+([^>]*)>/gi;\n  var m;\n  while ((m = aRe.exec(html)) !== null) {\n    var attrs = m[1];\n    if (!/class=\"[^\"]*comic-card__link/.test(attrs)) continue;\n    var hrefM = attrs.match(/href=\"([^\"]+)\"/);\n    if (!hrefM) continue;\n    var href = hrefM[1];\n    if (href.indexOf('/comic/') !== 0) continue;\n    if (seen[href]) continue;\n    var start = m.index + m[0].length;\n    var end = html.indexOf('</a>', start);\n    if (end < 0) continue;\n    var block = html.substring(start, end);\n    var title = '';\n    var tMatch = block.match(/class=\"comic-card__title\"[^>]*>([\\s\\S]*?)<\\/h[0-9]>/i) || block.match(/<img[^>]+alt=\"([^\"]+)\"/i);\n    if (tMatch) title = tMatch[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title) continue;\n    var cover = '';\n    var dsMatch = block.match(/<img[^>]+data-src=\"([^\"]+)\"[^>]*>/i);\n    if (dsMatch) cover = dsMatch[1];\n    else { var sMatch = block.match(/<img[^>]+src=\"([^\"]+)\"[^>]*>/i); if (sMatch) cover = sMatch[1]; }\n    if (cover && cover.indexOf('placeholder') >= 0) cover = '';\n    if (cover && cover.indexOf('/') === 0) cover = baseUrl + cover;\n    seen[href] = 1;\n    results.push({ id: href, title: title, cover: cover, detailUrl: baseUrl + href });\n  }\n  return results;\n}"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function parseDetail(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (typeof html !== 'string') html = '';\n  var stripTags = function(s) { return s.replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim(); };\n  var title = '';\n  var titleMatch = html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n  if (titleMatch) title = stripTags(titleMatch[1]);\n  if (!title) {\n    var titleMetaMatch = html.match(/<meta[^>]*property=\"og:title\"[^>]*content=\"([^\"]+)\"/i);\n    if (titleMetaMatch) title = titleMetaMatch[1];\n  }\n  if (!title) {\n    var titleDivMatch = html.match(/<div[^>]*class=\"[^\"]*comic-title[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i) || html.match(/<p[^>]*class=\"[^\"]*name[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (titleDivMatch) title = stripTags(titleDivMatch[1]);\n  }\n  var cover = '';\n  var coverMetaMatch = html.match(/<meta[^>]*property=\"og:image\"[^>]*content=\"([^\"]+)\"/i);\n  if (coverMetaMatch) cover = coverMetaMatch[1];\n  if (!cover) {\n    var coverImgMatch = html.match(/<img[^>]*class=\"[^\"]*cover[^\"]*\"[^>]+src=\"([^\"]+)\"/i) || html.match(/<div[^>]*class=\"[^\"]*detail-cover[^\"]*\"[^>]*>\\s*<img[^>]+src=\"([^\"]+)\"/i);\n    if (coverImgMatch) cover = coverImgMatch[1];\n  }\n  if (!cover) {\n    var lazyCoverMatch = html.match(/<img[^>]+class=\"[^\"]*lazy[^\"]*\"[^>]+data-original=\"([^\"]+)\"/i);\n    if (lazyCoverMatch) cover = lazyCoverMatch[1];\n  }\n  if (cover && cover.startsWith('/')) cover = baseUrl + cover;\n  var description = '';\n  var descMatch = html.match(/<meta[^>]*name=\"description\"[^>]*content=\"([^\"]*)\"/i) || html.match(/<meta[^>]*property=\"og:description\"[^>]*content=\"([^\"]*)\"/i);\n  if (descMatch) description = descMatch[1].trim();\n  if (!description) {\n    var descDiv = html.match(/<div[^>]*class=\"[^\"]*intro[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i) || html.match(/<p[^>]*class=\"[^\"]*desc[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>/i);\n    if (descDiv) description = stripTags(descDiv[1]);\n  }\n  var author = '';\n  var authorMatch = html.match(/作者[：:]\\s*([^<\\n]+)/i) || html.match(/<span[^>]*class=\"[^\"]*author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/span>/i);\n  if (authorMatch) author = stripTags(authorMatch[1]);\n  if (!author) {\n    var authorLinkMatch = html.match(/<a[^>]*href=\"[^\"]*author[^\"]*\"[^>]*>([\\s\\S]*?)<\\/a>/i);\n    if (authorLinkMatch) author = stripTags(authorLinkMatch[1]);\n  }\n  var status = '';\n  var statusMatch = html.match(/状态[：:]\\s*([^<\\n]+)/i) || html.match(/更新[：:]\\s*([^<\\n]+)/i) || html.match(/(连载中|已完结|完结)/i);\n  if (statusMatch) status = statusMatch[1] || statusMatch[0];\n  var tags = [];\n  var tagUrls = [];\n  var tagRe = /<a[^>]+href=\"([^\"]*\\/(?:tag|genre|category|type)\\/[^\"]+)\"[^>]*>([\\s\\S]*?)<\\/a>/gi;\n  var tm;\n  while ((tm = tagRe.exec(html)) !== null) {\n    var tHref = tm[1];\n    if (tHref.indexOf('/') === 0) tHref = baseUrl + tHref;\n    var t = stripTags(tm[2]);\n    if (t && tags.indexOf(t) === -1) { tags.push(t); tagUrls.push(tHref); }\n  }\n  var comicId = '';\n  var comicIdMatch = html.match(/data-comic-id=\"(\\d+)\"/i) || html.match(/data-id=\"(\\d+)\"/i) || html.match(/comic_id=(\\d+)/i);\n  if (comicIdMatch) comicId = comicIdMatch[1];\n  var detailUrl = ctx.url || (baseUrl + (ctx.id || ''));\n  return {\n    id: ctx.id || '',\n    title: title,\n    cover: cover,\n    coverUrl: cover,\n    author: author,\n    description: description,\n    status: status,\n    tags: tags,\n    tagUrls: tagUrls,\n    comicId: comicId,\n    detailUrl: detailUrl\n  };\n}"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "function parseChapters(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string' || html.length < 50) return [];\n  var results = [];\n  var seen = {};\n  var chapterRe = /<a\\s+([^>]*)href=\"([^\"]+)\"([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  var match;\n  while ((match = chapterRe.exec(html)) !== null) {\n    var href = match[2];\n    var block = match[4];\n    if (href.indexOf('/chapter/') < 0 && href.indexOf('/read/') < 0 && href.indexOf('/comic/') < 0) continue;\n    if (seen[href]) continue;\n    var title = '';\n    var titleMatch = block.match(/<span[^>]*>([\\s\\S]*?)<\\/span>/i);\n    if (titleMatch) title = titleMatch[1].replace(/<[^>]+>/g, '').trim();\n    if (!title) {\n      title = block.replace(/<[^>]+>/g, '').trim();\n    }\n    if (!title) continue;\n    seen[href] = 1;\n    var updatedAt = '';\n    var timeMatch = html.match(new RegExp(href.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '[\\\\s\\\\S]*?(\\\\d{4}[-/]\\\\d{1,2}[-/]\\\\d{1,2})', 'i'));\n    if (timeMatch) updatedAt = timeMatch[1];\n    var fullUrl = href.indexOf('http') === 0 ? href : baseUrl + href;\n    results.push({\n      id: href,\n      title: title,\n      url: fullUrl,\n      updatedAt: updatedAt\n    });\n  }\n  return results;\n}"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "function parseImages(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (!html || typeof html !== 'string') html = '';\n  var results = [];\n  var imgRe = /<img[^>]+src=\"([^\"]+)\"[^>]*>/gi;\n  var match;\n  while ((match = imgRe.exec(html)) !== null) {\n    var src = match[1];\n    if (!src) continue;\n    if (src.indexOf('data:') === 0) continue;\n    if (src.match(/(logo|icon|avatar|banner|qrcode|loading|spinner|advertisement)/i)) continue;\n    if (src.startsWith('/')) src = baseUrl + src;\n    if (results.indexOf(src) === -1) results.push(src);\n  }\n  if (results.length === 0) {\n    var dataSrcRe = /<img[^>]+data-src=\"([^\"]+)\"[^>]*>/gi;\n    while ((match = dataSrcRe.exec(html)) !== null) {\n      var src2 = match[1];\n      if (!src2) continue;\n      if (src2.indexOf('data:') === 0) continue;\n      if (src2.match(/(logo|icon|avatar|banner|qrcode|loading|spinner|advertisement)/i)) continue;\n      if (src2.startsWith('/')) src2 = baseUrl + src2;\n      if (results.indexOf(src2) === -1) results.push(src2);\n    }\n  }\n  if (results.length === 0) {\n    var dataOriginalRe = /<img[^>]+data-original=\"([^\"]+)\"[^>]*>/gi;\n    while ((match = dataOriginalRe.exec(html)) !== null) {\n      var src3 = match[1];\n      if (!src3) continue;\n      if (src3.indexOf('data:') === 0) continue;\n      if (src3.match(/(logo|icon|avatar|banner|qrcode|loading|spinner|advertisement)/i)) continue;\n      if (src3.startsWith('/')) src3 = baseUrl + src3;\n      if (results.indexOf(src3) === -1) results.push(src3);\n    }\n  }\n  return results;\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function parseList(html, context) {\n  var ctx = context || {};\n  var baseUrl = (ctx.baseUrl || 'https://m.wmh1234.com').replace(/\\/$/, '');\n  if (typeof html !== 'string') return [];\n  // 只取“推荐漫画”区之前的内容，避免把推荐卡片混入结果\n  var cut = html.indexOf('推荐漫画');\n  if (cut > 0) html = html.substring(0, cut);\n  var results = [];\n  var seen = {};\n  var aRe = /<a\\s+([^>]*)>/gi;\n  var m;\n  while ((m = aRe.exec(html)) !== null) {\n    var attrs = m[1];\n    if (!/class=\"[^\"]*comic-card__link/.test(attrs)) continue;\n    var hrefM = attrs.match(/href=\"([^\"]+)\"/);\n    if (!hrefM) continue;\n    var href = hrefM[1];\n    if (href.indexOf('/comic/') !== 0) continue;\n    if (seen[href]) continue;\n    var start = m.index + m[0].length;\n    var end = html.indexOf('</a>', start);\n    if (end < 0) continue;\n    var block = html.substring(start, end);\n    var title = '';\n    var tMatch = block.match(/class=\"comic-card__title\"[^>]*>([\\s\\S]*?)<\\/h[0-9]>/i) || block.match(/<img[^>]+alt=\"([^\"]+)\"/i);\n    if (tMatch) title = tMatch[1].replace(/<[^>]+>/g, '').replace(/\\s+/g, ' ').trim();\n    if (!title) continue;\n    var cover = '';\n    var dsMatch = block.match(/<img[^>]+data-src=\"([^\"]+)\"[^>]*>/i);\n    if (dsMatch) cover = dsMatch[1];\n    else { var sMatch = block.match(/<img[^>]+src=\"([^\"]+)\"[^>]*>/i); if (sMatch) cover = sMatch[1]; }\n    if (cover && cover.indexOf('placeholder') >= 0) cover = '';\n    if (cover && cover.indexOf('/') === 0) cover = baseUrl + cover;\n    seen[href] = 1;\n    results.push({ id: href, title: title, cover: cover, detailUrl: baseUrl + href });\n  }\n  return results;\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "explore": {
+      "url": "/?page={page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "search": {
+      "url": "/search?key={keyword}&page={page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "detail": {
+      "url": "{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "chapters": {
+      "url": "{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "images": {
+      "url": "{id}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "category": {
+      "url": "/category/tags/{category}/finish/{status}/order/{sort}/page/{page}",
+      "method": "GET",
+      "headers": {
+        "Referer": "https://m.wmh1234.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-S9080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      }
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "a[href^=\"/comic/\"], a[href^=\"/manhua/\"], a[href^=\"/manga/\"]",
+      "title": "h3@text, h2@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "explore": {
+      "list": "a[href^=\"/comic/\"], a[href^=\"/manhua/\"], a[href^=\"/manga/\"]",
+      "title": "h3@text, h2@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "search": {
+      "list": "a[href^=\"/comic/\"], a[href^=\"/manhua/\"], a[href^=\"/manga/\"]",
+      "title": "h3@text, h2@text, img@alt",
+      "cover": "img@src||data-src||data-original",
+      "id": "a@href"
+    },
+    "detail": {
+      "title": "h1@text, meta[property=\"og:title\"]@content",
+      "cover": "meta[property=\"og:image\"]@content, img.cover@src, img.lazy@data-original",
+      "author": "span.author@text, a[href*=\"author\"]@text",
+      "description": "meta[name=\"description\"]@content, div.intro@text, p.desc@text",
+      "tags": "a[href^=\"/tag/\"]@text, a[href^=\"/genre/\"]@text, a[href^=\"/type/\"]@text"
+    },
+    "chapters": {
+      "list": "a[href*=\"/chapter/\"], a[href*=\"/read/\"], a[href*=\"/comic/\"]",
+      "title": "span@text",
+      "id": "a@href",
+      "url": "a@href",
+      "updatedAt": ".time@text, .date@text, span.time@text"
+    },
+    "images": {
+      "list": "#comic-page img, .comic-content img, #chapter-content img, .read-content img",
+      "fallbackUrl": "img@data-src||img@data-original||img@src",
+      "fallbackList": [
+        "#chapterContent img",
+        ".comic-page img",
+        ".read-content img",
+        ".chapter-page img",
+        "#page img"
+      ],
+      "config": {
+        "skipPatterns": [
+          "logo",
+          "icon",
+          "qrcode",
+          "avatar",
+          "banner",
+          "loading",
+          "spinner",
+          "advertisement"
+        ],
+        "sizeFilter": {
+          "minWidth": 100,
+          "minHeight": 100
+        },
+        "referer": {
+          "mode": "site"
+        },
+        "pagination": {
+          "mode": "none"
+        }
+      }
+    },
+    "category": {
+      "categories": [
+        {
+          "id": "285",
+          "name": "ABO"
+        },
+        {
+          "id": "384",
+          "name": "SM"
+        },
+        {
+          "id": "86",
+          "name": "东方"
+        },
+        {
+          "id": "82",
+          "name": "仙侠"
+        },
+        {
+          "id": "132",
+          "name": "体育"
+        },
+        {
+          "id": "80",
+          "name": "侦探"
+        },
+        {
+          "id": "178",
+          "name": "修仙"
+        },
+        {
+          "id": "12",
+          "name": "修真"
+        },
+        {
+          "id": "201",
+          "name": "偶像"
+        },
+        {
+          "id": "97",
+          "name": "其他"
+        },
+        {
+          "id": "7",
+          "name": "冒险"
+        },
+        {
+          "id": "84",
+          "name": "剧情"
+        },
+        {
+          "id": "21",
+          "name": "动作"
+        },
+        {
+          "id": "24",
+          "name": "励志"
+        },
+        {
+          "id": "72",
+          "name": "历史"
+        },
+        {
+          "id": "28",
+          "name": "古风"
+        },
+        {
+          "id": "22",
+          "name": "同人"
+        },
+        {
+          "id": "15",
+          "name": "后宫"
+        },
+        {
+          "id": "65",
+          "name": "唯美"
+        },
+        {
+          "id": "380",
+          "name": "喜剧"
+        },
+        {
+          "id": "83",
+          "name": "四格"
+        },
+        {
+          "id": "257",
+          "name": "国漫"
+        },
+        {
+          "id": "124",
+          "name": "复仇"
+        },
+        {
+          "id": "391",
+          "name": "多攻"
+        },
+        {
+          "id": "172",
+          "name": "大女主"
+        },
+        {
+          "id": "96",
+          "name": "奇幻"
+        },
+        {
+          "id": "226",
+          "name": "女神"
+        },
+        {
+          "id": "177",
+          "name": "妖怪"
+        },
+        {
+          "id": "128",
+          "name": "娱乐圈"
+        },
+        {
+          "id": "136",
+          "name": "宫廷"
+        },
+        {
+          "id": "161",
+          "name": "宫斗"
+        },
+        {
+          "id": "187",
+          "name": "少女"
+        },
+        {
+          "id": "204",
+          "name": "少年"
+        },
+        {
+          "id": "387",
+          "name": "年下"
+        },
+        {
+          "id": "108",
+          "name": "异能"
+        },
+        {
+          "id": "176",
+          "name": "怪物"
+        },
+        {
+          "id": "170",
+          "name": "总裁"
+        },
+        {
+          "id": "17",
+          "name": "恋爱"
+        },
+        {
+          "id": "19",
+          "name": "恐怖"
+        },
+        {
+          "id": "18",
+          "name": "悬疑"
+        },
+        {
+          "id": "117",
+          "name": "惊悚"
+        },
+        {
+          "id": "20",
+          "name": "战争"
+        },
+        {
+          "id": "107",
+          "name": "战斗"
+        },
+        {
+          "id": "112",
+          "name": "推理"
+        },
+        {
+          "id": "13",
+          "name": "搞笑"
+        },
+        {
+          "id": "188",
+          "name": "改编"
+        },
+        {
+          "id": "60",
+          "name": "故事漫画"
+        },
+        {
+          "id": "104",
+          "name": "日常"
+        },
+        {
+          "id": "240",
+          "name": "日漫"
+        },
+        {
+          "id": "75",
+          "name": "明星"
+        },
+        {
+          "id": "175",
+          "name": "末日"
+        },
+        {
+          "id": "133",
+          "name": "机甲"
+        },
+        {
+          "id": "137",
+          "name": "权谋"
+        },
+        {
+          "id": "25",
+          "name": "架空"
+        },
+        {
+          "id": "11",
+          "name": "校园"
+        },
+        {
+          "id": "94",
+          "name": "格斗"
+        },
+        {
+          "id": "70",
+          "name": "欢乐向"
+        },
+        {
+          "id": "258",
+          "name": "欧美"
+        },
+        {
+          "id": "228",
+          "name": "欧风"
+        },
+        {
+          "id": "283",
+          "name": "正能量"
+        },
+        {
+          "id": "66",
+          "name": "武侠"
+        },
+        {
+          "id": "67",
+          "name": "治愈"
+        },
+        {
+          "id": "100",
+          "name": "浪漫"
+        },
+        {
+          "id": "143",
+          "name": "游戏"
+        },
+        {
+          "id": "26",
+          "name": "灵异"
+        },
+        {
+          "id": "6",
+          "name": "热血"
+        },
+        {
+          "id": "10",
+          "name": "玄幻"
+        },
+        {
+          "id": "222",
+          "name": "现代"
+        },
+        {
+          "id": "29",
+          "name": "生活"
+        },
+        {
+          "id": "27",
+          "name": "百合"
+        },
+        {
+          "id": "354",
+          "name": "短篇"
+        },
+        {
+          "id": "150",
+          "name": "社会"
+        },
+        {
+          "id": "174",
+          "name": "神仙"
+        },
+        {
+          "id": "74",
+          "name": "神鬼"
+        },
+        {
+          "id": "149",
+          "name": "神魔"
+        },
+        {
+          "id": "8",
+          "name": "科幻"
+        },
+        {
+          "id": "14",
+          "name": "穿越"
+        },
+        {
+          "id": "23",
+          "name": "竞技"
+        },
+        {
+          "id": "173",
+          "name": "系统"
+        },
+        {
+          "id": "77",
+          "name": "纯爱"
+        },
+        {
+          "id": "89",
+          "name": "美食"
+        },
+        {
+          "id": "16",
+          "name": "耽美"
+        },
+        {
+          "id": "73",
+          "name": "职场"
+        },
+        {
+          "id": "90",
+          "name": "脑洞"
+        },
+        {
+          "id": "85",
+          "name": "萌系"
+        },
+        {
+          "id": "93",
+          "name": "蔷薇"
+        },
+        {
+          "id": "68",
+          "name": "虐心"
+        },
+        {
+          "id": "224",
+          "name": "西幻"
+        },
+        {
+          "id": "79",
+          "name": "轻小说"
+        },
+        {
+          "id": "103",
+          "name": "轻松"
+        },
+        {
+          "id": "126",
+          "name": "逆袭"
+        },
+        {
+          "id": "31",
+          "name": "都市"
+        },
+        {
+          "id": "171",
+          "name": "重生"
+        },
+        {
+          "id": "9",
+          "name": "霸总"
+        },
+        {
+          "id": "99",
+          "name": "青春"
+        },
+        {
+          "id": "209",
+          "name": "韩漫"
+        },
+        {
+          "id": "278",
+          "name": "音乐"
+        },
+        {
+          "id": "181",
+          "name": "高甜"
+        },
+        {
+          "id": "69",
+          "name": "魔幻"
+        },
+        {
+          "id": "95",
+          "name": "魔法"
+        }
+      ]
+    }
+  },
+  "antiHotlinking": {
+    "enabled": true,
+    "referer": "https://m.wmh1234.com"
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "status",
+        "title": "状态",
+        "param": "status",
+        "options": [
+          {
+            "value": "0",
+            "label": "全部"
+          },
+          {
+            "value": "1",
+            "label": "连载"
+          },
+          {
+            "value": "2",
+            "label": "完结"
+          }
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {
+            "value": "id",
+            "label": "默认"
+          },
+          {
+            "value": "addtime",
+            "label": "最近更新"
+          },
+          {
+            "value": "hits",
+            "label": "人气最高"
+          }
+        ]
+      }
+    ]
+  }
+}
