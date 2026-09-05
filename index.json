@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-05T02:35:51.638Z",
-  "count": 19,
+  "generatedAt": "2026-09-05T04:02:14.002Z",
+  "count": 20,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -11,6 +11,22 @@
       "version": 12,
       "baseUrl": "https://cn.233dm.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_m233.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "anime/pms_mxdm",
+      "category": "anime",
+      "type": "anime",
+      "format": "nexhub",
+      "name": "MX动漫",
+      "version": 3,
+      "baseUrl": "https://www.dcc3.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_mxdm.json",
       "builtin": true,
       "desc": {
         "zh": "",
