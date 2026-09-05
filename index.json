@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-05T04:02:14.002Z",
-  "count": 20,
+  "generatedAt": "2026-09-05T05:08:07.023Z",
+  "count": 21,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -43,6 +43,22 @@
       "version": 7,
       "baseUrl": "https://www.dalvdm.cc",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_dalvdm.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "anime/pms_xifandm",
+      "category": "anime",
+      "type": "anime",
+      "format": "nexhub",
+      "name": "稀饭动漫",
+      "version": 3,
+      "baseUrl": "https://anime.xifanacg.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_xifandm.json",
       "builtin": true,
       "desc": {
         "zh": "",
