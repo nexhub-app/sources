@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-05T02:05:00.339Z",
-  "count": 18,
+  "generatedAt": "2026-09-05T02:35:51.638Z",
+  "count": 19,
   "sources": [
     {
       "id": "anime/pms_m233",
@@ -193,6 +193,22 @@
         "en": ""
       },
       "ageRating": "teen"
+    },
+    {
+      "id": "manga/manga_wmh1234",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "漫画1234",
+      "version": "1.1.0",
+      "baseUrl": "https://m.wmh1234.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_wmh1234.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "16+"
     },
     {
       "id": "manga/manga_311s",
