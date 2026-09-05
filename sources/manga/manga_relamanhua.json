@@ -1,0 +1,385 @@
+{
+  "id": "manga_relamanhua",
+  "name": "热辣漫画",
+  "type": "mangaSource",
+  "version": 3,
+  "author": "plexhub",
+  "description": "热辣漫画源（App API 通道，api.2024manga.com 及 mapi 镜像），支持分类 / 排行 / 搜索 / 详情 / 章节 / 图片全链路。",
+  "enabled": true,
+  "enabledExplore": true,
+  "ageRating": "mature",
+  "site": {
+    "domain": "api.2024manga.com",
+    "baseUrl": "https://api.2024manga.com",
+    "mirrors": [
+      {
+        "name": "api.2024manga.com",
+        "domain": "api.2024manga.com",
+        "baseUrl": "https://api.2024manga.com",
+        "type": "api"
+      },
+      {
+        "name": "mapi.hotmangasg.com",
+        "domain": "mapi.hotmangasg.com",
+        "baseUrl": "https://mapi.hotmangasg.com",
+        "type": "api"
+      },
+      {
+        "name": "mapi.hotmangasd.com",
+        "domain": "mapi.hotmangasd.com",
+        "baseUrl": "https://mapi.hotmangasd.com",
+        "type": "api"
+      },
+      {
+        "name": "mapi.hotmangasf.com",
+        "domain": "mapi.hotmangasf.com",
+        "baseUrl": "https://mapi.hotmangasf.com",
+        "type": "api"
+      },
+      {
+        "name": "mapi.elfgjfghkk.club",
+        "domain": "mapi.elfgjfghkk.club",
+        "baseUrl": "https://mapi.elfgjfghkk.club",
+        "type": "api"
+      },
+      {
+        "name": "mapi.fgjfghkkcenter.club",
+        "domain": "mapi.fgjfghkkcenter.club",
+        "baseUrl": "https://mapi.fgjfghkkcenter.club",
+        "type": "api"
+      },
+      {
+        "name": "mapi.fgjfghkk.club",
+        "domain": "mapi.fgjfghkk.club",
+        "baseUrl": "https://mapi.fgjfghkk.club",
+        "type": "api"
+      }
+    ],
+    "userAgent": "Dart/3.13 (NexHub)"
+  },
+  "responseType": "json",
+  "useWebview": false,
+  "webviewConfig": {
+    "timeout": 30000,
+    "adBlocker": true,
+    "skipSSLVerification": true,
+    "useLegacyParser": false
+  },
+  "parser": {
+    "type": "hybrid",
+    "engine": "css",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseList(raw, context) {\n  return __rlList(raw);\n}\n"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseList(raw, context) {\n  return __rlList(raw);\n}\n"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseList(raw, context) {\n  return __rlList(raw);\n}\n"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseList(raw, context) {\n  return __rlList(raw);\n}\n"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseDetail(raw, context) {\n  var res = __rlParse(raw);\n  var c = res ? res.comic : null;\n  if (!c || !c.path_word) return null;\n  var authors = [];\n  if (Array.isArray(c.author)) {\n    for (var i = 0; i < c.author.length; i++) {\n      if (c.author[i] && c.author[i].name) authors.push(c.author[i].name);\n    }\n  }\n  var tags = [];\n  if (Array.isArray(c.theme)) {\n    for (var j = 0; j < c.theme.length; j++) {\n      if (c.theme[j] && c.theme[j].name) tags.push(c.theme[j].name);\n    }\n  }\n  // 地区也是一种常见筛选维度，并入标签一起展示（如 韓國 / 日本）。\n  if (c.region && c.region.display && tags.indexOf(c.region.display) < 0) {\n    tags.push(c.region.display);\n  }\n  var item = {\n    id: c.path_word,\n    title: c.name || c.path_word,\n    cover: c.cover || '',\n    author: authors.join('、'),\n    description: c.brief || '',\n    status: (c.status && c.status.display) || '',\n    tags: tags\n  };\n  if (c.datetime_updated) item.updatedAt = c.datetime_updated;\n  return item;\n}\n"
+      },
+      "chapters": {
+        "type": "script",
+        "function": "parseChapters",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseChapters(raw, context) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var c = res.list[i];\n    if (!c || !c.uuid) continue;\n    out.push({\n      id: c.uuid,\n      title: c.name || c.uuid,\n      updatedAt: c.datetime_created || ''\n    });\n  }\n  return out;\n}\n"
+      },
+      "images": {
+        "type": "script",
+        "function": "parseImages",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseImages(raw, context) {\n  var res = __rlParse(raw);\n  var ch = res ? res.chapter : null;\n  if (!ch || !ch.contents) return [];\n  var urls = [];\n  for (var i = 0; i < ch.contents.length; i++) {\n    var u = ch.contents[i] && ch.contents[i].url;\n    if (u && typeof u === 'string' && u.length > 0) urls.push(u);\n  }\n  if (urls.length === 0) return [];\n  // 部分章节的 contents 是乱序的，真实顺序由 words 数组给出（第 n 项为原索引）。\n  var words = ch.words;\n  if (words && words.length === urls.length) {\n    var ordered = new Array(urls.length);\n    var filled = true;\n    for (var w = 0; w < words.length; w++) {\n      var idx = words[w];\n      if (typeof idx !== 'number' || idx < 0 || idx >= urls.length) { filled = false; break; }\n      ordered[idx] = urls[w];\n    }\n    if (filled) {\n      for (var f = 0; f < ordered.length; f++) {\n        if (!ordered[f]) { filled = false; break; }\n      }\n      if (filled) return ordered;\n    }\n  }\n  return urls;\n}\n"
+      },
+      "favorites": {
+        "type": "script",
+        "function": "parseFavList",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseFavList(raw, context) {\n  var data = raw;\n  if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { return []; } }\n  // 兼容多种包裹：results.list / 直接 list / results.comics。\n  var arr = (data && data.results && data.results.list) ||\n            (data && data.list) ||\n            (data && data.results && data.results.comics) || [];\n  if (!Array.isArray(arr)) return [];\n  var out = [];\n  for (var i = 0; i < arr.length; i++) {\n    var it = __rlItem(arr[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n"
+      },
+      "fav_add": {
+        "type": "script",
+        "function": "parseFavAdd",
+        "script": "\nfunction __rlParse(raw) {\n  var data = raw;\n  if (typeof data === 'string') {\n    try { data = JSON.parse(data); } catch (e) { return null; }\n  }\n  return (data && data.results) ? data.results : null;\n}\nfunction __rlItem(entry) {\n  if (!entry) return null;\n  // 榜单接口把漫画包在 comic 字段里，列表/搜索接口直接是漫画对象。\n  var m = (entry.comic && entry.comic.path_word) ? entry.comic : entry;\n  var id = m.path_word || '';\n  if (!id) return null;\n  var author = '';\n  if (Array.isArray(m.author) && m.author.length > 0 && m.author[0]) {\n    author = m.author[0].name || '';\n  }\n  var tags = [];\n  if (Array.isArray(m.theme)) {\n    for (var i = 0; i < m.theme.length; i++) {\n      if (m.theme[i] && m.theme[i].name) tags.push(m.theme[i].name);\n    }\n  }\n  var item = {\n    id: id,\n    title: m.name || id,\n    cover: m.cover || '',\n    author: author,\n    tags: tags\n  };\n  if (m.datetime_updated) item.updatedAt = m.datetime_updated;\n  return item;\n}\nfunction __rlList(raw) {\n  var res = __rlParse(raw);\n  if (!res || !res.list || typeof res.list.length !== 'number') return [];\n  var out = [];\n  for (var i = 0; i < res.list.length; i++) {\n    var it = __rlItem(res.list[i]);\n    if (it) out.push(it);\n  }\n  return out;\n}\n\nfunction parseFavAdd(raw, context) {\n  var data = raw;\n  if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = null; } }\n  var comic = data && data.results && data.results.comic;\n  if (!comic || !comic.uuid) throw new Error('无法获取作品 uuid');\n  var uuid = comic.uuid;\n  var base = (context && context.baseUrl) ? context.baseUrl : '';\n  if (base.endsWith('/')) base = base.slice(0, -1);\n  var token = (context && context.token) ? context.token : '';\n  return {\n    __meta: true,\n    __fetchUrl: base + '/api/v3/member/collect/comic',\n    __fetchMethod: 'post',\n    __fetchResponseType: 'text',\n    __fetchBody: 'comic_id=' + encodeURIComponent(uuid) +\n                 '&is_collect=1&authorization=Token+' + encodeURIComponent(token),\n    __fetchHeaders: { 'Content-Type': 'application/x-www-form-urlencoded' },\n    __processor: '__favPost'\n  };\n}\nfunction __favPost(raw, context) {\n  var data = raw;\n  if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { data = null; } }\n  if (!data || data.code !== 200) {\n    throw new Error('收藏失败：' + ((data && data.message) ? data.message : '未知错误'));\n  }\n  return [{ id: '1', title: 'ok' }];\n}\n"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/api/v3/comics?free_type=1&limit=30&offset={page*30-30}&ordering=-datetime_updated&theme=",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "explore": {
+      "url": "/api/v3/ranks?free_type=1&limit=30&offset={page*30-30}&_update=true&type=1&region=-1&date_type=day",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "category": {
+      "url": "/api/v3/comics?free_type=1&limit=30&offset={page*30-30}&ordering={ordering}&theme={category}",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "search": {
+      "url": "/api/v3/search/comic?platform=3&q={keyword}&limit=20&offset={page*20-20}&free_type=1&_update=true",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "detail": {
+      "url": "/api/v3/comic2/{id}?in_mainland=true&platform=3",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "chapters": {
+      "url": "/api/v3/comic/{id}/group/default/chapters?limit=500&offset=0",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "images": {
+      "url": "/api/v3/comic/{id}/chapter/{chapterId}?platform=3&_update=true",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "favorites": {
+      "url": "/api/v3/member/collect/comics?free_type=1&limit=30&offset={page*30-30}&ordering=-datetime_updated",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    },
+    "fav_add": {
+      "url": "/api/v3/comic2/{id}?in_mainland=true&platform=3",
+      "method": "GET",
+      "responseType": "json",
+      "headers": {
+        "platform": "3",
+        "version": "2024.04.28",
+        "webp": "1",
+        "X-Requested-With": "com.manga2020.app",
+        "Accept": "application/json, text/plain, */*"
+      }
+    }
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "ordering",
+        "title": "排序",
+        "param": "ordering",
+        "options": [
+          {
+            "value": "-datetime_updated",
+            "label": "最近更新"
+          },
+          {
+            "value": "-popular",
+            "label": "最热门"
+          },
+          {
+            "value": "datetime_updated",
+            "label": "最早更新"
+          },
+          {
+            "value": "popular",
+            "label": "热度正序"
+          }
+        ]
+      }
+    ]
+  },
+  "selectors": {
+    "category": {
+      "categories": [
+        {
+          "id": "",
+          "name": "全部"
+        },
+        {
+          "id": "aiqing",
+          "name": "愛情"
+        },
+        {
+          "id": "huanlexiang",
+          "name": "歡樂向"
+        },
+        {
+          "id": "maoxian",
+          "name": "冒險"
+        },
+        {
+          "id": "qihuan",
+          "name": "奇幻"
+        },
+        {
+          "id": "xiaoyuan",
+          "name": "校园"
+        },
+        {
+          "id": "kehuan",
+          "name": "科幻"
+        },
+        {
+          "id": "xuanyi",
+          "name": "悬疑"
+        },
+        {
+          "id": "gedou",
+          "name": "格鬥"
+        },
+        {
+          "id": "baihe",
+          "name": "百合"
+        },
+        {
+          "id": "danmei",
+          "name": "耽美"
+        },
+        {
+          "id": "hougong",
+          "name": "後宮"
+        },
+        {
+          "id": "rexue",
+          "name": "热血"
+        },
+        {
+          "id": "zhiyu",
+          "name": "治愈"
+        },
+        {
+          "id": "yishijie",
+          "name": "异世界"
+        },
+        {
+          "id": "dushi",
+          "name": "都市"
+        },
+        {
+          "id": "kongbu",
+          "name": "恐怖"
+        },
+        {
+          "id": "changtiao",
+          "name": "長條"
+        },
+        {
+          "id": "COLOR",
+          "name": "彩色"
+        }
+      ]
+    },
+    "images": {
+      "list": "img",
+      "config": {
+        "skipPatterns": [
+          "logo",
+          "icon",
+          "qrcode",
+          "avatar",
+          "banner",
+          "loading",
+          "ads"
+        ],
+        "sizeFilter": {
+          "minWidth": 100,
+          "minHeight": 100
+        },
+        "referer": {
+          "mode": "none"
+        },
+        "pagination": {
+          "mode": "none"
+        }
+      }
+    }
+  },
+  "antiHotlinking": {
+    "enabled": false
+  },
+  "comments": {
+    "login": {
+      "name": "Token",
+      "sendTokenAs": "key",
+      "authScheme": "Token",
+      "apiKeyParam": "token",
+      "registerUrl": "https://www.manga2026.com/web/login/loginByAccount",
+      "description": "在源站网页登录后，从账号页复制 API Token 粘贴到此处「Token」字段。"
+    }
+  },
+  "webFavorite": {
+    "enabled": true,
+    "requireLogin": true,
+    "route": "favorites",
+    "listEntry": "search",
+    "add": {
+      "route": "fav_add"
+    }
+  }
+}
