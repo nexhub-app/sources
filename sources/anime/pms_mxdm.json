@@ -1,0 +1,73 @@
+{
+  "id": "pms_mxdm",
+  "version": 3,
+  "name": "MX动漫",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "www.dcc3.com",
+    "baseUrl": "https://www.dcc3.com",
+    "mirrors": [
+      { "name": "主站", "domain": "www.dcc3.com", "baseUrl": "https://www.dcc3.com" }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": { "type": "builtin" },
+      "category": { "type": "builtin" },
+      "search": { "type": "builtin" },
+      "detail": { "type": "builtin" },
+      "episodes": { "type": "builtin" },
+      "video": {
+        "type": "webview",
+        "script": "(function(){try{var h=document.documentElement.outerHTML;var m=h.indexOf('.m3u8');if(m>=0){var a=h.lastIndexOf('http',m);if(a>=0&&a<m){var e=a;while(e<h.length){var c=h.charCodeAt(e);if(c===34||c===39||c===60||c===62||c===32||c===10||c===13||c===9)break;e++;}var u=h.substring(a,e);if(u.indexOf('.m3u8')>=0)return u;}}var v=document.querySelector('video');if(v&&v.src)return v.src;var s=document.querySelector('source');if(s&&s.src)return s.src;var i=h.indexOf('player_aaaa');if(i>=0){var ub=h.indexOf('\"url\":\"',i);if(ub>=0){var st=ub+7;var en=h.indexOf('\"',st);if(en>st)return h.substring(st,en).split(String.fromCharCode(92)).join('');}}return '';}catch(e){return '';}})();"
+      }
+    }
+  },
+  "routes": {
+    "latest": { "url": "/", "method": "get", "responseType": "html" },
+    "category": { "url": "/type/{category}/{page}/", "method": "get", "responseType": "html" },
+    "search": { "url": "/search/?wd={keyword}&pageno={page}", "method": "get", "responseType": "html" },
+    "detail": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "episodes": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "video": { "url": "{url}", "method": "get", "responseType": "html" }
+  },
+  "selectors": {
+    "list": "div.main ul li, div.search ul li",
+    "id": "a@href",
+    "title": "a@title",
+    "cover": "img@data-original",
+    "description": "div.item",
+    "detail": {
+      "title": "div.detail h2",
+      "cover": "div.detail div.cover img@data-original",
+      "description": "div.detail li.blurb"
+    },
+    "episodes": {
+      "lineList": "div.playlist div.row",
+      "lineName": "div.playlist div.tabs a",
+      "list": "ul.list6 li a"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      { "id": "riman", "title": "日本动漫" },
+      { "id": "guoman", "title": "国产动漫" },
+      { "id": "oman", "title": "欧美动漫" },
+      { "id": "dmfilm", "title": "动漫电影" }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最近更新", "route": "latest", "style": "grid", "limit": 18, "more": false }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": { "referer": "https://www.dcc3.com" },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v1：初版。列表/分类/搜索/详情/选集全部直连（站点无盾，已实测）。播放页为混淆 JS 播放器：webview 抽取脚本在页面加载后扫描 m3u8/video/source/player 配置，异步出链依赖引擎空结果自动重试。"
+}
