@@ -1,0 +1,268 @@
+{
+  "id": "pms_hanime",
+  "version": 21,
+  "name": "Hanime 源",
+  "author": "community",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "hanime1.me",
+    "baseUrl": "https://hanime1.me",
+    "userAgent": "Dart/3.13 (NexHub)",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "hanime1.me",
+        "baseUrl": "https://hanime1.me"
+      },
+      {
+        "name": "备用一",
+        "domain": "hanime1.com",
+        "baseUrl": "https://hanime1.com"
+      },
+      {
+        "name": "备用二",
+        "domain": "hanimeone.me",
+        "baseUrl": "https://hanimeone.me"
+      },
+      {
+        "name": "备用三",
+        "domain": "javchu.com",
+        "baseUrl": "https://javchu.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "html"
+      },
+      "search": {
+        "type": "html"
+      },
+      "detail": {
+        "type": "html"
+      },
+      "episodes": {
+        "type": "script",
+        "script": "function episodes(raw, context){try{\nvar base='https://hanime1.me';\nfunction abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}\nif(typeof raw==='string'&&raw){\nvar out=[];\nvar re=/<div[^>]*class=\"playlist-hover-wrap\"[^>]*data-href=\"([^\"]+)\"[^>]*>/gi;var m;\nwhile((m=re.exec(raw))){var href=abs(m[1]);if(href&&href.indexOf('watch')>=0){var ti='';var mm=raw.slice(m.index).match(/<h4[^>]*class=\"video-title\"[^>]*>\\s*<a[^>]*>([\\s\\S]*?)<\\/a>/i);if(mm)ti=(mm[1]||'').replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();out.push({title:ti||'分集',url:href});}}\nif(out.length)return out;\n}\nvar du=(context&&typeof context.detailUrl==='string'&&context.detailUrl.indexOf('http')===0)?context.detailUrl:'';\nif(!du&&typeof raw==='string'&&raw){var cm=raw.match(/<link[^>]+rel=\"canonical\"[^>]+href=\"([^\"]+)\"/i)||raw.match(/property=\"og:url\"[^>]+content=\"([^\"]+)\"/i);if(cm)du=cm[1];}\nif(!du&&typeof raw==='string'&&raw){var cm2=raw.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(cm2)du=abs(cm2[1]);}\nreturn du?[{title:'正片',url:du}]:[];\n}catch(e){return [];}}"
+      },
+      "category": {
+        "type": "html"
+      },
+      "video": {
+        "type": "script",
+        "script": "function video(raw, context){try{var org='https://hanime1.me';var cu=(context&&typeof context.url==='string')?context.url:'';var om=cu.match(/^(https?:\\/\\/[^\\/]+)/);if(om)org=om[1];function abs(u){if(!u)return '';u=String(u).trim();if(!u)return '';if(u.indexOf('//')===0)return 'https:'+u;if(u.indexOf('http://')===0||u.indexOf('https://')===0)return u;if(u.charAt(0)==='/')return org+u;return org+'/'+u;}var seg=(typeof raw==='string')?raw:'';var vm=seg.match(/<video[^>]*id=[\"']player[\"'][^>]*>([\\s\\S]*?)<\\/video>/i);if(vm)seg=vm[1];var list=[];var re=/<source\\b[^>]*>/gi;var m;while((m=re.exec(seg))){var tag=m[0];var sm=tag.match(/src\\s*=\\s*[\"']([^\"']+)[\"']/i);if(!sm)continue;var s=abs(sm[1]);if(!s)continue;if(!vm&&s.indexOf('.mp4')<0&&s.indexOf('.m3u8')<0)continue;var zm=tag.match(/size\\s*=\\s*[\"']([^\"']+)[\"']/i);var n=zm?zm[1].replace(/[^0-9]/g,''):'';var p=parseInt(n,10);if(isNaN(p))p=0;var nm=n?(n+'P'):'正片';list.push({url:s,size:p,name:nm});}if(!list.length){var cm=raw?raw.match(/const source\\s*=\\s*['\"]([^'\"]+)['\"]/):null;if(cm){var s2=abs(cm[1]);if(s2)list.push({url:s2,size:0,name:'正片'});}}if(!list.length){var pm=raw?raw.match(/<video[^>]*\\ssrc\\s*=\\s*[\"']([^\"']+)[\"']/i):null;if(pm){var s3=abs(pm[1]);if(s3)list.push({url:s3,size:0,name:'正片'});}}if(!list.length)return {url:'',type:'mp4',urls:[]};list.sort(function(a,b){return b.size-a.size;});var t=list[0].url.indexOf('.m3u8')>=0?'m3u8':'mp4';return {url:list[0].url,type:t,urls:list.map(function(e){return {name:e.name,url:e.url};})};}catch(e){return {url:'',type:'mp4',urls:[]};}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html",
+      "headers": {
+        "User-Agent": "Dart/3.13 (NexHub)",
+        "Referer": "https://hanime1.me/"
+      }
+    },
+    "search": {
+      "url": "/search?query={keyword}&page={page}&genre={genre}&sort={sort}&broad={broad}",
+      "method": "get",
+      "responseType": "html",
+      "headers": {
+        "User-Agent": "Dart/3.13 (NexHub)",
+        "Referer": "https://hanime1.me/"
+      }
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html",
+      "headers": {
+        "User-Agent": "Dart/3.13 (NexHub)",
+        "Referer": "https://hanime1.me/"
+      }
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html",
+      "headers": {
+        "User-Agent": "Dart/3.13 (NexHub)",
+        "Referer": "https://hanime1.me/"
+      }
+    },
+    "category": {
+      "url": "/search?genre={category}&page={page}",
+      "method": "get",
+      "responseType": "html",
+      "headers": {
+        "User-Agent": "Dart/3.13 (NexHub)",
+        "Referer": "https://hanime1.me/"
+      }
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": ".horizontal-card",
+      "id": "a[href*=\"watch\"]@href",
+      "title": ".title, .video-title, .home-rows-videos-title",
+      "cover": "img.main-thumb@src"
+    },
+    "search": {
+      "list": "a[href*=\"watch\"]",
+      "id": "//a/@href",
+      "title": ".title, .video-title, .home-rows-videos-title",
+      "cover": "img.main-thumb@src, img@src"
+    },
+    "detail": {
+      "title": "#shareBtn-title, meta[property=\"og:title\"]@content, .video-title",
+      "cover": "video#player@poster, meta[property=\"og:image\"]@content",
+      "description": ".video-caption-text, .video-caption",
+      "tags": ".single-video-tag a, .single-video-tag"
+    },
+    "episodes": {
+      "list": "#playlist-scroll .playlist-hover-wrap",
+      "title": ".video-title, .title",
+      "url": "./@data-href"
+    },
+    "category": {
+      "list": "a[href*=\"watch\"]",
+      "id": "//a/@href",
+      "title": ".title, .video-title, .home-rows-videos-title",
+      "cover": "img.main-thumb@src, img@src"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {"id": "裏番", "title": "裏番"},
+      {"id": "泡麵番", "title": "泡麵番"},
+      {"id": "Motion Anime", "title": "Motion Anime"},
+      {"id": "3DCG", "title": "3DCG"},
+      {"id": "2.5D", "title": "2.5D"},
+      {"id": "2D動畫", "title": "2D動畫"},
+      {"id": "AI生成", "title": "AI生成"},
+      {"id": "MMD", "title": "MMD"},
+      {"id": "Cosplay", "title": "Cosplay"},
+      {"id": "新番預告", "title": "新番預告"}
+    ]
+  },
+  "filters": {
+    "route": "search",
+    "groups": [
+      {
+        "id": "genre",
+        "title": "类型",
+        "param": "genre",
+        "options": [
+          {"value": "裏番", "label": "裏番"},
+          {"value": "泡麵番", "label": "泡麵番"},
+          {"value": "Motion Anime", "label": "Motion Anime"},
+          {"value": "3DCG", "label": "3DCG"},
+          {"value": "2.5D", "label": "2.5D"},
+          {"value": "2D動畫", "label": "2D動畫"},
+          {"value": "AI生成", "label": "AI生成"},
+          {"value": "MMD", "label": "MMD"},
+          {"value": "Cosplay", "label": "Cosplay"},
+          {"value": "新番預告", "label": "新番預告"}
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {"value": "最新上市", "label": "最新上市"},
+          {"value": "最新上傳", "label": "最新上傳"},
+          {"value": "本日排行", "label": "本日排行"},
+          {"value": "本週排行", "label": "本週排行"},
+          {"value": "本月排行", "label": "本月排行"},
+          {"value": "觀看次數", "label": "觀看次數"},
+          {"value": "讚好比例", "label": "讚好比例"},
+          {"value": "時長最長", "label": "時長最長"},
+          {"value": "他們在看", "label": "他們在看"}
+        ]
+      },
+      {
+        "id": "broad",
+        "title": "放送",
+        "param": "broad",
+        "options": [
+          {"value": "1", "label": "有"},
+          {"value": "0", "label": "無"}
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新上传",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "userAgent": "Dart/3.13 (NexHub)",
+    "referer": "https://hanime1.me"
+  },
+  "ageRating": "mature",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "network": {
+    "hosts": [
+      { "ip": "172.64.229.154", "host": "hanime1.me", "enabled": true },
+      { "ip": "162.159.0.1", "host": "hanime1.me", "enabled": true },
+      { "ip": "108.162.192.1", "host": "hanime1.me", "enabled": true },
+      { "ip": "172.64.33.1", "host": "hanime1.me", "enabled": true },
+      { "ip": "104.19.0.1", "host": "hanime1.me", "enabled": true },
+      { "ip": "172.64.229.154", "host": "hanime1.com", "enabled": true },
+      { "ip": "162.159.0.1", "host": "hanime1.com", "enabled": true },
+      { "ip": "108.162.192.1", "host": "hanime1.com", "enabled": true },
+      { "ip": "172.64.33.1", "host": "hanime1.com", "enabled": true },
+      { "ip": "104.19.0.1", "host": "hanime1.com", "enabled": true },
+      { "ip": "172.64.229.154", "host": "hanimeone.me", "enabled": true },
+      { "ip": "162.159.0.1", "host": "hanimeone.me", "enabled": true },
+      { "ip": "108.162.192.1", "host": "hanimeone.me", "enabled": true },
+      { "ip": "172.64.33.1", "host": "hanimeone.me", "enabled": true },
+      { "ip": "104.19.0.1", "host": "hanimeone.me", "enabled": true }
+    ],
+    "cookieDomains": [
+      "hanime1.me",
+      ".hanime1.me",
+      "hanime1.com",
+      ".hanime1.com",
+      "hanimeone.me",
+      ".hanimeone.me",
+      "javchu.com",
+      ".javchu.com"
+    ],
+    "dns": {
+      "mode": "system",
+      "servers": [],
+      "dohUrl": "",
+      "dotHost": "",
+      "dotPort": 853,
+      "cacheEnabled": true
+    }
+  },
+  "comments": {
+    "login": {
+      "url": "https://hanime1.me/",
+      "checkCookie": "cf_clearance"
+    }
+  }
+}
