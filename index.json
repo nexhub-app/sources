@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T11:25:18.487Z",
+  "generatedAt": "2026-10-03T04:38:28.299Z",
   "count": 23,
   "sources": [
     {
@@ -40,7 +40,7 @@
       "type": "anime",
       "format": "nexhub",
       "name": "Hanime 源",
-      "version": 21,
+      "version": 25,
       "baseUrl": "https://hanime1.me",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_hanime.json",
       "builtin": true,
