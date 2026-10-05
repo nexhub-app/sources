@@ -1,0 +1,364 @@
+{
+  "id": "pms_xifandm",
+  "version": 4,
+  "name": "稀饭动漫",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "site": {
+    "domain": "api.xifanacg.com",
+    "baseUrl": "https://api.xifanacg.com",
+    "headers": {
+      "apikey": "sb_publishable_OBIVAWACIX6lPXrO98_z24_HcsmalkA",
+      "Authorization": "Bearer sb_publishable_OBIVAWACIX6lPXrO98_z24_HcsmalkA"
+    },
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "api.xifanacg.com",
+        "baseUrl": "https://api.xifanacg.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "jsonpath"
+  },
+  "routes": {
+    "latest": {
+      "url": "/rest/v1/animes?select=id,title,cover_url,remarks,release_year,updated_at&is_published=eq.true&order=updated_at.desc&limit=20&offset={page*20-20}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/rest/v1/animes?select=id,title,cover_url,remarks&is_published=eq.true&or=(search_title.ilike.*{keyword}*,pinyin_search.ilike.*{keyword}*,search_author.ilike.*{keyword}*)&order=view_count.desc&limit=30&offset={page*30-30}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/rest/v1/animes?select=id,title,cover_url,description,director,release_year,remarks,is_finished,total_episodes&is_published=eq.true&id=eq.{id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/rest/v1/episodes?select=id,episode_number,title&anime_id=eq.{id}&kind=eq.main&order=episode_number.asc&limit=500",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "/functions/v1/issue-web-playback",
+      "method": "post",
+      "body": "{\"action\":\"fallback\",\"episode_id\":{url}}",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/rest/v1/animes?select=id,title,cover_url,remarks,release_year,updated_at&is_published=eq.true&type_id=eq.{category}&meta_tags={class?}&release_year={year?}&order={by}&limit=24&offset={page*24-24}",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$",
+      "id": "$.id",
+      "title": "$.title",
+      "cover": "$.cover_url",
+      "status": "$.remarks",
+      "year": "$.release_year",
+      "updatedAt": "$.updated_at"
+    },
+    "search": {
+      "list": "$",
+      "id": "$.id",
+      "title": "$.title",
+      "cover": "$.cover_url",
+      "status": "$.remarks"
+    },
+    "category": {
+      "list": "$",
+      "id": "$.id",
+      "title": "$.title",
+      "cover": "$.cover_url",
+      "status": "$.remarks",
+      "year": "$.release_year",
+      "updatedAt": "$.updated_at"
+    },
+    "detail": {
+      "title": "$[0].title",
+      "cover": "$[0].cover_url",
+      "description": "$[0].description",
+      "director": "$[0].director",
+      "year": "$[0].release_year",
+      "status": "$[0].remarks"
+    },
+    "episodes": {
+      "list": "$",
+      "id": "$.id",
+      "title": "$.title",
+      "url": "$.id",
+      "number": "$.episode_number"
+    },
+    "video": "$.url"
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "1",
+        "title": "连载新番"
+      },
+      {
+        "id": "2",
+        "title": "完结旧番"
+      },
+      {
+        "id": "3",
+        "title": "剧场版"
+      },
+      {
+        "id": "4",
+        "title": "美漫"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://next.xifanacg.com"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v4：站点由 MacCMS（anime.xifanacg.com）整体迁移至 Next.js 新站（next.xifanacg.com），旧接口全部 301 失效。数据源改走新站 Supabase 后端（api.xifanacg.com，PostgREST 公开表 animes/episodes），播放地址由 issue-web-playback 接口匿名签发（明文 MP4 直链，多线路自动择优）。分类改为 连载新番/完结旧番/剧场版/美漫（新 type_id 1-4），筛选（类型/年份/排序）改走 meta_tags/release_year/order 过滤。v3：新增分类与筛选（走 ds_api vod 接口）。v2：搜索改走 suggest 联想接口。",
+  "filters": {
+    "groups": [
+      {
+        "id": "class",
+        "title": "类型",
+        "param": "class",
+        "options": [
+          {
+            "value": "",
+            "label": "全部"
+          },
+          {
+            "value": "cs.{乙女}",
+            "label": "乙女"
+          },
+          {
+            "value": "cs.{原创}",
+            "label": "原创"
+          },
+          {
+            "value": "cs.{后宫}",
+            "label": "后宫"
+          },
+          {
+            "value": "cs.{奇幻}",
+            "label": "奇幻"
+          },
+          {
+            "value": "cs.{恋爱}",
+            "label": "恋爱"
+          },
+          {
+            "value": "cs.{悬疑}",
+            "label": "悬疑"
+          },
+          {
+            "value": "cs.{战斗}",
+            "label": "战斗"
+          },
+          {
+            "value": "cs.{日常}",
+            "label": "日常"
+          },
+          {
+            "value": "cs.{校园}",
+            "label": "校园"
+          },
+          {
+            "value": "cs.{科幻}",
+            "label": "科幻"
+          },
+          {
+            "value": "cs.{游戏改}",
+            "label": "游戏改"
+          },
+          {
+            "value": "cs.{漫画改}",
+            "label": "漫画改"
+          },
+          {
+            "value": "cs.{小说改}",
+            "label": "小说改"
+          },
+          {
+            "value": "cs.{百合}",
+            "label": "百合"
+          },
+          {
+            "value": "cs.{耽美}",
+            "label": "耽美"
+          },
+          {
+            "value": "cs.{冒险}",
+            "label": "冒险"
+          },
+          {
+            "value": "cs.{穿越}",
+            "label": "穿越"
+          },
+          {
+            "value": "cs.{机战}",
+            "label": "机战"
+          },
+          {
+            "value": "cs.{运动}",
+            "label": "运动"
+          },
+          {
+            "value": "cs.{音乐}",
+            "label": "音乐"
+          },
+          {
+            "value": "cs.{喜剧}",
+            "label": "喜剧"
+          },
+          {
+            "value": "cs.{推理}",
+            "label": "推理"
+          },
+          {
+            "value": "cs.{萌系}",
+            "label": "萌系"
+          },
+          {
+            "value": "cs.{历史}",
+            "label": "历史"
+          },
+          {
+            "value": "cs.{剧情}",
+            "label": "剧情"
+          },
+          {
+            "value": "cs.{职场}",
+            "label": "职场"
+          }
+        ]
+      },
+      {
+        "id": "year",
+        "title": "年份",
+        "param": "year",
+        "options": [
+          {
+            "value": "",
+            "label": "全部"
+          },
+          {
+            "value": "eq.2026",
+            "label": "2026"
+          },
+          {
+            "value": "eq.2025",
+            "label": "2025"
+          },
+          {
+            "value": "eq.2024",
+            "label": "2024"
+          },
+          {
+            "value": "eq.2023",
+            "label": "2023"
+          },
+          {
+            "value": "eq.2022",
+            "label": "2022"
+          },
+          {
+            "value": "eq.2021",
+            "label": "2021"
+          },
+          {
+            "value": "eq.2020",
+            "label": "2020"
+          },
+          {
+            "value": "eq.2019",
+            "label": "2019"
+          },
+          {
+            "value": "eq.2018",
+            "label": "2018"
+          },
+          {
+            "value": "eq.2017",
+            "label": "2017"
+          },
+          {
+            "value": "eq.2016",
+            "label": "2016"
+          },
+          {
+            "value": "eq.2015",
+            "label": "2015"
+          }
+        ]
+      },
+      {
+        "id": "by",
+        "title": "排序",
+        "param": "by",
+        "options": [
+          {
+            "value": "updated_at.desc",
+            "label": "最新"
+          },
+          {
+            "value": "view_count.desc",
+            "label": "最热"
+          },
+          {
+            "value": "bangumi_score.desc",
+            "label": "评分"
+          }
+        ]
+      }
+    ],
+    "defaults": {
+      "1": {
+        "class": "",
+        "year": "",
+        "by": "updated_at.desc"
+      },
+      "2": {
+        "class": "",
+        "year": "",
+        "by": "updated_at.desc"
+      },
+      "3": {
+        "class": "",
+        "year": "",
+        "by": "updated_at.desc"
+      },
+      "4": {
+        "class": "",
+        "year": "",
+        "by": "updated_at.desc"
+      }
+    }
+  }
+}

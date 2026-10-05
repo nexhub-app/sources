@@ -1,0 +1,165 @@
+{
+  "id": "pms_11kt",
+  "version": 3,
+  "name": "去看吧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "site": {
+    "domain": "11kt.net",
+    "baseUrl": "https://11kt.net",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "11kt.net",
+        "baseUrl": "https://11kt.net"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "category": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "function atob(s){var k='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';var o='';s=String(s).replace(/[^A-Za-z0-9+\\/=]/g,'').replace(/=+$/,'');for(var i=0;i<s.length;i+=4){var a=k.indexOf(s.charAt(i)),b=k.indexOf(s.charAt(i+1)),c=i+2<s.length?k.indexOf(s.charAt(i+2)):-1,d=i+3<s.length?k.indexOf(s.charAt(i+3)):-1;if(c<0)c=0;if(d<0)d=0;o+=String.fromCharCode((a<<2)|(b>>4));if(i+2<s.length)o+=String.fromCharCode(((b&15)<<4)|(c>>2));if(i+3<s.length)o+=String.fromCharCode(((c&3)<<6)|d);}return o;}function parseVideo(html){try{var i=html.indexOf('data-play=\"');while(i!==-1){var st=i+11;var en=html.indexOf('\"',st);if(en<0)break;var v=html.substring(st,en);if(v.length>4){try{var u=atob(v.substring(3));if(u&&u.indexOf('http')===0)return u;}catch(e){}}i=html.indexOf('data-play=\"',en);} }catch(e){}try{var k=html.indexOf('player_aaaa');if(k>=0){var b=html.indexOf('{',k);if(b>=0){var depth=0,end=-1;for(var j=b;j<html.length;j++){var c=html.charAt(j);if(c=='{')depth++;else if(c=='}'){depth--;if(depth==0){end=j+1;break;}}}if(end>0){var cfg=JSON.parse(html.substring(b,end));var u2=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u2=atob(u2);try{u2=decodeURIComponent(u2);}catch(e){}try{u2=decodeURIComponent(u2);}catch(e){}}else if(enc==1){try{u2=decodeURIComponent(u2);}catch(e){}}if(u2.indexOf('http')===0)return u2;}}}}catch(e){}try{var m=html.match(/https?:\\/\\/[^\"'\\s\\\\]+\\.m3u8[^\"'\\s\\\\]*/);if(m)return m[0];}catch(e){}return '';}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/index.php/ajax/data/?mid=1&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/index.php/ajax/suggest?mid=1&wd={keyword}&limit=50",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/index.php/vod/detail/id/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/index.php/vod/detail/id/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/index.php/vod/type/id/{category}/page/{page}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "list": "$.list",
+    "id": "$.vod_id",
+    "title": "$.vod_name",
+    "cover": "$.vod_pic",
+    "status": "$.vod_remarks",
+    "tags": "$.vod_class",
+    "year": "$.vod_year",
+    "updatedAt": "$.vod_time",
+    "search": {
+      "list": "$.list",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.pic"
+    },
+    "category": {
+      "list": "ul.fed-list-info li.fed-list-item",
+      "id": "substring-before(substring-after(.//a[contains(@class,'fed-list-pics')]/@href, '/vod/detail/id/'), '.')",
+      "title": "a.fed-list-title",
+      "cover": "a.fed-list-pics@data-original",
+      "status": "a.fed-list-pics span.fed-list-remarks",
+      "description": "span.fed-list-desc"
+    },
+    "detail": {
+      "title": "dd.fed-deta-content h1 a",
+      "cover": "a.fed-list-pics@data-original",
+      "description": "div.fed-tabs-item p.fed-text-muted",
+      "year": "a[href*='/vod/search/year/']",
+      "tags": "a[href*='/vod/type/']",
+      "actors": "a[href*='/vod/search/actor/']",
+      "status": "span.fed-list-remarks"
+    },
+    "episodes": {
+      "lineList": "div.fed-play-item",
+      "lineName": "li.fed-col-xs4",
+      "list": "a.fed-btns-info"
+    },
+    "video": "//video/@src"
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "20",
+        "title": "国语动漫"
+      },
+      {
+        "id": "21",
+        "title": "日漫"
+      },
+      {
+        "id": "22",
+        "title": "美漫"
+      },
+      {
+        "id": "24",
+        "title": "劇場"
+      },
+      {
+        "id": "33",
+        "title": "高清原碟"
+      },
+      {
+        "id": "43",
+        "title": "日韩剧"
+      },
+      {
+        "id": "50",
+        "title": "女频"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://11kt.net/"
+  },
+  "enabled": true,
+  "enabledExplore": false,
+  "migrationMessage": "v2（2026-10-05）：修复分类 tab——v1 未声明分类，点分类时引擎兜底走 suggest(wd=0) 返回无关全量列表。本站 ajax/data 的 tid 参数无效（实测 tid=21 仍返回全站混排、limit 也被忽略），故分类走 HTML 分类页 /index.php/vod/type/id/{id}.html（fed 模板：ul.fed-list-info li.fed-list-item，封面 a.fed-list-pics@data-original，分页 /page/{page}.html 实测 200 且翻页内容变化；id/all.html 为空壳页 31632B，故不设「全部」tab，仅声明首页导航真实存在的 7 个分类）。v1：声明式 MacCMS 路由 + 播放页 script 解析。2026-09-21 实测：ajax/suggest 搜索正常（'海贼王' 41 条）；ajax/data 最新列表正常；详情/剧集走 /index.php/vod/detail/id/{id}.html（.fed-play-item 多线路、a.fed-btns-info 剧集链接 /index.php/vod/play/...）；播放页 #fed-play-iframe data-play 去前 3 字符后 base64 解出 m3u8 直链，实测可拉取分片（AES-128 加密流，播放需带 Referer）。",
+  "ageRating": "general"
+}

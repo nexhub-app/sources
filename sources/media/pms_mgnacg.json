@@ -1,0 +1,153 @@
+{
+  "id": "pms_mgnacg",
+  "version": 2,
+  "name": "橘子动漫",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "author": "nexhub",
+  "site": {
+    "domain": "www.mgnacg.com",
+    "baseUrl": "https://www.mgnacg.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.mgnacg.com",
+        "baseUrl": "https://www.mgnacg.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "webview",
+        "script": "(function(){\n  try {\n    var doc = document;\n    // A) 播放器页已初始化：video 元素直链（blob: 是 hls.js MSE 包装，跳过）\n    var v = doc.querySelector('video source[src], video[src]');\n    if (v) {\n      var s = (v.getAttribute && v.getAttribute('src')) || '';\n      if (/^https?:\\/\\//i.test(s)) return s;\n    }\n    // B) 播放器页：MuiPlayer/hls.js 发起的媒体请求在 performance 资源表里\n    try {\n      var res = window.performance && window.performance.getEntriesByType ? window.performance.getEntriesByType('resource') : [];\n      for (var i = res.length - 1; i >= 0; i--) {\n        var n = res[i].name || '';\n        if (/^https?:\\/\\//i.test(n) && /\\.(m3u8|mp4|mknvideo)(\\?|$)/i.test(n)) return n;\n      }\n    } catch (e2) {}\n    // C) 播放页：player_aaaa(encrypt=2) 令牌（brace 平衡截取，不依赖行尾分号）\n    var html = doc.documentElement.outerHTML;\n    var idx = html.indexOf('player_aaaa');\n    if (idx >= 0) {\n      var start = html.indexOf('{', idx);\n      if (start >= 0) {\n        var depth = 0, end = -1;\n        for (var j = start; j < html.length && j < start + 20000; j++) {\n          var ch = html.charAt(j);\n          if (ch === '{') depth++;\n          else if (ch === '}') { depth--; if (depth === 0) { end = j + 1; break; } }\n        }\n        if (end > start) {\n          var cfg = {};\n          try { cfg = new Function('return (' + html.substring(start, end) + ')')(); } catch (e3) { cfg = {}; }\n          if (cfg && cfg.url && cfg.from) {\n            // parse 映射来自站点 /static/js/playerconfig.js + /static/player/parse.js\n            var parseMap = {\n              '2_': 'https://play.mknacg.top:8585/cloudplay/?url=',\n              '5_': 'https://play.mknacg.top:8585/cloudplay/yp2.php?url=',\n              '6_': 'https://play.mknacg.top:8585/cloudplay/yp3.php?url=',\n              '4_': 'https://play.mknacg.top:8585/cloudplay/ccxl.php?url=',\n              '3_': 'https://play.mknacg.top:8585/muiplayer/?url='\n            };\n            var parse = parseMap[cfg.from];\n            if (parse) return 'webview:' + parse + cfg.url;\n          }\n        }\n      }\n    }\n    // D) 兜底：cloudplay/muiplayer iframe → 引擎跳转该页重跑本脚本\n    var f = doc.querySelector('iframe#videoiframe, iframe[src*=\"cloudplay\"], iframe[src*=\"muiplayer\"]');\n    if (f) {\n      var fs = f.getAttribute('src') || '';\n      if (/^https?:\\/\\//i.test(fs)) return 'webview:' + fs;\n    }\n    return '';\n  } catch (e) { return ''; }\n})();"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/index.php/ajax/data/?mid=1&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/index.php/ajax/suggest?mid=1&wd={keyword}&limit=50",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/media/{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/media/{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/index.php/ajax/data/?mid=1&tid={category}&page={page}&limit=24",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb"
+    },
+    "search": {
+      "list": "$.list",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.pic"
+    },
+    "category": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb"
+    },
+    "detail": {
+      "title": "h3.slide-info-title",
+      "cover": "div.detail-pic img@data-src",
+      "description": "div#height_limit"
+    },
+    "episodes": {
+      "lineList": "div.anthology-list-box",
+      "lineName": "a.swiper-slide",
+      "list": "ul.anthology-list-play li a"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "",
+        "title": "全部"
+      },
+      {
+        "id": "1",
+        "title": "动漫"
+      },
+      {
+        "id": "2",
+        "title": "剧场版"
+      },
+      {
+        "id": "5",
+        "title": "4月新番"
+      },
+      {
+        "id": "29",
+        "title": "7月新番"
+      },
+      {
+        "id": "32",
+        "title": "10月新番"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://www.mgnacg.com/"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v3（2026-10-05 全链路实测）：分类 tab 走 /index.php/ajax/data/?tid= JSON 接口（tid=1动漫/2剧场版/5 4月新番/29 7月新番/32 10月新番，空=全部）。video 解析两步走：播放页 player_aaaa(encrypt=2) 的 base64 令牌按站点 playerconfig.js 的 parse 映射拼成 cloudplay 播放器页地址回传 webview:，引擎跳转后页面自身（setting.js + crypto-js，MD5 派生 key/iv AES-CBC）解密出 mknvideo/m3u8 直链并初始化 MuiPlayer，脚本从 video[src] 或 performance 资源记录截获直链。播放器页直链 302 至实际文件（如 pan.wo.cn），sign 有效期约一天，引擎按捕获页 Referer 处理防盗链。另修复引擎层图片 302 不跟随（dio_image_file_service + http_fetcher 回调时机），封面恢复。"
+}

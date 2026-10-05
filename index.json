@@ -1,16 +1,64 @@
 {
-  "generatedAt": "2026-10-05T02:25:11.771Z",
-  "count": 23,
+  "generatedAt": "2026-10-05T11:17:44.464Z",
+  "count": 31,
   "sources": [
     {
-      "id": "anime/pms_m233",
-      "category": "anime",
-      "type": "anime",
+      "id": "manga/manga_dm5",
+      "category": "manga",
+      "type": "manga",
       "format": "nexhub",
-      "name": "233动漫",
-      "version": 12,
-      "baseUrl": "https://cn.233dm.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_m233.json",
+      "name": "动漫屋",
+      "version": "1.0.2",
+      "baseUrl": "https://www.dm5.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_dm5.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "teen"
+    },
+    {
+      "id": "manga/manga_mangacopy",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "拷贝漫画",
+      "version": 7,
+      "baseUrl": "https://www.copy4000.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_mangacopy.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "teen"
+    },
+    {
+      "id": "manga/manga_wmh1234",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "漫画1234",
+      "version": "1.1.0",
+      "baseUrl": "https://m.wmh1234.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_wmh1234.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "16+"
+    },
+    {
+      "id": "manga/manga_311s",
+      "category": "manga",
+      "type": "manga",
+      "format": "nexhub",
+      "name": "漫画社",
+      "version": 2,
+      "baseUrl": "https://www.311s.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_311s.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -19,30 +67,14 @@
       "ageRating": "general"
     },
     {
-      "id": "anime/pms_age",
-      "category": "anime",
-      "type": "anime",
+      "id": "manga/manga_relamanhua",
+      "category": "manga",
+      "type": "manga",
       "format": "nexhub",
-      "name": "Age动漫",
+      "name": "热辣漫画",
       "version": 3,
-      "baseUrl": "https://www.agedm.io",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_age.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "general"
-    },
-    {
-      "id": "anime/pms_hanime",
-      "category": "anime",
-      "type": "anime",
-      "format": "nexhub",
-      "name": "Hanime 源",
-      "version": 30,
-      "baseUrl": "https://hanime1.me",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_hanime.json",
+      "baseUrl": "https://api.2024manga.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_relamanhua.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -51,62 +83,30 @@
       "ageRating": "mature"
     },
     {
-      "id": "anime/pms_mxdm",
-      "category": "anime",
-      "type": "anime",
+      "id": "manga/manga_favcomic",
+      "category": "manga",
+      "type": "manga",
       "format": "nexhub",
-      "name": "MX动漫",
-      "version": 3,
-      "baseUrl": "https://www.dcc3.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_mxdm.json",
+      "name": "喜漫漫画",
+      "version": 4,
+      "baseUrl": "https://www.favcomic.xyz",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_favcomic.json",
       "builtin": true,
       "desc": {
         "zh": "",
         "en": ""
       },
-      "ageRating": "general"
+      "ageRating": "mature"
     },
     {
-      "id": "anime/pms_dalvdm",
-      "category": "anime",
-      "type": "anime",
+      "id": "manga/manga_zaimanhua",
+      "category": "manga",
+      "type": "manga",
       "format": "nexhub",
-      "name": "打驴动漫",
-      "version": 7,
-      "baseUrl": "https://www.dalvdm.cc",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_dalvdm.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "general"
-    },
-    {
-      "id": "anime/pms_xifandm",
-      "category": "anime",
-      "type": "anime",
-      "format": "nexhub",
-      "name": "稀饭动漫",
-      "version": 3,
-      "baseUrl": "https://anime.xifanacg.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_xifandm.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "general"
-    },
-    {
-      "id": "anime/pms_girigirilove",
-      "category": "anime",
-      "type": "anime",
-      "format": "nexhub",
-      "name": "花子动漫",
-      "version": 1,
-      "baseUrl": "https://ani.girigirilove.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/anime/pms_girigirilove.json",
+      "name": "再漫画",
+      "version": "2.0.0",
+      "baseUrl": "https://manhua.zaimanhua.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_zaimanhua.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -195,14 +195,14 @@
       "ageRating": "mature"
     },
     {
-      "id": "manga/manga_zaimanhua",
-      "category": "manga",
-      "type": "manga",
+      "id": "media/pms_m233",
+      "category": "media",
+      "type": "media",
       "format": "nexhub",
-      "name": "再漫画",
-      "version": "2.0.0",
-      "baseUrl": "https://manhua.zaimanhua.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_zaimanhua.json",
+      "name": "233动漫",
+      "version": 12,
+      "baseUrl": "https://cn.233dm.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_m233.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -211,78 +211,14 @@
       "ageRating": "general"
     },
     {
-      "id": "manga/manga_dm5",
-      "category": "manga",
-      "type": "manga",
+      "id": "media/pms_dalvdm",
+      "category": "media",
+      "type": "media",
       "format": "nexhub",
-      "name": "动漫屋",
-      "version": "1.0.2",
-      "baseUrl": "https://www.dm5.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_dm5.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "teen"
-    },
-    {
-      "id": "manga/manga_favcomic",
-      "category": "manga",
-      "type": "manga",
-      "format": "nexhub",
-      "name": "喜漫漫画",
-      "version": 4,
-      "baseUrl": "https://www.favcomic.xyz",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_favcomic.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "mature"
-    },
-    {
-      "id": "manga/manga_mangacopy",
-      "category": "manga",
-      "type": "manga",
-      "format": "nexhub",
-      "name": "拷贝漫画",
-      "version": 7,
-      "baseUrl": "https://www.copy4000.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_mangacopy.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "teen"
-    },
-    {
-      "id": "manga/manga_wmh1234",
-      "category": "manga",
-      "type": "manga",
-      "format": "nexhub",
-      "name": "漫画1234",
-      "version": "1.1.0",
-      "baseUrl": "https://m.wmh1234.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_wmh1234.json",
-      "builtin": true,
-      "desc": {
-        "zh": "",
-        "en": ""
-      },
-      "ageRating": "16+"
-    },
-    {
-      "id": "manga/manga_311s",
-      "category": "manga",
-      "type": "manga",
-      "format": "nexhub",
-      "name": "漫画社",
-      "version": 2,
-      "baseUrl": "https://www.311s.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_311s.json",
+      "name": "打驴动漫",
+      "version": 9,
+      "baseUrl": "https://www.sbdl.cc",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_dalvdm.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -291,14 +227,158 @@
       "ageRating": "general"
     },
     {
-      "id": "manga/manga_relamanhua",
-      "category": "manga",
-      "type": "manga",
+      "id": "media/pms_didahd",
+      "category": "media",
+      "type": "media",
       "format": "nexhub",
-      "name": "热辣漫画",
+      "name": "嘀嗒影视",
       "version": 3,
-      "baseUrl": "https://api.2024manga.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/manga/manga_relamanhua.json",
+      "baseUrl": "https://www.didahd.xyz",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_didahd.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_mgnacg",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "橘子动漫",
+      "version": 2,
+      "baseUrl": "https://www.mgnacg.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_mgnacg.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_7sefun",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "七色番",
+      "version": 6,
+      "baseUrl": "https://www.7sefun.top",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_7sefun.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_11kt",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "去看吧",
+      "version": 3,
+      "baseUrl": "https://11kt.net",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_11kt.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_xifandm",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "稀饭动漫",
+      "version": 4,
+      "baseUrl": "https://api.xifanacg.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_xifandm.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_age",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "Age动漫",
+      "version": 3,
+      "baseUrl": "https://www.agedm.io",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_age.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_akianime",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "Akianime",
+      "version": 6,
+      "baseUrl": "https://www.moefun.cc",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_akianime.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_anime7",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "Anime7 动画线上看",
+      "version": 3,
+      "baseUrl": "https://anime7.top",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_anime7.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_girigirilove",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "girigiri愛動漫",
+      "version": 5,
+      "baseUrl": "https://ani.girigirilove.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_girigirilove.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_hanime",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "Hanime 源",
+      "version": 30,
+      "baseUrl": "https://hanime1.me",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_hanime.json",
       "builtin": true,
       "desc": {
         "zh": "",
@@ -307,34 +387,50 @@
       "ageRating": "mature"
     },
     {
-      "id": "novel/novel_linovelib",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "哔哩轻小说",
-      "version": 1,
-      "baseUrl": "https://www.linovelib.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_linovelib.json",
+      "id": "media/pms_ios_mifun",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "MiFun",
+      "version": 6,
+      "baseUrl": "https://ios.mifun.org",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_ios_mifun.json",
       "builtin": true,
       "desc": {
-        "zh": "哔哩轻小说(linovelib，原 bilinovel)，正文清晰，附「最近更新」发现入口。",
-        "en": "linovelib (formerly bilinovel) source with clean text and a latest-updates explore feed."
+        "zh": "",
+        "en": ""
       },
       "ageRating": "general"
     },
     {
-      "id": "novel/novel_huanmengacg",
-      "category": "novel",
-      "type": "novel",
-      "format": "legado",
-      "name": "幻梦ACG轻小说",
-      "version": 1,
-      "baseUrl": "https://www.huanmengacg.com",
-      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_huanmengacg.json",
+      "id": "media/pms_mxdm",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "MX动漫",
+      "version": 3,
+      "baseUrl": "https://www.dcc3.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_mxdm.json",
       "builtin": true,
       "desc": {
-        "zh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
-        "en": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_tvtfun",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "TvTFun",
+      "version": 6,
+      "baseUrl": "https://www.tvtfun.net",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_tvtfun.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
       },
       "ageRating": "general"
     },
@@ -367,6 +463,38 @@
       "desc": {
         "zh": "笔趣阁综合网文站，支持玄幻/都市/言情等分类发现。",
         "en": "Biquge multi-category web-novel source with genre browsing."
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "novel/novel_linovelib",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "哔哩轻小说",
+      "version": 1,
+      "baseUrl": "https://www.linovelib.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_linovelib.json",
+      "builtin": true,
+      "desc": {
+        "zh": "哔哩轻小说(linovelib，原 bilinovel)，正文清晰，附「最近更新」发现入口。",
+        "en": "linovelib (formerly bilinovel) source with clean text and a latest-updates explore feed."
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "novel/novel_huanmengacg",
+      "category": "novel",
+      "type": "novel",
+      "format": "legado",
+      "name": "幻梦ACG轻小说",
+      "version": 1,
+      "baseUrl": "https://www.huanmengacg.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/novel/novel_huanmengacg.json",
+      "builtin": true,
+      "desc": {
+        "zh": "幻梦ACG轻小说站，题材/文库筛选丰富，含排行榜与分类发现。",
+        "en": "HuanmengACG PTCMS light-novel source with rich tag filtering, rankings & categories."
       },
       "ageRating": "general"
     }

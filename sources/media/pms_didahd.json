@@ -1,0 +1,154 @@
+{
+  "id": "pms_didahd",
+  "version": 3,
+  "name": "嘀嗒影视",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "author": "nexhub",
+  "site": {
+    "domain": "www.didahd.xyz",
+    "baseUrl": "https://www.didahd.xyz",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.didahd.xyz",
+        "baseUrl": "https://www.didahd.xyz"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "category": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "builtin"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/index.php/ajax/data/?mid=1&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/index.php/ajax/suggest?mid=1&wd={keyword}&limit=50",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/detail/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/detail/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/index.php/ajax/data/?mid=1&tid={category?}&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb"
+    },
+    "search": {
+      "list": "$.list",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.pic"
+    },
+    "category": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb"
+    },
+    "detail": {
+      "title": "h1",
+      "cover": "img@data-original"
+    },
+    "episodes": {
+      "lineList": "div[id^=\"playlist\"]",
+      "lineName": "ul.nav-tabs li a[href^=\"#playlist\"]",
+      "list": "ul.myui-content__list li a"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "",
+        "title": "全部"
+      },
+      {
+        "id": "1",
+        "title": "电影"
+      },
+      {
+        "id": "2",
+        "title": "电视剧"
+      },
+      {
+        "id": "3",
+        "title": "纪录片"
+      },
+      {
+        "id": "4",
+        "title": "动漫"
+      },
+      {
+        "id": "5",
+        "title": "综艺"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://www.didahd.xyz/"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v3（2026-10-05）：修复选集解析——v1 的列表选择器 ul.myui-play-list 在页面中不存在（正确类名为 ul.myui-content__list），选集自初版起解析为 0 条导致无法播放；容器改用 [id^=playlist] 精确圈定选集面板（排除「同类型/同主演」推荐区）。⚠️ 本站线路标签与实际内容不符：可播的直链线可能挂在「夸克网盘」等网盘标签下，某条线路提示解析不到请换其他线路；流媒体线多为 artplayer 加密（BBA/NBY/rrmj），手动解析拿不到直链，播放依赖播放器的 WebView 嗅探链路（站点端解密后截获真实 m3u8）；嗅探失败的线路请换其他线路。站点线路会不定期变动（线路标签与实际内容未必对应）。v2：分类走 MacCMS ajax/data 的 tid 过滤（type 参数无效；tid 需与 mid 同传），「全部」用 {category?} 可选标记空值整段移除；播放新增 video 路由（{url} 直通播放页），player_aaaa 中 from=ffm3u8 的明文 m3u8 线可直接解析。v1 初版（2026-09-21）。"
+}

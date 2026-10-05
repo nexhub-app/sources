@@ -8,7 +8,7 @@
  * 网页 (nexhub-app/website) 只读取 index.json，因此新增/修改源后无需改网页代码。
  *
  * 判定规则：
- *   category : 取文件相对 sources/ 的第一级文件夹名（manga / anime / novel）。
+ *   category : 取文件相对 sources/ 的第一级文件夹名（manga / media / novel）。
  *   format   : JSON 顶层有 type: "xxxSource" -> "nexhub"（NexHub 原生格式）；
  *              有 bookSourceName 无顶层 type -> "legado"（阅读/书源格式）。
  *              两种格式 App 都支持导入，所以 builtin 一律为 true。
@@ -28,7 +28,7 @@ const OUT_FILE = path.join(ROOT, "index.json");
 const RAW_BASE =
   process.env.RAW_BASE || "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main";
 
-const ALLOWED_CATEGORIES = ["manga", "anime", "novel"];
+const ALLOWED_CATEGORIES = ["manga", "media", "novel"];
 
 function detectFormat(obj) {
   if (obj && typeof obj.type === "string" && obj.type.endsWith("Source")) return "nexhub";
@@ -96,7 +96,7 @@ function main() {
     sources.push({
       id,
       category,
-      type: category, // 供网页筛选标签使用（manga/anime/novel）
+      type: category, // 供网页筛选标签使用（manga/media/novel）
       format,
       name,
       version,

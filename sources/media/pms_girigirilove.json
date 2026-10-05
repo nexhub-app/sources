@@ -1,0 +1,140 @@
+{
+  "id": "pms_girigirilove",
+  "version": 5,
+  "name": "girigiri愛動漫",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "site": {
+    "domain": "ani.girigirilove.com",
+    "baseUrl": "https://ani.girigirilove.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "ani.girigirilove.com",
+        "baseUrl": "https://ani.girigirilove.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "function atob(s){var k='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';var o='';s=String(s).replace(/[^A-Za-z0-9+\\/=]/g,'').replace(/=+$/,'');for(var i=0;i<s.length;i+=4){var a=k.indexOf(s.charAt(i)),b=k.indexOf(s.charAt(i+1)),c=i+2<s.length?k.indexOf(s.charAt(i+2)):-1,d=i+3<s.length?k.indexOf(s.charAt(i+3)):-1;if(c<0)c=0;if(d<0)d=0;o+=String.fromCharCode((a<<2)|(b>>4));if(i+2<s.length)o+=String.fromCharCode(((b&15)<<4)|(c>>2));if(i+3<s.length)o+=String.fromCharCode(((c&3)<<6)|d);}return o;}function parseVideo(html){try{var i=html.indexOf('player_aaaa');if(i<0)return '';var k=html.indexOf('{',i);if(k<0)return '';var depth=0,end=-1;for(var j=k;j<html.length;j++){var c=html.charAt(j);if(c=='{')depth++;else if(c=='}'){depth--;if(depth==0){end=j+1;break;}}}if(end<0)return '';var cfg=JSON.parse(html.substring(k,end));var u=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u=atob(u);try{u=decodeURIComponent(u);}catch(e){}try{u=decodeURIComponent(u);}catch(e){}}else if(enc==1){u=decodeURIComponent(u);}if(u.indexOf('http')!==0)return '';return u;}catch(e){return '';}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/index.php/ajax/data/?mid=1&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/index.php/ajax/suggest?mid=1&wd={keyword}&limit=50",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/GV{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/GV{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "list": "$.list",
+    "id": "$.vod_id",
+    "title": "$.vod_name",
+    "cover": "$.vod_pic",
+    "detail": {
+      "title": "h3.slide-info-title",
+      "cover": "div.detail-pic img@data-src, div.detail-pic img@data-original",
+      "description": "div#height_limit",
+      "director": "//strong[contains(text(),'导演')]/following-sibling::a/text()",
+      "actors": "//strong[contains(text(),'演员')]/following-sibling::a/text(), //strong[contains(text(),'主演')]/following-sibling::a/text()",
+      "year": "//span[contains(@class,'slide-info-remarks')]/a/text()",
+      "status": "//span[contains(@class,'slide-info-remarks')]/text()"
+    },
+    "episodes": {
+      "list": "ul.anthology-list-play li a, a[href*='/playGV']"
+    },
+    "video": "//video/@src",
+    "search": {
+      "list": "$.list",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.pic"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      },
+      {
+        "id": "1",
+        "title": "动漫"
+      },
+      {
+        "id": "2",
+        "title": "剧场版"
+      },
+      {
+        "id": "3",
+        "title": "国产"
+      },
+      {
+        "id": "4",
+        "title": "日韩"
+      },
+      {
+        "id": "5",
+        "title": "欧美"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://ani.girigirilove.com"
+  },
+  "enabled": true,
+  "enabledExplore": true,
+  "migrationMessage": "v5（2026-10-05 实测）：站点现名「girigiri愛動漫」；详情页封面属性由 data-original 改为 data-src；导演/演员改以 strong 标签文本定位（引擎 xpath_selector 不支持 contains(.,'…') 当前节点谓词，v2 起的旧选择器一直被静默降级为空；「主演」也改「演员」）；年份/状态改取 slide-info-remarks 首个节点；剧集选择器改 Map 形态（扁平字符串会被顶层 $.list 劫持成 HTML 选择器，详情页剧集恒空）；列表封面为 /upload 相对路径，引擎已全局补全为绝对 URL。v2：搜索改走 ajax/suggest 联想接口；详情从 ajax/data?ids= 改为 /GV{id}/ 页面并配 HTML 选择器；视频解析 script 通道解 player_aaaa（encrypt=2：base64 + 双层 URL 解码，实测出 mp4 直链）。",
+  "ageRating": "general"
+}

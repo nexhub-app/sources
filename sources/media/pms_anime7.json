@@ -1,0 +1,168 @@
+{
+  "id": "pms_anime7",
+  "version": 3,
+  "name": "Anime7 动画线上看",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "author": "nexhub",
+  "site": {
+    "domain": "anime7.top",
+    "baseUrl": "https://anime7.top",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "anime7.top",
+        "baseUrl": "https://anime7.top"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "function parseVideo(html){try{var i=html.indexOf('player_aaaa');if(i<0)return '';var k=html.indexOf('{',i);if(k<0)return '';var depth=0,end=-1;for(var j=k;j<html.length;j++){var c=html.charAt(j);if(c=='{')depth++;else if(c=='}'){depth--;if(depth==0){end=j+1;break}}}if(end<0)return '';var cfg=JSON.parse(html.substring(k,end));var u=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u=atob(u);try{u=decodeURIComponent(u)}catch(e){}try{u=decodeURIComponent(u)}catch(e){}}else if(enc==1){u=decodeURIComponent(u)}if(u.indexOf('http')!==0)return '';return u}catch(e){return ''}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/index.php/ajax/data/?mid=1&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/index.php/ajax/data/?mid=1&tid={category}&page={page}&limit=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/vod-search/page/{page}/wd/{keyword}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/vod-detail/{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/vod-detail/{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb",
+      "updatedAt": "$.vod_time"
+    },
+    "category": {
+      "list": "$.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb",
+      "updatedAt": "$.vod_time"
+    },
+    "search": {
+      "list": "ul.hl-one-list li.hl-list-item",
+      "id": "substring-before(substring-after(.//a[contains(@class,'hl-item-thumb')]/@href, '/vod-detail/'), '/')",
+      "title": "a.hl-item-thumb@title, .hl-item-title a@text",
+      "cover": "a.hl-item-thumb@data-original, a.hl-item-thumb@src",
+      "description": "p.hl-item-sub.hl-lc-2",
+      "status": ".hl-pic-text .remarks"
+    },
+    "detail": {
+      "title": "h2.hl-dc-title",
+      "cover": "div.hl-dc-pic .hl-item-thumb@data-original, div.hl-dc-pic img@data-original, div.hl-dc-pic img@src",
+      "description": "span.hl-content-text",
+      "director": "//em[contains(text(),'导演')]/following-sibling::a/text()",
+      "actors": "//em[contains(text(),'主演')]/following-sibling::a/text(), //em[contains(text(),'演员')]/following-sibling::a/text()",
+      "year": "substring-after(//li[em[contains(text(),'年份')]], '：')",
+      "status": "//em[contains(text(),'状态')]/following-sibling::span/text()",
+      "tags": "//em[contains(text(),'类型')]/following-sibling::a/text()"
+    },
+    "episodes": {
+      "lineList": "div.hl-tabs-box",
+      "lineName": "div.hl-plays-from a.hl-tabs-btn",
+      "list": "ul.hl-plays-list li a"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      },
+      {
+        "id": "29",
+        "title": "日韩动漫"
+      },
+      {
+        "id": "38",
+        "title": "剧场版"
+      },
+      {
+        "id": "37",
+        "title": "僧侣番"
+      },
+      {
+        "id": "28",
+        "title": "国产动漫"
+      },
+      {
+        "id": "31",
+        "title": "欧美动漫"
+      },
+      {
+        "id": "30",
+        "title": "港台动漫"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": true,
+  "antiHotlinking": {
+    "referer": "https://anime7.top/",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "migrationMessage": "v3（2026-10-05）：分类 tab 接入 ajax/data 的 tid 过滤（tid=all 即全部）；剧集选择器对齐 conch 模板实际 DOM（线路容器 hl-tabs-box / 分集 ul.hl-plays-list li a，旧选择器命不中任何节点导致详情页剧集恒空、无法播放）；搜索改走站内搜索页 /vod-search/page/{page}/wd/{keyword}/（旧 suggest 接口全字段模糊且恒按更新时间取前 50 条，结果与关键词基本无关）；详情封面改取 span.hl-item-thumb@data-original（该模板封面不是 img），状态/年份/类型改按 em 标签定位。播放直链解析不变（player_aaaa encrypt=2）。"
+}

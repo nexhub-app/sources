@@ -14,7 +14,7 @@ NexHub 的**公共源仓库**。这里集中存放所有可导入的源（漫画
 .
 ├─ sources/                  # 源文件（按媒体类型分类）
 │  ├─ manga/                 # 漫画源（NexHub 格式）
-│  ├─ anime/                 # 影视 / 动漫源（NexHub 格式）
+│  ├─ media/                 # 影视 / 媒体源（NexHub 格式）
 │  └─ novel/                 # 小说源（阅读 / Legado 格式）
 ├─ scripts/
 │  └─ generate_index.js      # 扫描 sources/**/*.json → 生成 index.json
@@ -41,7 +41,7 @@ NexHub 的**公共源仓库**。这里集中存放所有可导入的源（漫画
 
 网站下次打开就会自动显示这个新源，并带上「导入」按钮。
 
-> ⚠️ 分类文件夹只能是 `manga` / `anime` / `novel` 之一，文件名建议用 `类型_站点标识.json`（如 `manga_goda.json`）。
+> ⚠️ 分类文件夹只能是 `manga` / `media` / `novel` 之一，文件名建议用 `类型_站点标识.json`（如 `manga_goda.json`）。
 
 ---
 

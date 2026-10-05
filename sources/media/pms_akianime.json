@@ -1,0 +1,454 @@
+{
+  "id": "pms_akianime",
+  "version": 6,
+  "name": "Akianime",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "www.moefun.cc",
+    "baseUrl": "https://www.moefun.cc",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.moefun.cc",
+        "baseUrl": "https://www.moefun.cc"
+      },
+      {
+        "name": "镜像",
+        "domain": "www.akianime.cc",
+        "baseUrl": "https://www.akianime.cc"
+      }
+    ]
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/bgmsearch/-------------.html?wd={keyword}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/index.php/ds_api/vod?type={category}&class={class}&area=&year={year}&lang=&version=&state=&letter={letter}&time=&level=0&weekday=&by={sort}&page={page}",
+      "method": "post",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "list": "div.public-list-box",
+    "id": "a.public-list-exp@href",
+    "title": "a.time-title@title",
+    "cover": "img@data-src",
+    "search": {
+      "list": "div.vod-detail",
+      "id": "a[href*='/bgmdetail/']@href",
+      "title": "h3.slide-info-title",
+      "cover": "img@data-src"
+    },
+    "category": {
+      "list": "$.list[*]",
+      "id": "$.url",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "detailUrl": "$.url",
+      "description": "$.vod_blurb",
+      "status": "$.vod_remarks"
+    },
+    "detail": {
+      "title": "h3.slide-info-title",
+      "cover": "div.detail-pic img@data-src",
+      "description": "div.detail-content-desc, p.desc",
+      "tags": "//li[em[contains(text(),'类型：')]]/a",
+      "director": "//li[em[contains(text(),'导演：')]]/a",
+      "year": "substring-after(//li[em[contains(text(),'年份：')]],'年份：')"
+    },
+    "episodes": {
+      "lineList": "div.anthology-list-box",
+      "lineName": "div.anthology-tab .swiper-slide",
+      "list": "ul.anthology-list-play li a"
+    }
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "akiVideo",
+        "script": "function atob(s){var k='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';var o='';s=String(s).replace(/[^A-Za-z0-9+\\/=]/g,'').replace(/=+$/,'');for(var i=0;i<s.length;i+=4){var a=k.indexOf(s.charAt(i)),b=k.indexOf(s.charAt(i+1)),c=i+2<s.length?k.indexOf(s.charAt(i+2)):-1,d=i+3<s.length?k.indexOf(s.charAt(i+3)):-1;if(c<0)c=0;if(d<0)d=0;o+=String.fromCharCode((a<<2)|(b>>4));if(i+2<s.length)o+=String.fromCharCode(((b&15)<<4)|(c>>2));if(i+3<s.length)o+=String.fromCharCode(((c&3)<<6)|d);}return o;}var __akiTok;var __akiFrom;var __akiParse;var __akiPlay='https://www.moefun.cc';\nfunction akiBalanced(s,k){var d=0;for(var j=k;j<s.length;j++){var c=s.charAt(j);if(c=='{')d++;else if(c=='}'){d--;if(d==0)return s.substring(k,j+1);}}return '';}\nfunction akiUnpack(html){try{var i=html.indexOf('player_aaaa');if(i<0)return '';var k=html.indexOf('{',i);if(k<0)return '';var txt=akiBalanced(html,k);if(!txt)return '';var cfg=JSON.parse(txt);__akiFrom=cfg.from||'';var u=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u=atob(u);if(/^[0-9a-fA-F]+$/.test(u)){u=decodeURIComponent(u);}try{u=decodeURIComponent(u);}catch(e){}}else if(enc==1){u=decodeURIComponent(u);}return u;}catch(e){return '';}}\nfunction akiType(u){var lu=String(u).toLowerCase();if(lu.indexOf('.m3u8')>=0)return 'm3u8';if(lu.indexOf('dis_k=')>=0||lu.indexOf('.mp4')>=0)return 'mp4';return 'm3u8';}\nfunction akiVideo(html){var u=akiUnpack(html);if(!u)return '';if(u.indexOf('http')===0)return {url:u,type:akiType(u)};__akiTok=u;return {__meta:true,__fetchUrl:__akiPlay+'/static/js/playerconfig.js',__fetchResponseType:'text',__fetchHeaders:{'Referer':__akiPlay+'/'},__processor:'akiConfig'};}\nfunction akiConfig(text){try{var key='\"'+__akiFrom+'\":{';var ki=text.indexOf(key);if(ki<0)return '';var obj=JSON.parse(akiBalanced(text,ki+key.length-1));var p=obj.parse||'';if(!p)return '';__akiParse=p;var u=__akiTok;if(u.indexOf('http')===0)return {url:u,type:akiType(u)};return {__meta:true,__fetchUrl:p+encodeURIComponent(u),__fetchResponseType:'text',__fetchHeaders:{'Referer':__akiPlay+'/'},__processor:'akiPlayer'};}catch(e){return '';}}\nfunction akiPlayer(text){try{var m1=text.match(/\"time\"\\s*:\\s*\"?([0-9]+)\"?/);var m2=text.match(/\"key\"\\s*:\\s*\"([^\"]*)\"/);var m3=text.match(/\"vkey\"\\s*:\\s*\"([^\"]*)\"/);if(!m1)return '';var time=m1[1],key=m2?m2[1]:'',vkey=m3?m3[1]:'';var h=__akiParse,pi=h.indexOf('//'),host=h.substring(0,h.indexOf('/',pi+2));return {__meta:true,__fetchUrl:host+'/api_config.php',__fetchMethod:'post',__fetchBody:'url='+encodeURIComponent(__akiTok)+'&time='+time+'&key='+encodeURIComponent(key)+'&vkey='+encodeURIComponent(vkey),__fetchResponseType:'text',__fetchHeaders:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','Accept':'application/json, text/javascript, */*; q=0.01','X-Requested-With':'XMLHttpRequest','Origin':host,'Referer':__akiParse+encodeURIComponent(__akiTok)},__processor:'akiFinal'};}catch(e){return '';}}\nfunction akiFinal(text){try{var j=text;if(typeof j==='string')j=JSON.parse(j);var u=(j&&j.url)||'';if(!u)return '';u=String(u).replace(/\\\\\\//g,'/');if(u.indexOf('http')===0)return {url:u,type:akiType(u)};return '';}catch(e){return '';}}\n"
+      }
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "20",
+        "title": "新旧番剧"
+      },
+      {
+        "id": "21",
+        "title": "动漫剧场"
+      }
+    ]
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "genre",
+        "title": "类型",
+        "param": "class",
+        "options": [
+          {
+            "value": "恋爱",
+            "label": "恋爱"
+          },
+          {
+            "value": "校园",
+            "label": "校园"
+          },
+          {
+            "value": "青春",
+            "label": "青春"
+          },
+          {
+            "value": "后宫",
+            "label": "后宫"
+          },
+          {
+            "value": "治愈",
+            "label": "治愈"
+          },
+          {
+            "value": "日常",
+            "label": "日常"
+          },
+          {
+            "value": "原创",
+            "label": "原创"
+          },
+          {
+            "value": "战斗",
+            "label": "战斗"
+          },
+          {
+            "value": "百合",
+            "label": "百合"
+          },
+          {
+            "value": "奇幻",
+            "label": "奇幻"
+          },
+          {
+            "value": "少女",
+            "label": "少女"
+          },
+          {
+            "value": "魔法",
+            "label": "魔法"
+          },
+          {
+            "value": "冒险",
+            "label": "冒险"
+          },
+          {
+            "value": "运动",
+            "label": "运动"
+          },
+          {
+            "value": "漫画改",
+            "label": "漫画改"
+          },
+          {
+            "value": "游戏改",
+            "label": "游戏改"
+          },
+          {
+            "value": "异世界",
+            "label": "异世界"
+          },
+          {
+            "value": "泡面番",
+            "label": "泡面番"
+          },
+          {
+            "value": "轻小说改",
+            "label": "轻小说改"
+          }
+        ]
+      },
+      {
+        "id": "letter",
+        "title": "字母",
+        "param": "letter",
+        "options": [
+          {
+            "value": "A",
+            "label": "A"
+          },
+          {
+            "value": "B",
+            "label": "B"
+          },
+          {
+            "value": "C",
+            "label": "C"
+          },
+          {
+            "value": "D",
+            "label": "D"
+          },
+          {
+            "value": "E",
+            "label": "E"
+          },
+          {
+            "value": "F",
+            "label": "F"
+          },
+          {
+            "value": "G",
+            "label": "G"
+          },
+          {
+            "value": "H",
+            "label": "H"
+          },
+          {
+            "value": "I",
+            "label": "I"
+          },
+          {
+            "value": "J",
+            "label": "J"
+          },
+          {
+            "value": "K",
+            "label": "K"
+          },
+          {
+            "value": "L",
+            "label": "L"
+          },
+          {
+            "value": "M",
+            "label": "M"
+          },
+          {
+            "value": "N",
+            "label": "N"
+          },
+          {
+            "value": "O",
+            "label": "O"
+          },
+          {
+            "value": "P",
+            "label": "P"
+          },
+          {
+            "value": "Q",
+            "label": "Q"
+          },
+          {
+            "value": "R",
+            "label": "R"
+          },
+          {
+            "value": "S",
+            "label": "S"
+          },
+          {
+            "value": "T",
+            "label": "T"
+          },
+          {
+            "value": "U",
+            "label": "U"
+          },
+          {
+            "value": "V",
+            "label": "V"
+          },
+          {
+            "value": "W",
+            "label": "W"
+          },
+          {
+            "value": "X",
+            "label": "X"
+          },
+          {
+            "value": "Y",
+            "label": "Y"
+          },
+          {
+            "value": "Z",
+            "label": "Z"
+          },
+          {
+            "value": "1",
+            "label": "1"
+          },
+          {
+            "value": "2",
+            "label": "2"
+          },
+          {
+            "value": "3",
+            "label": "3"
+          },
+          {
+            "value": "4",
+            "label": "4"
+          },
+          {
+            "value": "5",
+            "label": "5"
+          },
+          {
+            "value": "6",
+            "label": "6"
+          },
+          {
+            "value": "7",
+            "label": "7"
+          },
+          {
+            "value": "8",
+            "label": "8"
+          },
+          {
+            "value": "9",
+            "label": "9"
+          }
+        ]
+      },
+      {
+        "id": "year",
+        "title": "年份",
+        "param": "year",
+        "options": [
+          {
+            "value": "2026",
+            "label": "2026"
+          },
+          {
+            "value": "2025",
+            "label": "2025"
+          },
+          {
+            "value": "2024",
+            "label": "2024"
+          },
+          {
+            "value": "2023",
+            "label": "2023"
+          },
+          {
+            "value": "2022",
+            "label": "2022"
+          },
+          {
+            "value": "2021",
+            "label": "2021"
+          },
+          {
+            "value": "2020",
+            "label": "2020"
+          },
+          {
+            "value": "2019",
+            "label": "2019"
+          },
+          {
+            "value": "2018",
+            "label": "2018"
+          },
+          {
+            "value": "2017",
+            "label": "2017"
+          },
+          {
+            "value": "2016",
+            "label": "2016"
+          },
+          {
+            "value": "2015",
+            "label": "2015"
+          },
+          {
+            "value": "2014",
+            "label": "2014"
+          }
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "param": "sort",
+        "options": [
+          {
+            "value": "time",
+            "label": "最新"
+          },
+          {
+            "value": "hits",
+            "label": "最热"
+          },
+          {
+            "value": "score",
+            "label": "评分"
+          }
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最近更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.moefun.cc"
+  },
+  "enabled": true,
+  "migrationMessage": "moefun.cc / dsn2 模板源。实测（2026-09-22）：search=/bgmsearch/?wd= HTML 命中；详情/选集 /bgmdetail/{code}.html 三线 1179 集。播放两条路径：player_aaaa(encrypt=0) 直链 m3u8 直接播放（lzm3u8/bfzym3u8 线，vip1.lz-cdn8.com 200 #EXTM3U）；Doki- 令牌线走 3 跳 __meta 链（GET /static/js/playerconfig.js 取 parse → GET aniplayer…/?url=令牌 取 time/key/vkey → POST …/api_config.php 得直链，实测 200 可播）。v6 实测（2026-10-05）：category 走 POST /index.php/ds_api/vod（type=20 新旧番剧 4490 / type=21 动漫剧场 294），class/letter/year/by 全参数蓝军实测生效（letter 无 0：PHP empty('0') 被服务端无视）；详情页 tags/director/year 用 li/em XPath 补齐，头部 slide-info 区作备用。girigiri 站为同模板，解析规则可平移。",
+  "ageRating": "general"
+}
