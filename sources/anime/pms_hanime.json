@@ -1,6 +1,6 @@
 {
   "id": "pms_hanime",
-  "version": 25,
+  "version": 30,
   "name": "Hanime 源",
   "author": "community",
   "type": "animeSource",
@@ -9,7 +9,6 @@
   "site": {
     "domain": "hanime1.me",
     "baseUrl": "https://hanime1.me",
-    "userAgent": "Dart/3.13 (NexHub)",
     "mirrors": [
       {
         "name": "主站",
@@ -20,11 +19,6 @@
         "name": "备用一",
         "domain": "hanime1.com",
         "baseUrl": "https://hanime1.com"
-      },
-      {
-        "name": "备用二",
-        "domain": "hanimeone.me",
-        "baseUrl": "https://hanimeone.me"
       }
     ]
   },
@@ -42,7 +36,7 @@
       },
       "episodes": {
         "type": "script",
-        "script": "function episodes(raw, context){try{\nvar base='https://hanime1.me';\nfunction abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}\nif(typeof raw==='string'&&raw){\nvar out=[];\nvar re=/<div[^>]*class=\"playlist-hover-wrap\"[^>]*data-href=\"([^\"]+)\"[^>]*>/gi;var m;\nwhile((m=re.exec(raw))){var href=abs(m[1]);if(href&&href.indexOf('watch')>=0){var ti='';var mm=raw.slice(m.index).match(/<h4[^>]*class=\"video-title\"[^>]*>\\s*<a[^>]*>([\\s\\S]*?)<\\/a>/i);if(mm)ti=(mm[1]||'').replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();out.push({title:ti||'分集',url:href});}}\nif(out.length)return out;\n}\nvar du=(context&&typeof context.detailUrl==='string'&&context.detailUrl.indexOf('http')===0)?context.detailUrl:'';\nif(!du&&typeof raw==='string'&&raw){var cm=raw.match(/<link[^>]+rel=\"canonical\"[^>]+href=\"([^\"]+)\"/i)||raw.match(/property=\"og:url\"[^>]+content=\"([^\"]+)\"/i);if(cm)du=cm[1];}\nif(!du&&typeof raw==='string'&&raw){var cm2=raw.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(cm2)du=abs(cm2[1]);}\nreturn du?[{title:'正片',url:du}]:[];\n}catch(e){return [];}}"
+        "script": "function episodes(raw, context){try{\nvar base='https://hanime1.me';\nfunction abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}\nif(typeof raw==='string'&&raw){\nvar du0=(context&&typeof context.detailUrl==='string')?context.detailUrl:'';\nif(du0.indexOf('playlist?list=')>=0||raw.indexOf('playlist-item-')>=0){\nvar eps=[];var pre=/<div[^>]*id=\"playlist-item-\\d+\"[^>]*>/gi;var pm2;var pos=[];\nwhile((pm2=pre.exec(raw)))pos.push(pm2.index);\nfor(var i2=0;i2<pos.length;i2++){var s2=raw.slice(pos[i2],i2+1<pos.length?pos[i2+1]:raw.length);var dm=s2.match(/data-href=\"([^\"]+)\"/i);if(!dm)continue;var hu=abs(dm[1].replace(/&amp;/g,'&'));var wm=hu.match(/watch\\?v=\\d+/);if(!wm)continue;var t2=s2.match(/<h4[^>]*class=\"video-title\"[^>]*>([\\s\\S]*?)<\\/h4>/i);var inner2=t2?t2[1]:'';var a2=inner2.match(/<a[^>]*>([\\s\\S]*?)<\\/a>/i);var ti2=a2?a2[1]:inner2;ti2=ti2.replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();eps.push({title:ti2||('P'+(i2+1)),url:abs(wm[0])});}\nif(eps.length)return eps;\n}\nvar out=[];\nvar re=/<div[^>]*class=\"playlist-hover-wrap\"[^>]*data-href=\"([^\"]+)\"[^>]*>/gi;var m;\nwhile((m=re.exec(raw))){var href=abs(m[1]);if(href&&href.indexOf('watch')>=0){var ti='';var mm=raw.slice(m.index).match(/<h4[^>]*class=\"video-title\"[^>]*>\\s*<a[^>]*>([\\s\\S]*?)<\\/a>/i);if(mm)ti=(mm[1]||'').replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();out.push({title:ti||'分集',url:href});}}\nif(out.length)return out;\n}\nvar du=(context&&typeof context.detailUrl==='string'&&context.detailUrl.indexOf('http')===0)?context.detailUrl:'';\nif(!du&&typeof raw==='string'&&raw){var cm=raw.match(/<link[^>]+rel=\"canonical\"[^>]+href=\"([^\"]+)\"/i)||raw.match(/property=\"og:url\"[^>]+content=\"([^\"]+)\"/i);if(cm)du=cm[1];}\nif(!du&&typeof raw==='string'&&raw){var cm2=raw.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(cm2)du=abs(cm2[1]);}\nreturn du?[{title:'正片',url:du}]:[];\n}catch(e){return [];}}"
       },
       "category": {
         "type": "html"
@@ -53,11 +47,11 @@
       },
       "folders": {
         "type": "script",
-        "script": "function folders(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];var m=raw.match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);var uid='';if(m){var hm=m[0].match(/href=\"([^\"]*)\"/i);if(hm){var pm=hm[1].match(/\\/user\\/(\\d+)/);if(pm)uid=pm[1];}}if(!uid)return [];return [{title:'喜歡的影片',url:base+'/user/'+uid+'/likes',value:'likes',count:0},{title:'稍後再看',url:base+'/user/'+uid+'/saves',value:'saves',count:0}];}catch(e){return [];}}"
+        "script": "function folders(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];function uidOf(html){var m=String(html||'').match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);if(!m)return '';var hm=m[0].match(/href=\"([^\"]*)\"/i);if(!hm)return '';var pm=hm[1].match(/\\/user\\/(\\d+)/);return pm?pm[1]:'';}if(raw.indexOf('user-tab-item-playlists-')>=0){var direct=foldersParse(raw,context);if(direct.length)return direct;}var u=uidOf(raw);if(!u)return [];return {__meta:true,__fetchUrl:base+'/user/'+u+'/playlists',__fetchResponseType:'text',__processor:'foldersParse'};}catch(e){return [];}}\nfunction foldersParse(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];var u='';var m=raw.match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);if(m){var hm=m[0].match(/href=\"([^\"]*)\"/i);if(hm){var pm=hm[1].match(/\\/user\\/(\\d+)/);if(pm)u=pm[1];}}if(!u)return [];var out=[{title:'喜歡的影片',url:base+'/user/'+u+'/likes',value:'likes'},{title:'稍後再看',url:base+'/user/'+u+'/saves',value:'saves'}];return out.concat(playlistsParse(raw,u,base));}catch(e){return [];}}\nfunction playlistsParse(raw,u,base){try{if(typeof base!=='string'||!base)base='https://hanime1.me';var html=String(raw||'');if(!html)return [];var out=[];var re=/<div[^>]*id=\"user-tab-item-playlists-(\\d+)\"[^>]*>/gi;var m;var pos=[];while((m=re.exec(html)))pos.push({i:m.index,code:m[1]});for(var k=0;k<pos.length;k++){var seg=html.slice(pos[k].i,k+1<pos.length?pos[k+1].i:html.length);var href='';var are=/ href=\"([^\"]*)\"/gi;var am;while((am=are.exec(seg))){var h=am[1].replace(/&amp;/g,'&');if(h.indexOf('list=')>=0){href=h;break;}}if(!href)continue;if(href.indexOf('http')!==0)href=base+(href.charAt(0)==='/'?href:'/'+href);var cm=href.match(/[?&]list=(\\d+)/);if(!cm)continue;var tm=seg.match(/<div[^>]*class=\"title\"[^>]*>([\\s\\S]*?)<\\/div>/i);var title=tm?tm[1].replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim():'';out.push({title:title||('播放清單 '+cm[1]),url:href,value:'list'+cm[1]});}return out;}catch(e){return [];}}"
       },
       "favList": {
         "type": "script",
-        "script": "function favList(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];function abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}var block=raw;var hm=block.match(/<div[^>]*class=\"horizontal-row\"/i);if(hm)block=raw.slice(hm.index);var positions=[];var re=/<div[^>]*class=\"user-tab-item-wrapper[^\"]*\"/gi;var m;while((m=re.exec(block)))positions.push(m.index);if(!positions.length)return [];var cards=[];for(var i=0;i<positions.length;i++){var seg=block.slice(positions[i],i+1<positions.length?positions[i+1]:block.length);var am=seg.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(!am)continue;var href=abs(am[1].replace(/&amp;/g,'&'));var cm=href.match(/watch\\?v=(\\d+)/);if(!cm)continue;var tm=seg.match(/<h4[^>]*class=\"video-title\"[^>]*>([\\s\\S]*?)<\\/h4>/i)||seg.match(/<div[^>]*class=\"title\"[^>]*>([\\s\\S]*?)<\\/div>/i);var title=tm?tm[1].replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim():'';var ivm=seg.match(/<img[^>]*src=\"([^\"]+)\"/i);var cover=ivm?abs(ivm[1].replace(/&amp;/g,'&')):'';cards.push({id:cm[1],title:title||'未命名',cover:cover,detailUrl:href});}return cards;}catch(e){return [];}}"
+        "script": "function favList(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];if(raw.indexOf('playlist-item-')>=0&&raw.indexOf('data-href=')>=0)return favPlaylistParse(raw,context);if(raw.indexOf('user-tab-item-wrapper')>=0)return favListParse(raw,context);var m=raw.match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);var uid='';if(m){var hm=m[0].match(/href=\"([^\"]*)\"/i);if(hm){var pm=hm[1].match(/\\/user\\/(\\d+)/);if(pm)uid=pm[1];}}if(!uid)return [];return {__meta:true,__fetchUrl:base+'/user/'+uid+'/likes',__fetchResponseType:'text',__processor:'favListParse'};}catch(e){return [];}}\nfunction favListParse(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';if(typeof raw!=='string'||!raw)return [];function abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}var block=raw;var hm=block.match(/<div[^>]*class=\"horizontal-row\"/i);if(hm)block=raw.slice(hm.index);var positions=[];var re=/<div[^>]*class=\"user-tab-item-wrapper[^\"]*\"/gi;var m;while((m=re.exec(block)))positions.push(m.index);if(!positions.length)return [];var cards=[];for(var i=0;i<positions.length;i++){var seg=block.slice(positions[i],i+1<positions.length?positions[i+1]:block.length);var am=seg.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(!am)continue;var href=abs(am[1].replace(/&amp;/g,'&'));var cm=href.match(/watch\\?v=(\\d+)/);if(!cm)continue;var tm=seg.match(/<h4[^>]*class=\"video-title\"[^>]*>([\\s\\S]*?)<\\/h4>/i)||seg.match(/<div[^>]*class=\"title\"[^>]*>([\\s\\S]*?)<\\/div>/i);var title=tm?tm[1].replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim():'';var ivm=seg.match(/<img[^>]*src=\"([^\"]+)\"/i);var cover=ivm?abs(ivm[1].replace(/&amp;/g,'&')):'';cards.push({id:cm[1],title:title||'未命名',cover:cover,detailUrl:href});}return cards;}catch(e){return [];}}\nfunction favPlaylistParse(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://hanime1.me';var html=String(raw||'');if(!html)return [];function abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}var positions=[];var re=/<div[^>]*id=\"playlist-item-\\d+\"[^>]*>/gi;var m;while((m=re.exec(html)))positions.push(m.index);if(!positions.length)return [];var cards=[];for(var i=0;i<positions.length;i++){var seg=html.slice(positions[i],i+1<positions.length?positions[i+1]:html.length);var dm=seg.match(/data-href=\"([^\"]+)\"/i);if(!dm)continue;var href=abs(dm[1].replace(/&amp;/g,'&'));var cm=href.match(/watch\\?v=(\\d+)/);if(!cm)continue;var clean=href.replace(/&list=\\d+/g,'');var tm=seg.match(/<h4[^>]*class=\"video-title\"[^>]*>([\\s\\S]*?)<\\/h4>/i);var inner=tm?tm[1]:'';var a2=inner.match(/<a[^>]*>([\\s\\S]*?)<\\/a>/i);var title=a2?a2[1]:inner;title=title.replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();var ivm=seg.match(/<img[^>]*class=\"main-thumb\"[^>]*src=\"([^\"]+)\"/i)||seg.match(/<img[^>]*src=\"([^\"]+)\"[^>]*class=\"main-thumb\"/i);var cover=ivm?abs(ivm[1].replace(/&amp;/g,'&')):'';cards.push({id:cm[1],title:title||'未命名',cover:cover,detailUrl:clean});}return cards;}catch(e){return [];}}"
       },
       "favoritesAdd": {
         "type": "script",
@@ -71,16 +65,14 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
     "search": {
-      "url": "/search?query={keyword}&page={page}&genre={genre}&sort={sort}&tags[]={tags}&broad={broad}",
+      "url": "/search?query={keyword}&page={page}&genre={genre}&sort={sort}&date={date}&duration={duration}&tags[]={tags}&broad={broad}",
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
@@ -89,7 +81,6 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
@@ -98,7 +89,6 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
@@ -107,7 +97,6 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
@@ -121,7 +110,6 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     },
@@ -130,7 +118,6 @@
       "method": "get",
       "responseType": "html",
       "headers": {
-        "User-Agent": "Dart/3.13 (NexHub)",
         "Referer": "https://hanime1.me/"
       }
     }
@@ -151,9 +138,9 @@
       "cover": "img.main-thumb@src, img@src"
     },
     "detail": {
-      "title": "#shareBtn-title, meta[property=\"og:title\"]@content, .video-title",
-      "cover": "video#player@poster, meta[property=\"og:image\"]@content",
-      "description": ".video-caption-text, .video-caption",
+      "title": "#shareBtn-title, meta[property=\"og:title\"]@content, .video-title, .playlist-title",
+      "cover": "video#player@poster, meta[property=\"og:image\"]@content, img.main-thumb@src",
+      "description": ".video-caption-text, .video-caption, h1.playlist-title",
       "tags": ".single-video-tag a, .single-video-tag"
     },
     "episodes": {
@@ -172,15 +159,46 @@
   "category": {
     "dynamicCategories": false,
     "categoryEntries": [
-      {"id": "裏番", "title": "裏番"},
-      {"id": "泡麵番", "title": "泡麵番"},
-      {"id": "Motion Anime", "title": "Motion Anime"},
-      {"id": "3DCG", "title": "3DCG"},
-      {"id": "2.5D", "title": "2.5D"},
-      {"id": "2D動畫", "title": "2D動畫"},
-      {"id": "AI生成", "title": "AI生成"},
-      {"id": "MMD", "title": "MMD"},
-      {"id": "Cosplay", "title": "Cosplay"}
+      {
+        "id": "裏番",
+        "title": "裏番"
+      },
+      {
+        "id": "泡麵番",
+        "title": "泡麵番"
+      },
+      {
+        "id": "Motion Anime",
+        "title": "Motion Anime"
+      },
+      {
+        "id": "3DCG",
+        "title": "3DCG"
+      },
+      {
+        "id": "2.5D",
+        "title": "2.5D"
+      },
+      {
+        "id": "2D動畫",
+        "title": "2D動畫"
+      },
+      {
+        "id": "AI生成",
+        "title": "AI生成"
+      },
+      {
+        "id": "MMD",
+        "title": "MMD"
+      },
+      {
+        "id": "Cosplay",
+        "title": "Cosplay"
+      },
+      {
+        "id": "新番預告",
+        "title": "新番预告"
+      }
     ]
   },
   "filters": {
@@ -189,1047 +207,1206 @@
       {
         "id": "genre",
         "title": "类型",
+        "route": "search",
         "param": "genre",
         "options": [
-          {"value": "裏番", "label": "裏番"},
-          {"value": "泡麵番", "label": "泡麵番"},
-          {"value": "Motion Anime", "label": "Motion Anime"},
-          {"value": "3DCG", "label": "3DCG"},
-          {"value": "2.5D", "label": "2.5D"},
-          {"value": "2D動畫", "label": "2D動畫"},
-          {"value": "AI生成", "label": "AI生成"},
-          {"value": "MMD", "label": "MMD"},
-          {"value": "Cosplay", "label": "Cosplay"}
+          {
+            "value": "裏番",
+            "label": "裏番"
+          },
+          {
+            "value": "泡麵番",
+            "label": "泡麵番"
+          },
+          {
+            "value": "Motion Anime",
+            "label": "Motion Anime"
+          },
+          {
+            "value": "3DCG",
+            "label": "3DCG"
+          },
+          {
+            "value": "2.5D",
+            "label": "2.5D"
+          },
+          {
+            "value": "2D動畫",
+            "label": "2D動畫"
+          },
+          {
+            "value": "AI生成",
+            "label": "AI生成"
+          },
+          {
+            "value": "MMD",
+            "label": "MMD"
+          },
+          {
+            "value": "Cosplay",
+            "label": "Cosplay"
+          },
+          {
+            "value": "新番預告",
+            "label": "新番預告"
+          }
         ]
       },
       {
         "id": "sort",
         "title": "排序",
+        "route": "search",
         "param": "sort",
         "options": [
-          {"value": "最新上市", "label": "最新上市"},
-          {"value": "最新上傳", "label": "最新上傳"},
-          {"value": "本日排行", "label": "本日排行"},
-          {"value": "本週排行", "label": "本週排行"},
-          {"value": "本月排行", "label": "本月排行"},
-          {"value": "觀看次數", "label": "觀看次數"},
-          {"value": "讚好比例", "label": "讚好比例"},
-          {"value": "時長最長", "label": "時長最長"},
-          {"value": "他們在看", "label": "他們在看"}
+          {
+            "value": "最新上市",
+            "label": "最新上市"
+          },
+          {
+            "value": "最新上傳",
+            "label": "最新上傳"
+          },
+          {
+            "value": "本日排行",
+            "label": "本日排行"
+          },
+          {
+            "value": "本週排行",
+            "label": "本週排行"
+          },
+          {
+            "value": "本月排行",
+            "label": "本月排行"
+          },
+          {
+            "value": "觀看次數",
+            "label": "觀看次數"
+          },
+          {
+            "value": "讚好比例",
+            "label": "讚好比例"
+          },
+          {
+            "value": "時長最長",
+            "label": "時長最長"
+          },
+          {
+            "value": "他們在看",
+            "label": "他們在看"
+          }
+        ]
+      },
+      {
+        "id": "date",
+        "title": "发布时间",
+        "route": "search",
+        "param": "date",
+        "options": [
+          {
+            "value": "過去 24 小時",
+            "label": "过去 24 小时"
+          },
+          {
+            "value": "過去 2 天",
+            "label": "过去 2 天"
+          },
+          {
+            "value": "過去 1 週",
+            "label": "过去 1 周"
+          },
+          {
+            "value": "過去 1 個月",
+            "label": "过去 1 个月"
+          },
+          {
+            "value": "過去 3 個月",
+            "label": "过去 3 个月"
+          },
+          {
+            "value": "過去 1 年",
+            "label": "过去 1 年"
+          }
+        ]
+      },
+      {
+        "id": "duration",
+        "title": "时长",
+        "route": "search",
+        "param": "duration",
+        "options": [
+          {
+            "value": "1 分鐘 +",
+            "label": "1 分钟以上"
+          },
+          {
+            "value": "5 分鐘 +",
+            "label": "5 分钟以上"
+          },
+          {
+            "value": "10 分鐘 +",
+            "label": "10 分钟以上"
+          },
+          {
+            "value": "20 分鐘 +",
+            "label": "20 分钟以上"
+          },
+          {
+            "value": "30 分鐘 +",
+            "label": "30 分钟以上"
+          },
+          {
+            "value": "60 分鐘 +",
+            "label": "60 分钟以上"
+          },
+          {
+            "value": "0 - 10 分鐘",
+            "label": "0 - 10 分钟"
+          },
+          {
+            "value": "0 - 20 分鐘",
+            "label": "0 - 20 分钟"
+          }
         ]
       },
       {
         "id": "broad",
         "title": "放送",
+        "route": "search",
         "param": "broad",
         "options": [
-          {"value": "1", "label": "有"},
-          {"value": "0", "label": "無"}
+          {
+            "value": "1",
+            "label": "有"
+          },
+          {
+            "value": "0",
+            "label": "無"
+          }
         ]
       },
       {
-            "id": "video_attributes",
-            "title": "影片属性",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "無碼",
-                "label": "无码"
-              },
-              {
-                "value": "AI解碼",
-                "label": "AI解码"
-              },
-              {
-                "value": "中文字幕",
-                "label": "中文字幕"
-              },
-              {
-                "value": "中文配音",
-                "label": "中文配音"
-              },
-              {
-                "value": "同人作品",
-                "label": "同人作品"
-              },
-              {
-                "value": "斷面圖",
-                "label": "断面图"
-              },
-              {
-                "value": "ASMR",
-                "label": "ASMR"
-              },
-              {
-                "value": "1080p",
-                "label": "1080p"
-              },
-              {
-                "value": "60FPS",
-                "label": "60FPS"
-              }
-            ]
+        "id": "video_attributes",
+        "title": "影片属性",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "無碼",
+            "label": "无码"
           },
           {
-            "id": "character_relationships",
-            "title": "人物关系",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "近親",
-                "label": "近亲"
-              },
-              {
-                "value": "姐",
-                "label": "姐"
-              },
-              {
-                "value": "妹",
-                "label": "妹"
-              },
-              {
-                "value": "母",
-                "label": "母"
-              },
-              {
-                "value": "女兒",
-                "label": "女儿"
-              },
-              {
-                "value": "師生",
-                "label": "师生"
-              },
-              {
-                "value": "情侶",
-                "label": "情侣"
-              },
-              {
-                "value": "青梅竹馬",
-                "label": "青梅竹马"
-              },
-              {
-                "value": "同事",
-                "label": "同事"
-              }
-            ]
+            "value": "AI解碼",
+            "label": "AI解码"
           },
           {
-            "id": "characteristics",
-            "title": "角色设定",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "JK",
-                "label": "JK"
-              },
-              {
-                "value": "處女",
-                "label": "处女"
-              },
-              {
-                "value": "御姐",
-                "label": "御姐"
-              },
-              {
-                "value": "熟女",
-                "label": "熟女"
-              },
-              {
-                "value": "人妻",
-                "label": "人妻"
-              },
-              {
-                "value": "女教師",
-                "label": "女教师"
-              },
-              {
-                "value": "男教師",
-                "label": "男教师"
-              },
-              {
-                "value": "女醫生",
-                "label": "女医生"
-              },
-              {
-                "value": "女病人",
-                "label": "女病人"
-              },
-              {
-                "value": "護士",
-                "label": "护士"
-              },
-              {
-                "value": "OL",
-                "label": "OL"
-              },
-              {
-                "value": "女警",
-                "label": "女警"
-              },
-              {
-                "value": "大小姐",
-                "label": "大小姐"
-              },
-              {
-                "value": "偶像",
-                "label": "偶像"
-              },
-              {
-                "value": "女僕",
-                "label": "女仆"
-              },
-              {
-                "value": "巫女",
-                "label": "巫女"
-              },
-              {
-                "value": "魔女",
-                "label": "魔女"
-              },
-              {
-                "value": "修女",
-                "label": "修女"
-              },
-              {
-                "value": "風俗娘",
-                "label": "风俗娘"
-              },
-              {
-                "value": "公主",
-                "label": "公主"
-              },
-              {
-                "value": "女忍者",
-                "label": "女忍者"
-              },
-              {
-                "value": "女戰士",
-                "label": "女战士"
-              },
-              {
-                "value": "女騎士",
-                "label": "女骑士"
-              },
-              {
-                "value": "魔法少女",
-                "label": "魔法少女"
-              },
-              {
-                "value": "異種族",
-                "label": "异种族"
-              },
-              {
-                "value": "天使",
-                "label": "天使"
-              },
-              {
-                "value": "妖精",
-                "label": "妖精"
-              },
-              {
-                "value": "魔物娘",
-                "label": "魔物娘"
-              },
-              {
-                "value": "魅魔",
-                "label": "魅魔"
-              },
-              {
-                "value": "吸血鬼",
-                "label": "吸血鬼"
-              },
-              {
-                "value": "女鬼",
-                "label": "女鬼"
-              },
-              {
-                "value": "獸娘",
-                "label": "兽娘"
-              },
-              {
-                "value": "福瑞",
-                "label": "福瑞"
-              },
-              {
-                "value": "乳牛",
-                "label": "乳牛"
-              },
-              {
-                "value": "機械娘",
-                "label": "机械娘"
-              },
-              {
-                "value": "碧池",
-                "label": "碧池"
-              },
-              {
-                "value": "痴女",
-                "label": "痴女"
-              },
-              {
-                "value": "雌小鬼",
-                "label": "雌小鬼"
-              },
-              {
-                "value": "不良少女",
-                "label": "不良少女"
-              },
-              {
-                "value": "傲嬌",
-                "label": "傲娇"
-              },
-              {
-                "value": "病嬌",
-                "label": "病娇"
-              },
-              {
-                "value": "無口",
-                "label": "无口"
-              },
-              {
-                "value": "無表情",
-                "label": "无表情"
-              },
-              {
-                "value": "眼神死",
-                "label": "眼神死"
-              },
-              {
-                "value": "正太",
-                "label": "正太"
-              },
-              {
-                "value": "偽娘",
-                "label": "伪娘"
-              },
-              {
-                "value": "扶他",
-                "label": "扶他"
-              }
-            ]
+            "value": "中文字幕",
+            "label": "中文字幕"
           },
           {
-            "id": "appearance_and_figure",
-            "title": "外貌身材",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "短髮",
-                "label": "短发"
-              },
-              {
-                "value": "馬尾",
-                "label": "马尾"
-              },
-              {
-                "value": "雙馬尾",
-                "label": "双马尾"
-              },
-              {
-                "value": "丸子頭",
-                "label": "丸子头"
-              },
-              {
-                "value": "巨乳",
-                "label": "巨乳"
-              },
-              {
-                "value": "乳環",
-                "label": "乳环"
-              },
-              {
-                "value": "舌環",
-                "label": "舌环"
-              },
-              {
-                "value": "貧乳",
-                "label": "贫乳"
-              },
-              {
-                "value": "黑皮膚",
-                "label": "黑皮肤"
-              },
-              {
-                "value": "曬痕",
-                "label": "晒痕"
-              },
-              {
-                "value": "眼鏡娘",
-                "label": "眼镜娘"
-              },
-              {
-                "value": "獸耳",
-                "label": "兽耳"
-              },
-              {
-                "value": "尖耳朵",
-                "label": "尖耳朵"
-              },
-              {
-                "value": "異色瞳",
-                "label": "异色瞳"
-              },
-              {
-                "value": "美人痣",
-                "label": "美人痣"
-              },
-              {
-                "value": "肌肉女",
-                "label": "肌肉女"
-              },
-              {
-                "value": "白虎",
-                "label": "白虎"
-              },
-              {
-                "value": "陰毛",
-                "label": "阴毛"
-              },
-              {
-                "value": "腋毛",
-                "label": "腋毛"
-              },
-              {
-                "value": "大屌",
-                "label": "大屌"
-              },
-              {
-                "value": "著衣",
-                "label": "着衣"
-              },
-              {
-                "value": "水手服",
-                "label": "水手服"
-              },
-              {
-                "value": "體操服",
-                "label": "体操服"
-              },
-              {
-                "value": "泳裝",
-                "label": "泳装"
-              },
-              {
-                "value": "比基尼",
-                "label": "比基尼"
-              },
-              {
-                "value": "死庫水",
-                "label": "死库水"
-              },
-              {
-                "value": "和服",
-                "label": "和服"
-              },
-              {
-                "value": "兔女郎",
-                "label": "兔女郎"
-              },
-              {
-                "value": "圍裙",
-                "label": "围裙"
-              },
-              {
-                "value": "啦啦隊",
-                "label": "啦啦队"
-              },
-              {
-                "value": "絲襪",
-                "label": "丝袜"
-              },
-              {
-                "value": "吊襪帶",
-                "label": "吊袜带"
-              },
-              {
-                "value": "熱褲",
-                "label": "热裤"
-              },
-              {
-                "value": "迷你裙",
-                "label": "迷你裙"
-              },
-              {
-                "value": "性感內衣",
-                "label": "性感内衣"
-              },
-              {
-                "value": "緊身衣",
-                "label": "紧身衣"
-              },
-              {
-                "value": "丁字褲",
-                "label": "丁字裤"
-              },
-              {
-                "value": "高跟鞋",
-                "label": "高跟鞋"
-              },
-              {
-                "value": "睡衣",
-                "label": "睡衣"
-              },
-              {
-                "value": "婚紗",
-                "label": "婚纱"
-              },
-              {
-                "value": "旗袍",
-                "label": "旗袍"
-              },
-              {
-                "value": "古裝",
-                "label": "古装"
-              },
-              {
-                "value": "哥德",
-                "label": "哥德"
-              },
-              {
-                "value": "口罩",
-                "label": "口罩"
-              },
-              {
-                "value": "刺青",
-                "label": "刺青"
-              },
-              {
-                "value": "淫紋",
-                "label": "淫纹"
-              },
-              {
-                "value": "身體寫字",
-                "label": "身体写字"
-              }
-            ]
+            "value": "中文配音",
+            "label": "中文配音"
           },
           {
-            "id": "story_location",
-            "title": "情景场所",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "校園",
-                "label": "校园"
-              },
-              {
-                "value": "教室",
-                "label": "教室"
-              },
-              {
-                "value": "圖書館",
-                "label": "图书馆"
-              },
-              {
-                "value": "保健室",
-                "label": "保健室"
-              },
-              {
-                "value": "游泳池",
-                "label": "游泳池"
-              },
-              {
-                "value": "愛情賓館",
-                "label": "爱情宾馆"
-              },
-              {
-                "value": "醫院",
-                "label": "医院"
-              },
-              {
-                "value": "辦公室",
-                "label": "办公室"
-              },
-              {
-                "value": "浴室",
-                "label": "浴室"
-              },
-              {
-                "value": "窗邊",
-                "label": "窗边"
-              },
-              {
-                "value": "公共廁所",
-                "label": "公共厕所"
-              },
-              {
-                "value": "公眾場合",
-                "label": "公众场合"
-              },
-              {
-                "value": "戶外野戰",
-                "label": "户外野战"
-              },
-              {
-                "value": "電車",
-                "label": "电车"
-              },
-              {
-                "value": "車震",
-                "label": "车震"
-              },
-              {
-                "value": "遊艇",
-                "label": "游艇"
-              },
-              {
-                "value": "露營帳篷",
-                "label": "露营帐篷"
-              },
-              {
-                "value": "電影院",
-                "label": "电影院"
-              },
-              {
-                "value": "健身房",
-                "label": "健身房"
-              },
-              {
-                "value": "沙灘",
-                "label": "沙滩"
-              },
-              {
-                "value": "溫泉",
-                "label": "温泉"
-              },
-              {
-                "value": "夜店",
-                "label": "夜店"
-              },
-              {
-                "value": "監獄",
-                "label": "监狱"
-              },
-              {
-                "value": "教堂",
-                "label": "教堂"
-              }
-            ]
+            "value": "同人作品",
+            "label": "同人作品"
           },
           {
-            "id": "story_plot",
-            "title": "故事剧情",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "純愛",
-                "label": "纯爱"
-              },
-              {
-                "value": "戀愛喜劇",
-                "label": "恋爱喜剧"
-              },
-              {
-                "value": "後宮",
-                "label": "后宫"
-              },
-              {
-                "value": "十指緊扣",
-                "label": "十指紧扣"
-              },
-              {
-                "value": "開大車",
-                "label": "开大车"
-              },
-              {
-                "value": "NTR",
-                "label": "NTR"
-              },
-              {
-                "value": "精神控制",
-                "label": "精神控制"
-              },
-              {
-                "value": "藥物",
-                "label": "药物"
-              },
-              {
-                "value": "痴漢",
-                "label": "痴汉"
-              },
-              {
-                "value": "阿嘿顏",
-                "label": "阿嘿颜"
-              },
-              {
-                "value": "精神崩潰",
-                "label": "精神崩溃"
-              },
-              {
-                "value": "獵奇",
-                "label": "猎奇"
-              },
-              {
-                "value": "BDSM",
-                "label": "BDSM"
-              },
-              {
-                "value": "綑綁",
-                "label": "捆绑"
-              },
-              {
-                "value": "眼罩",
-                "label": "眼罩"
-              },
-              {
-                "value": "項圈",
-                "label": "项圈"
-              },
-              {
-                "value": "調教",
-                "label": "调教"
-              },
-              {
-                "value": "異物插入",
-                "label": "异物插入"
-              },
-              {
-                "value": "尋歡洞",
-                "label": "寻欢洞"
-              },
-              {
-                "value": "肉便器",
-                "label": "肉便器"
-              },
-              {
-                "value": "性奴隸",
-                "label": "性奴隶"
-              },
-              {
-                "value": "胃凸",
-                "label": "胃凸"
-              },
-              {
-                "value": "強制",
-                "label": "强制"
-              },
-              {
-                "value": "輪姦",
-                "label": "轮奸"
-              },
-              {
-                "value": "凌辱",
-                "label": "凌辱"
-              },
-              {
-                "value": "性暴力",
-                "label": "性暴力"
-              },
-              {
-                "value": "逆強制",
-                "label": "逆强制"
-              },
-              {
-                "value": "女王樣",
-                "label": "女王样"
-              },
-              {
-                "value": "榨精",
-                "label": "榨精"
-              },
-              {
-                "value": "母女丼",
-                "label": "母女丼"
-              },
-              {
-                "value": "姐妹丼",
-                "label": "姐妹丼"
-              },
-              {
-                "value": "出軌",
-                "label": "出轨"
-              },
-              {
-                "value": "醉酒",
-                "label": "醉酒"
-              },
-              {
-                "value": "攝影",
-                "label": "摄影"
-              },
-              {
-                "value": "睡眠姦",
-                "label": "睡眠奸"
-              },
-              {
-                "value": "機械姦",
-                "label": "机械奸"
-              },
-              {
-                "value": "蟲姦",
-                "label": "虫奸"
-              },
-              {
-                "value": "性轉換",
-                "label": "性转换"
-              },
-              {
-                "value": "百合",
-                "label": "百合"
-              },
-              {
-                "value": "耽美",
-                "label": "耽美"
-              },
-              {
-                "value": "時間停止",
-                "label": "时间停止"
-              },
-              {
-                "value": "異世界",
-                "label": "异世界"
-              },
-              {
-                "value": "怪獸",
-                "label": "怪兽"
-              },
-              {
-                "value": "哥布林",
-                "label": "哥布林"
-              },
-              {
-                "value": "世界末日",
-                "label": "世界末日"
-              }
-            ]
+            "value": "斷面圖",
+            "label": "断面图"
           },
           {
-            "id": "sex_positions",
-            "title": "性交体位",
-            "route": "search",
-            "param": "tags",
-            "multiSelect": true,
-            "options": [
-              {
-                "value": "手交",
-                "label": "手交"
-              },
-              {
-                "value": "指交",
-                "label": "指交"
-              },
-              {
-                "value": "乳交",
-                "label": "乳交"
-              },
-              {
-                "value": "乳頭交",
-                "label": "乳头交"
-              },
-              {
-                "value": "肛交",
-                "label": "肛交"
-              },
-              {
-                "value": "雙洞齊下",
-                "label": "双洞齐下"
-              },
-              {
-                "value": "腳交",
-                "label": "脚交"
-              },
-              {
-                "value": "素股",
-                "label": "素股"
-              },
-              {
-                "value": "拳交",
-                "label": "拳交"
-              },
-              {
-                "value": "3P",
-                "label": "3P"
-              },
-              {
-                "value": "群交",
-                "label": "群交"
-              },
-              {
-                "value": "口交",
-                "label": "口交"
-              },
-              {
-                "value": "跪舔",
-                "label": "跪舔"
-              },
-              {
-                "value": "深喉嚨",
-                "label": "深喉咙"
-              },
-              {
-                "value": "口爆",
-                "label": "口爆"
-              },
-              {
-                "value": "吞精",
-                "label": "吞精"
-              },
-              {
-                "value": "舔蛋蛋",
-                "label": "舔蛋蛋"
-              },
-              {
-                "value": "舔穴",
-                "label": "舔穴"
-              },
-              {
-                "value": "69",
-                "label": "69"
-              },
-              {
-                "value": "自慰",
-                "label": "自慰"
-              },
-              {
-                "value": "腋交",
-                "label": "腋交"
-              },
-              {
-                "value": "舔腋下",
-                "label": "舔腋下"
-              },
-              {
-                "value": "髮交",
-                "label": "发交"
-              },
-              {
-                "value": "舔耳朵",
-                "label": "舔耳朵"
-              },
-              {
-                "value": "舔腳",
-                "label": "舔脚"
-              },
-              {
-                "value": "內射",
-                "label": "内射"
-              },
-              {
-                "value": "外射",
-                "label": "外射"
-              },
-              {
-                "value": "顏射",
-                "label": "颜射"
-              },
-              {
-                "value": "潮吹",
-                "label": "潮吹"
-              },
-              {
-                "value": "懷孕",
-                "label": "怀孕"
-              },
-              {
-                "value": "噴奶",
-                "label": "喷奶"
-              },
-              {
-                "value": "放尿",
-                "label": "放尿"
-              },
-              {
-                "value": "排便",
-                "label": "排便"
-              },
-              {
-                "value": "騎乘位",
-                "label": "骑乘位"
-              },
-              {
-                "value": "背後位",
-                "label": "背后位"
-              },
-              {
-                "value": "顏面騎乘",
-                "label": "颜面骑乘"
-              },
-              {
-                "value": "火車便當",
-                "label": "火车便当"
-              },
-              {
-                "value": "一字馬",
-                "label": "一字马"
-              },
-              {
-                "value": "性玩具",
-                "label": "性玩具"
-              },
-              {
-                "value": "飛機杯",
-                "label": "飞机杯"
-              },
-              {
-                "value": "跳蛋",
-                "label": "跳蛋"
-              },
-              {
-                "value": "毒龍鑽",
-                "label": "毒龙钻"
-              },
-              {
-                "value": "觸手",
-                "label": "触手"
-              },
-              {
-                "value": "獸交",
-                "label": "兽交"
-              },
-              {
-                "value": "頸手枷",
-                "label": "颈手枷"
-              },
-              {
-                "value": "扯頭髮",
-                "label": "扯头发"
-              },
-              {
-                "value": "掐脖子",
-                "label": "掐脖子"
-              },
-              {
-                "value": "打屁股",
-                "label": "打屁股"
-              },
-              {
-                "value": "肉棒打臉",
-                "label": "肉棒打脸"
-              },
-              {
-                "value": "陰道外翻",
-                "label": "阴道外翻"
-              },
-              {
-                "value": "男乳首責",
-                "label": "男乳首责"
-              },
-              {
-                "value": "接吻",
-                "label": "接吻"
-              },
-              {
-                "value": "舌吻",
-                "label": "舌吻"
-              },
-              {
-                "value": "POV",
-                "label": "POV"
-              }
-            ]
+            "value": "ASMR",
+            "label": "ASMR"
+          },
+          {
+            "value": "1080p",
+            "label": "1080p"
+          },
+          {
+            "value": "60FPS",
+            "label": "60FPS"
           }
+        ]
+      },
+      {
+        "id": "character_relationships",
+        "title": "人物关系",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "近親",
+            "label": "近亲"
+          },
+          {
+            "value": "姐",
+            "label": "姐"
+          },
+          {
+            "value": "妹",
+            "label": "妹"
+          },
+          {
+            "value": "母",
+            "label": "母"
+          },
+          {
+            "value": "女兒",
+            "label": "女儿"
+          },
+          {
+            "value": "師生",
+            "label": "师生"
+          },
+          {
+            "value": "情侶",
+            "label": "情侣"
+          },
+          {
+            "value": "青梅竹馬",
+            "label": "青梅竹马"
+          },
+          {
+            "value": "同事",
+            "label": "同事"
+          }
+        ]
+      },
+      {
+        "id": "characteristics",
+        "title": "角色设定",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "JK",
+            "label": "JK"
+          },
+          {
+            "value": "處女",
+            "label": "处女"
+          },
+          {
+            "value": "御姐",
+            "label": "御姐"
+          },
+          {
+            "value": "熟女",
+            "label": "熟女"
+          },
+          {
+            "value": "人妻",
+            "label": "人妻"
+          },
+          {
+            "value": "女教師",
+            "label": "女教师"
+          },
+          {
+            "value": "男教師",
+            "label": "男教师"
+          },
+          {
+            "value": "女醫生",
+            "label": "女医生"
+          },
+          {
+            "value": "女病人",
+            "label": "女病人"
+          },
+          {
+            "value": "護士",
+            "label": "护士"
+          },
+          {
+            "value": "OL",
+            "label": "OL"
+          },
+          {
+            "value": "女警",
+            "label": "女警"
+          },
+          {
+            "value": "大小姐",
+            "label": "大小姐"
+          },
+          {
+            "value": "偶像",
+            "label": "偶像"
+          },
+          {
+            "value": "女僕",
+            "label": "女仆"
+          },
+          {
+            "value": "巫女",
+            "label": "巫女"
+          },
+          {
+            "value": "魔女",
+            "label": "魔女"
+          },
+          {
+            "value": "修女",
+            "label": "修女"
+          },
+          {
+            "value": "風俗娘",
+            "label": "风俗娘"
+          },
+          {
+            "value": "公主",
+            "label": "公主"
+          },
+          {
+            "value": "女忍者",
+            "label": "女忍者"
+          },
+          {
+            "value": "女戰士",
+            "label": "女战士"
+          },
+          {
+            "value": "女騎士",
+            "label": "女骑士"
+          },
+          {
+            "value": "魔法少女",
+            "label": "魔法少女"
+          },
+          {
+            "value": "異種族",
+            "label": "异种族"
+          },
+          {
+            "value": "天使",
+            "label": "天使"
+          },
+          {
+            "value": "妖精",
+            "label": "妖精"
+          },
+          {
+            "value": "魔物娘",
+            "label": "魔物娘"
+          },
+          {
+            "value": "魅魔",
+            "label": "魅魔"
+          },
+          {
+            "value": "吸血鬼",
+            "label": "吸血鬼"
+          },
+          {
+            "value": "女鬼",
+            "label": "女鬼"
+          },
+          {
+            "value": "獸娘",
+            "label": "兽娘"
+          },
+          {
+            "value": "福瑞",
+            "label": "福瑞"
+          },
+          {
+            "value": "乳牛",
+            "label": "乳牛"
+          },
+          {
+            "value": "機械娘",
+            "label": "机械娘"
+          },
+          {
+            "value": "碧池",
+            "label": "碧池"
+          },
+          {
+            "value": "痴女",
+            "label": "痴女"
+          },
+          {
+            "value": "雌小鬼",
+            "label": "雌小鬼"
+          },
+          {
+            "value": "不良少女",
+            "label": "不良少女"
+          },
+          {
+            "value": "傲嬌",
+            "label": "傲娇"
+          },
+          {
+            "value": "病嬌",
+            "label": "病娇"
+          },
+          {
+            "value": "無口",
+            "label": "无口"
+          },
+          {
+            "value": "無表情",
+            "label": "无表情"
+          },
+          {
+            "value": "眼神死",
+            "label": "眼神死"
+          },
+          {
+            "value": "正太",
+            "label": "正太"
+          },
+          {
+            "value": "偽娘",
+            "label": "伪娘"
+          },
+          {
+            "value": "扶他",
+            "label": "扶他"
+          }
+        ]
+      },
+      {
+        "id": "appearance_and_figure",
+        "title": "外貌身材",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "短髮",
+            "label": "短发"
+          },
+          {
+            "value": "馬尾",
+            "label": "马尾"
+          },
+          {
+            "value": "雙馬尾",
+            "label": "双马尾"
+          },
+          {
+            "value": "丸子頭",
+            "label": "丸子头"
+          },
+          {
+            "value": "巨乳",
+            "label": "巨乳"
+          },
+          {
+            "value": "乳環",
+            "label": "乳环"
+          },
+          {
+            "value": "舌環",
+            "label": "舌环"
+          },
+          {
+            "value": "貧乳",
+            "label": "贫乳"
+          },
+          {
+            "value": "黑皮膚",
+            "label": "黑皮肤"
+          },
+          {
+            "value": "曬痕",
+            "label": "晒痕"
+          },
+          {
+            "value": "眼鏡娘",
+            "label": "眼镜娘"
+          },
+          {
+            "value": "獸耳",
+            "label": "兽耳"
+          },
+          {
+            "value": "尖耳朵",
+            "label": "尖耳朵"
+          },
+          {
+            "value": "異色瞳",
+            "label": "异色瞳"
+          },
+          {
+            "value": "美人痣",
+            "label": "美人痣"
+          },
+          {
+            "value": "肌肉女",
+            "label": "肌肉女"
+          },
+          {
+            "value": "白虎",
+            "label": "白虎"
+          },
+          {
+            "value": "陰毛",
+            "label": "阴毛"
+          },
+          {
+            "value": "腋毛",
+            "label": "腋毛"
+          },
+          {
+            "value": "大屌",
+            "label": "大屌"
+          },
+          {
+            "value": "黑屌",
+            "label": "黑屌"
+          },
+          {
+            "value": "著衣",
+            "label": "着衣"
+          },
+          {
+            "value": "水手服",
+            "label": "水手服"
+          },
+          {
+            "value": "體操服",
+            "label": "体操服"
+          },
+          {
+            "value": "泳裝",
+            "label": "泳装"
+          },
+          {
+            "value": "比基尼",
+            "label": "比基尼"
+          },
+          {
+            "value": "死庫水",
+            "label": "死库水"
+          },
+          {
+            "value": "和服",
+            "label": "和服"
+          },
+          {
+            "value": "兔女郎",
+            "label": "兔女郎"
+          },
+          {
+            "value": "圍裙",
+            "label": "围裙"
+          },
+          {
+            "value": "啦啦隊",
+            "label": "啦啦队"
+          },
+          {
+            "value": "絲襪",
+            "label": "丝袜"
+          },
+          {
+            "value": "吊襪帶",
+            "label": "吊袜带"
+          },
+          {
+            "value": "熱褲",
+            "label": "热裤"
+          },
+          {
+            "value": "迷你裙",
+            "label": "迷你裙"
+          },
+          {
+            "value": "性感內衣",
+            "label": "性感内衣"
+          },
+          {
+            "value": "緊身衣",
+            "label": "紧身衣"
+          },
+          {
+            "value": "丁字褲",
+            "label": "丁字裤"
+          },
+          {
+            "value": "高跟鞋",
+            "label": "高跟鞋"
+          },
+          {
+            "value": "睡衣",
+            "label": "睡衣"
+          },
+          {
+            "value": "婚紗",
+            "label": "婚纱"
+          },
+          {
+            "value": "旗袍",
+            "label": "旗袍"
+          },
+          {
+            "value": "古裝",
+            "label": "古装"
+          },
+          {
+            "value": "哥德",
+            "label": "哥德"
+          },
+          {
+            "value": "口罩",
+            "label": "口罩"
+          },
+          {
+            "value": "刺青",
+            "label": "刺青"
+          },
+          {
+            "value": "淫紋",
+            "label": "淫纹"
+          },
+          {
+            "value": "身體寫字",
+            "label": "身体写字"
+          }
+        ]
+      },
+      {
+        "id": "story_location",
+        "title": "情景场所",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "校園",
+            "label": "校园"
+          },
+          {
+            "value": "教室",
+            "label": "教室"
+          },
+          {
+            "value": "圖書館",
+            "label": "图书馆"
+          },
+          {
+            "value": "保健室",
+            "label": "保健室"
+          },
+          {
+            "value": "體育倉庫",
+            "label": "体育仓库"
+          },
+          {
+            "value": "游泳池",
+            "label": "游泳池"
+          },
+          {
+            "value": "愛情賓館",
+            "label": "爱情宾馆"
+          },
+          {
+            "value": "醫院",
+            "label": "医院"
+          },
+          {
+            "value": "辦公室",
+            "label": "办公室"
+          },
+          {
+            "value": "浴室",
+            "label": "浴室"
+          },
+          {
+            "value": "窗邊",
+            "label": "窗边"
+          },
+          {
+            "value": "公共廁所",
+            "label": "公共厕所"
+          },
+          {
+            "value": "公眾場合",
+            "label": "公众场合"
+          },
+          {
+            "value": "戶外野戰",
+            "label": "户外野战"
+          },
+          {
+            "value": "電車",
+            "label": "电车"
+          },
+          {
+            "value": "車震",
+            "label": "车震"
+          },
+          {
+            "value": "遊艇",
+            "label": "游艇"
+          },
+          {
+            "value": "露營帳篷",
+            "label": "露营帐篷"
+          },
+          {
+            "value": "電影院",
+            "label": "电影院"
+          },
+          {
+            "value": "健身房",
+            "label": "健身房"
+          },
+          {
+            "value": "沙灘",
+            "label": "沙滩"
+          },
+          {
+            "value": "溫泉",
+            "label": "温泉"
+          },
+          {
+            "value": "夜店",
+            "label": "夜店"
+          },
+          {
+            "value": "監獄",
+            "label": "监狱"
+          },
+          {
+            "value": "教堂",
+            "label": "教堂"
+          }
+        ]
+      },
+      {
+        "id": "story_plot",
+        "title": "故事剧情",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "純愛",
+            "label": "纯爱"
+          },
+          {
+            "value": "戀愛喜劇",
+            "label": "恋爱喜剧"
+          },
+          {
+            "value": "後宮",
+            "label": "后宫"
+          },
+          {
+            "value": "十指緊扣",
+            "label": "十指紧扣"
+          },
+          {
+            "value": "開大車",
+            "label": "开大车"
+          },
+          {
+            "value": "NTR",
+            "label": "NTR"
+          },
+          {
+            "value": "精神控制",
+            "label": "精神控制"
+          },
+          {
+            "value": "藥物",
+            "label": "药物"
+          },
+          {
+            "value": "痴漢",
+            "label": "痴汉"
+          },
+          {
+            "value": "阿嘿顏",
+            "label": "阿嘿颜"
+          },
+          {
+            "value": "哭泣",
+            "label": "哭泣"
+          },
+          {
+            "value": "精神崩潰",
+            "label": "精神崩溃"
+          },
+          {
+            "value": "獵奇",
+            "label": "猎奇"
+          },
+          {
+            "value": "BDSM",
+            "label": "BDSM"
+          },
+          {
+            "value": "綑綁",
+            "label": "捆绑"
+          },
+          {
+            "value": "眼罩",
+            "label": "眼罩"
+          },
+          {
+            "value": "項圈",
+            "label": "项圈"
+          },
+          {
+            "value": "調教",
+            "label": "调教"
+          },
+          {
+            "value": "異物插入",
+            "label": "异物插入"
+          },
+          {
+            "value": "尋歡洞",
+            "label": "寻欢洞"
+          },
+          {
+            "value": "肉便器",
+            "label": "肉便器"
+          },
+          {
+            "value": "性奴隸",
+            "label": "性奴隶"
+          },
+          {
+            "value": "胃凸",
+            "label": "胃凸"
+          },
+          {
+            "value": "強制",
+            "label": "强制"
+          },
+          {
+            "value": "輪姦",
+            "label": "轮奸"
+          },
+          {
+            "value": "凌辱",
+            "label": "凌辱"
+          },
+          {
+            "value": "性暴力",
+            "label": "性暴力"
+          },
+          {
+            "value": "逆強制",
+            "label": "逆强制"
+          },
+          {
+            "value": "女王樣",
+            "label": "女王样"
+          },
+          {
+            "value": "榨精",
+            "label": "榨精"
+          },
+          {
+            "value": "母女丼",
+            "label": "母女丼"
+          },
+          {
+            "value": "姐妹丼",
+            "label": "姐妹丼"
+          },
+          {
+            "value": "出軌",
+            "label": "出轨"
+          },
+          {
+            "value": "醉酒",
+            "label": "醉酒"
+          },
+          {
+            "value": "攝影",
+            "label": "摄影"
+          },
+          {
+            "value": "睡眠姦",
+            "label": "睡眠奸"
+          },
+          {
+            "value": "機械姦",
+            "label": "机械奸"
+          },
+          {
+            "value": "蟲姦",
+            "label": "虫奸"
+          },
+          {
+            "value": "性轉換",
+            "label": "性转换"
+          },
+          {
+            "value": "百合",
+            "label": "百合"
+          },
+          {
+            "value": "耽美",
+            "label": "耽美"
+          },
+          {
+            "value": "時間停止",
+            "label": "时间停止"
+          },
+          {
+            "value": "異世界",
+            "label": "异世界"
+          },
+          {
+            "value": "怪獸",
+            "label": "怪兽"
+          },
+          {
+            "value": "哥布林",
+            "label": "哥布林"
+          },
+          {
+            "value": "世界末日",
+            "label": "世界末日"
+          }
+        ]
+      },
+      {
+        "id": "sex_positions",
+        "title": "性交体位",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {
+            "value": "手交",
+            "label": "手交"
+          },
+          {
+            "value": "指交",
+            "label": "指交"
+          },
+          {
+            "value": "玩乳頭",
+            "label": "玩乳头"
+          },
+          {
+            "value": "乳交",
+            "label": "乳交"
+          },
+          {
+            "value": "乳頭交",
+            "label": "乳头交"
+          },
+          {
+            "value": "肛交",
+            "label": "肛交"
+          },
+          {
+            "value": "雙洞齊下",
+            "label": "双洞齐下"
+          },
+          {
+            "value": "腳交",
+            "label": "脚交"
+          },
+          {
+            "value": "素股",
+            "label": "素股"
+          },
+          {
+            "value": "拳交",
+            "label": "拳交"
+          },
+          {
+            "value": "3P",
+            "label": "3P"
+          },
+          {
+            "value": "群交",
+            "label": "群交"
+          },
+          {
+            "value": "口交",
+            "label": "口交"
+          },
+          {
+            "value": "跪舔",
+            "label": "跪舔"
+          },
+          {
+            "value": "深喉嚨",
+            "label": "深喉咙"
+          },
+          {
+            "value": "口爆",
+            "label": "口爆"
+          },
+          {
+            "value": "吞精",
+            "label": "吞精"
+          },
+          {
+            "value": "舔蛋蛋",
+            "label": "舔蛋蛋"
+          },
+          {
+            "value": "舔穴",
+            "label": "舔穴"
+          },
+          {
+            "value": "69",
+            "label": "69"
+          },
+          {
+            "value": "自慰",
+            "label": "自慰"
+          },
+          {
+            "value": "腋交",
+            "label": "腋交"
+          },
+          {
+            "value": "舔腋下",
+            "label": "舔腋下"
+          },
+          {
+            "value": "髮交",
+            "label": "发交"
+          },
+          {
+            "value": "舔耳朵",
+            "label": "舔耳朵"
+          },
+          {
+            "value": "舔腳",
+            "label": "舔脚"
+          },
+          {
+            "value": "內射",
+            "label": "内射"
+          },
+          {
+            "value": "外射",
+            "label": "外射"
+          },
+          {
+            "value": "顏射",
+            "label": "颜射"
+          },
+          {
+            "value": "潮吹",
+            "label": "潮吹"
+          },
+          {
+            "value": "懷孕",
+            "label": "怀孕"
+          },
+          {
+            "value": "噴奶",
+            "label": "喷奶"
+          },
+          {
+            "value": "放尿",
+            "label": "放尿"
+          },
+          {
+            "value": "排便",
+            "label": "排便"
+          },
+          {
+            "value": "騎乘位",
+            "label": "骑乘位"
+          },
+          {
+            "value": "背後位",
+            "label": "背后位"
+          },
+          {
+            "value": "側面位",
+            "label": "侧面位"
+          },
+          {
+            "value": "顏面騎乘",
+            "label": "颜面骑乘"
+          },
+          {
+            "value": "火車便當",
+            "label": "火车便当"
+          },
+          {
+            "value": "一字馬",
+            "label": "一字马"
+          },
+          {
+            "value": "性玩具",
+            "label": "性玩具"
+          },
+          {
+            "value": "飛機杯",
+            "label": "飞机杯"
+          },
+          {
+            "value": "跳蛋",
+            "label": "跳蛋"
+          },
+          {
+            "value": "毒龍鑽",
+            "label": "毒龙钻"
+          },
+          {
+            "value": "觸手",
+            "label": "触手"
+          },
+          {
+            "value": "獸交",
+            "label": "兽交"
+          },
+          {
+            "value": "頸手枷",
+            "label": "颈手枷"
+          },
+          {
+            "value": "扯頭髮",
+            "label": "扯头发"
+          },
+          {
+            "value": "掐脖子",
+            "label": "掐脖子"
+          },
+          {
+            "value": "打屁股",
+            "label": "打屁股"
+          },
+          {
+            "value": "肉棒打臉",
+            "label": "肉棒打脸"
+          },
+          {
+            "value": "陰道外翻",
+            "label": "阴道外翻"
+          },
+          {
+            "value": "男乳首責",
+            "label": "男乳首责"
+          },
+          {
+            "value": "接吻",
+            "label": "接吻"
+          },
+          {
+            "value": "舌吻",
+            "label": "舌吻"
+          },
+          {
+            "value": "POV",
+            "label": "POV"
+          }
+        ]
+      }
     ]
   },
   "homeSections": [
@@ -1237,7 +1414,9 @@
       "id": "latest-hanime",
       "title": "最新里番",
       "route": "search",
-      "params": {"genre": "裏番"},
+      "params": {
+        "genre": "裏番"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1246,7 +1425,9 @@
       "id": "latest-release",
       "title": "最新上市",
       "route": "search",
-      "params": {"sort": "最新上市"},
+      "params": {
+        "sort": "最新上市"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1255,7 +1436,9 @@
       "id": "latest-upload",
       "title": "最新上传",
       "route": "search",
-      "params": {"sort": "最新上傳"},
+      "params": {
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1264,7 +1447,9 @@
       "id": "watching-now",
       "title": "他们在看",
       "route": "search",
-      "params": {"sort": "他們在看"},
+      "params": {
+        "sort": "他們在看"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1273,7 +1458,10 @@
       "id": "instant-noodle",
       "title": "泡面番",
       "route": "search",
-      "params": {"genre": "泡麵番", "sort": "最新上傳"},
+      "params": {
+        "genre": "泡麵番",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1282,7 +1470,10 @@
       "id": "motion-anime",
       "title": "动态动画",
       "route": "search",
-      "params": {"genre": "Motion Anime", "sort": "最新上傳"},
+      "params": {
+        "genre": "Motion Anime",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1291,7 +1482,10 @@
       "id": "3d-animation",
       "title": "3D作品",
       "route": "search",
-      "params": {"genre": "3DCG", "sort": "最新上傳"},
+      "params": {
+        "genre": "3DCG",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1300,7 +1494,10 @@
       "id": "animation-2-5d",
       "title": "2.5D",
       "route": "search",
-      "params": {"genre": "2.5D", "sort": "最新上傳"},
+      "params": {
+        "genre": "2.5D",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1309,7 +1506,10 @@
       "id": "animation-2d",
       "title": "2D动画",
       "route": "search",
-      "params": {"genre": "2D動畫", "sort": "最新上傳"},
+      "params": {
+        "genre": "2D動畫",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1318,7 +1518,10 @@
       "id": "ai-generated",
       "title": "AI生成",
       "route": "search",
-      "params": {"genre": "AI生成", "sort": "最新上傳"},
+      "params": {
+        "genre": "AI生成",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1327,7 +1530,10 @@
       "id": "mmd",
       "title": "MMD",
       "route": "search",
-      "params": {"genre": "MMD", "sort": "最新上傳"},
+      "params": {
+        "genre": "MMD",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1336,7 +1542,10 @@
       "id": "cosplay",
       "title": "Cosplay",
       "route": "search",
-      "params": {"genre": "Cosplay", "sort": "最新上傳"},
+      "params": {
+        "genre": "Cosplay",
+        "sort": "最新上傳"
+      },
       "style": "grid",
       "limit": 18,
       "more": true
@@ -1344,7 +1553,6 @@
   ],
   "stealthMode": true,
   "antiHotlinking": {
-    "userAgent": "Dart/3.13 (NexHub)",
     "referer": "https://hanime1.me"
   },
   "ageRating": "mature",
@@ -1353,29 +1561,37 @@
   "isHidden": false,
   "network": {
     "hosts": [
-      { "ip": "172.64.229.154", "host": "hanime1.me", "enabled": true },
-      { "ip": "162.159.0.1", "host": "hanime1.me", "enabled": true },
-      { "ip": "108.162.192.1", "host": "hanime1.me", "enabled": true },
-      { "ip": "172.64.33.1", "host": "hanime1.me", "enabled": true },
-      { "ip": "104.19.0.1", "host": "hanime1.me", "enabled": true },
-      { "ip": "172.64.229.154", "host": "hanime1.com", "enabled": true },
-      { "ip": "162.159.0.1", "host": "hanime1.com", "enabled": true },
-      { "ip": "108.162.192.1", "host": "hanime1.com", "enabled": true },
-      { "ip": "172.64.33.1", "host": "hanime1.com", "enabled": true },
-      { "ip": "104.19.0.1", "host": "hanime1.com", "enabled": true },
-      { "ip": "172.64.229.154", "host": "hanimeone.me", "enabled": true },
-      { "ip": "162.159.0.1", "host": "hanimeone.me", "enabled": true },
-      { "ip": "108.162.192.1", "host": "hanimeone.me", "enabled": true },
-      { "ip": "172.64.33.1", "host": "hanimeone.me", "enabled": true },
-      { "ip": "104.19.0.1", "host": "hanimeone.me", "enabled": true }
+      {
+        "ip": "104.26.9.104",
+        "host": "hanime1.me",
+        "enabled": true
+      },
+      {
+        "ip": "172.67.74.156",
+        "host": "hanime1.me",
+        "enabled": true
+      },
+      {
+        "ip": "104.26.8.104",
+        "host": "hanime1.me",
+        "enabled": true
+      },
+      {
+        "ip": "104.21.42.221",
+        "host": "hanime1.com",
+        "enabled": true
+      },
+      {
+        "ip": "172.67.167.30",
+        "host": "hanime1.com",
+        "enabled": true
+      }
     ],
     "cookieDomains": [
       "hanime1.me",
       ".hanime1.me",
       "hanime1.com",
-      ".hanime1.com",
-      "hanimeone.me",
-      ".hanimeone.me"
+      ".hanime1.com"
     ],
     "dns": {
       "mode": "system",
@@ -1397,7 +1613,6 @@
         "method": "get",
         "responseType": "json",
         "headers": {
-          "User-Agent": "Dart/3.13 (NexHub)",
           "Referer": "https://hanime1.me/"
         }
       },
@@ -1406,7 +1621,6 @@
         "method": "get",
         "responseType": "json",
         "headers": {
-          "User-Agent": "Dart/3.13 (NexHub)",
           "Referer": "https://hanime1.me/"
         }
       }
@@ -1417,7 +1631,7 @@
       "container": "#comment-start",
       "chunkSize": 4,
       "commentId": "substring-after(//div[starts-with(@id,'reply-section-wrapper')]/@id, 'wrapper-')",
-      "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), '\u00a0')",
+      "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), ' ')",
       "avatar": "//a/img/@src",
       "content": "//div[@class='comment-index-text'][2]",
       "time": "//div[@class='comment-index-text'][1]//span",
@@ -1430,7 +1644,7 @@
           "container": "div[id^='reply-start']",
           "chunkSize": 2,
           "commentId": null,
-          "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), '\u00a0')",
+          "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), ' ')",
           "avatar": "//a/img/@src",
           "content": "//div[@class='comment-index-text'][2]",
           "time": "//div[@class='comment-index-text'][1]//span",
