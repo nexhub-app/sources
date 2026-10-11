@@ -1,6 +1,6 @@
 {
   "id": "pms_m233",
-  "version": 13,
+  "version": 14,
   "name": "233动漫",
   "type": "animeSource",
   "responseType": "json",
@@ -45,7 +45,7 @@
       },
       "video": {
         "type": "webview",
-        "script": "(function(){\n  try {\n    var doc = document;\n    var m = doc.documentElement.outerHTML.match(/playData\\(\\s*['\"]([A-Za-z0-9+/=]+)['\"]\\s*,\\s*['\"]([0-9a-f]+)['\"]\\s*\\)/);\n    if (typeof playData === 'function' && m) {\n      var url = playData(m[1], m[2]);\n      if (url && /^https?:\\/\\/.+\\.(m3u8|mp4|webm)/i.test(url)) return url;\n    }\n    var f = doc.querySelector('iframe#MacPlayer, iframe#buffer, iframe[src*=\"/player/\"]');\n    var src = (f && f.getAttribute('src')) || '';\n    if (!src) {\n      var ifs = doc.querySelectorAll('iframe');\n      for (var i = 0; i < ifs.length; i++) {\n        var s = ifs[i].getAttribute('src') || '';\n        if (/player|v2player|cfhls/i.test(s)) { src = s; break; }\n      }\n    }\n    if (src && /\\/player\\/\\?url=/.test(src)) {\n      return 'webview:' + (src.indexOf('http') === 0 ? src : location.origin + src);\n    }\n    // video[src] 兜底必须带媒体扩展名：无扩展名地址多为广告占位/中转壳\n    // （站点风控对疑似机器人下发广告视频），当作解析结果会顶掉真直链。\n    var v = doc.querySelector('video[src]');\n    var vs = (v && v.getAttribute('src')) || '';\n    if (vs && /^https?:\\/\\/.+\\.(m3u8|m3u|mpd|mp4|webm|flv)/i.test(vs)) return vs;\n    return '';\n  } catch (e) { return ''; }\n})();"
+        "script": "(function(){\n  try {\n    var doc = document;\n    var m = doc.documentElement.outerHTML.match(/playData\\(\\s*['\"]([A-Za-z0-9+/=]+)['\"]\\s*,\\s*['\"]([0-9a-f]+)['\"]\\s*\\)/);\n    if (typeof playData === 'function' && m) {\n      var url = playData(m[1], m[2]);\n      if (url && /^https?:\\/\\/.+\\.(m3u8|mp4|webm)/i.test(url)) return url;\n    }\n    var f = doc.querySelector('iframe#MacPlayer, iframe#buffer, iframe[src*=\"/player/\"]');\n    var src = (f && f.getAttribute('src')) || '';\n    if (!src) {\n      var ifs = doc.querySelectorAll('iframe');\n      for (var i = 0; i < ifs.length; i++) {\n        var s = ifs[i].getAttribute('src') || '';\n        if (/player|v2player|cfhls/i.test(s)) { src = s; break; }\n      }\n    }\n    if (src && /\\/player\\/\\?url=/.test(src)) {\n      var abs = src.indexOf('http') === 0 ? src : location.origin + src;\n      // url= 为完整媒体直链（明文 m3u8 线）→ 保持 webview: 跳转，由播放器页\n      // 完成签名/去广告后再嗅探（链路已验证可用）。\n      // url= 为加密令牌（精品线）→ 不跳转：顶层导航上下文会被站点风控下发\n      // TikTok 广告占位；留在播放页靠嗅探链路在内嵌 iframe 上下文（真实内容\n      // 仅对该上下文下发）中捕获真实直链。\n      var mm = abs.match(/[?&]url=([^&]+)/);\n      var inner = mm ? decodeURIComponent(mm[1]) : '';\n      if (inner && /^https?:\\/\\//i.test(inner)) {\n        return 'webview:' + abs;\n      }\n      return '';\n    }\n    // video[src] 兜底必须带媒体扩展名：无扩展名地址多为广告占位/中转壳\n    // （站点风控对疑似机器人下发广告视频），当作解析结果会顶掉真直链。\n    var v = doc.querySelector('video[src]');\n    var vs = (v && v.getAttribute('src')) || '';\n    if (vs && /^https?:\\/\\/.+\\.(m3u8|m3u|mpd|mp4|webm|flv)/i.test(vs)) return vs;\n    return '';\n  } catch (e) { return ''; }\n})();"
       },
       "week": {
         "type": "builtin"
