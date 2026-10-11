@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T11:19:24.879Z",
+  "generatedAt": "2026-10-11T06:05:28.064Z",
   "count": 31,
   "sources": [
     {
@@ -200,7 +200,7 @@
       "type": "media",
       "format": "nexhub",
       "name": "233动漫",
-      "version": 12,
+      "version": 13,
       "baseUrl": "https://cn.233dm.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_m233.json",
       "builtin": true,
