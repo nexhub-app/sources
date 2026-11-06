@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-11T08:16:26.537Z",
-  "count": 31,
+  "generatedAt": "2026-11-06T12:03:21.246Z",
+  "count": 32,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -353,6 +353,22 @@
         "en": ""
       },
       "ageRating": "general"
+    },
+    {
+      "id": "media/pms_juiguo",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "剧果",
+      "version": 1,
+      "baseUrl": "https://huangju.net",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_juiguo.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "mature"
     },
     {
       "id": "media/pms_11kt",
