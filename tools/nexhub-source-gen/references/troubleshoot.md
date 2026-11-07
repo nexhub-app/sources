@@ -20,6 +20,7 @@
 |---|---|---|
 | 2xx + 几百字节 + `Welcome to nginx!` / `Apache2 Default Page` / `It works!` | 域名已弃用或站点搬走 | 别改解析。找新域名；无解就 `deprecated: true` + `migrationMessage` 说清原因 |
 | 2xx + 首页正常，但某个前缀（常见 `/search/`）返回「安全验证」/滑块/CAPTCHA | 该端点有验证墙 | 该端点 `overrides.type = webview-html`，用户手动过一次（见 §0.2） |
+| 2xx + 几百字节小页 + 标题「请稍候」类 + 内联脚本写 cookie 后自跳转 | 该端点的 **JS 自动挑战**（无人工要素） | 走脚本两步现取令牌（见 §0.4），**不要**开 webview |
 | 2xx + 只有骨架、正文密度 <2% | 前端渲染 | 见 `site-patterns.md` 的 SPA 路线 |
 | 502/521/`Failed to read origin site` | 源站挂了或拒绝机房 IP | 先换网络重试，别急着改源 |
 | 301/302 到别的域名 | 站方换域 | 把新域写进 `site.baseUrl` + `mirrors` |
@@ -53,6 +54,50 @@ assert len(nodes) >= 10 and len(set(ids)) == len(nodes), '容器或 id 选择器
 
 > 坑：`el.xpath('substring-before(...)')` 返回**字符串**，写成 `v[0]` 会只拿到首字符（表现为「每张卡片 id 都是 5」）。
 
+### 0.4 JS 自动挑战（200 小页面、无人工要素的拦截页）
+
+与滑块/图形码（§0.2）同属端点级拦截，但**无人工要素**：拦截页仍是 200、只有
+几百字节，标题多为「请稍候」类；内联脚本 `document.cookie` 写一个挑战 cookie，
+再带一个附加查询参数自跳转（`location.replace(原URL+参数)`），常伴自定义响应头
+（`X-*-Verify` 类）。浏览器里脚本执行完即自动放行——这类挑战**不该开 webview**
+（慢且依赖浏览器环境健康度），用脚本两步协议在直连层自愈：
+
+1. 首跳（引擎预取路由）拿到拦截页 → 入口脚本识别挑战特征（在页面里找挑战
+   cookie 的名字），**当场提取新鲜令牌**，返回 meta 描述符。
+2. `__fetchUrl` = 原端点 URL + 挑战要求的附加参数（通常任意值即可）；
+   `__fetchHeaders` 带 `Cookie: <挑战cookie名>=<令牌>`；`__fetchResponseType:
+   'text'`；`__processor` 交给列表解析函数。
+3. 令牌每次现取，站点轮换也不怕——**绝不把令牌写死进 JSON**。
+
+```js
+function parseX(raw, context) {
+  var list = parseList(raw, context);        // 先按真实结果页解析
+  if (list.length > 0) return list;          // 会话已暖 → 单跳直出
+  var m = /challenge_cookie=([0-9a-f]{8,})/.exec(String(raw || ''));
+  if (!m) return list;                       // 非挑战页（真异常）→ 空列表
+  return {
+    __meta: true,
+    __fetchUrl: context.baseUrl + '/search?kw='
+        + encodeURIComponent(context.keyword || '') + '&_challenge_pass=1',
+    __fetchHeaders: { 'Cookie': 'challenge_cookie=' + m[1] },
+    __fetchResponseType: 'text',
+    __processor: 'parseList'
+  };
+}
+```
+
+前置条件与校验：
+
+- 引擎必须「显式请求头与会话 jar 按名合并、同名显式优先」。旧实现里显式
+  `Cookie` 会被 jar 回带（PHP 会话每页都下发）整条顶掉，二跳永远带不上令牌
+  ——**二跳仍返回拦截页时先查这一条**。
+- 列表解析在脚本里做（script 端点返回最终数组），口径照抄声明式选择器：
+  容器块切分 → 图锚的 `title`/`href` → 封面 `data-src` 优先、占位图排除。
+- `context.keyword` 是**未编码**的原始搜索词，拼 URL 必须
+  `encodeURIComponent`（路由 `{keyword}` 的编码只发生在占位符替换时）。
+- 验证边界：挑战参数取任意值都能过、连续搜索无频控，可直接 curl 复核；
+  若站方后续把挑战升级出真人工要素，退回 §0.2 的 webview-html。
+
 ## 1. 导入与应用层
 
 | 症状 | 根因 | 修法 |
@@ -74,6 +119,7 @@ assert len(nodes) >= 10 and len(set(ids)) == len(nodes), '容器或 id 选择器
 | 搜索永远空 | 搜索参数名不对（`q` / `wd` / `keyword` / `searchword`） | 读首页 `<form action>` 与 `input name`（probe 会打印），别猜 |
 | 搜索页 404 / `System Error` | 地址形态不对（`?s=`、`/search/{kw}.html` 各有站点不支持） | 见 `site-patterns.md`「搜索地址四种形态」逐个排除 |
 | 搜索页返回「安全验证」 | 该端点有验证墙 | 该端点改 `webview-html`，用户手动过验证（§0.2） |
+| 搜索 200 但只有几百字节「请稍候」小页 | 端点有 JS 自动挑战（无人工要素，内联写 cookie 自跳转） | 脚本两步现取令牌二跳（§0.4），别开 webview |
 | 搜索有结果但点进去错乱 | `id` 取错（整串 URL 或首字符） | 用 `substring-before(substring-after(@href,'/vod/'),'.html')` 精确截取 |
 | 搜索第一页正常、第二页重复 | 页码从 0 开始或参数名是 `p` / `offset` | 用 `{page-1}` 或改参数名 |
 

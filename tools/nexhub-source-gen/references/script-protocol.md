@@ -32,9 +32,9 @@
 
 > 沙箱内**没有** `fetch` / `XMLHttpRequest` / `document` / 文件系统；网络一律走 `context.http`。
 
-## 3. 铁律：不要靠 async 返回结果
+## 3. 铁律：二次请求数据优先 __meta；纯计算可 await
 
-引擎对 `async function` / `Promise` 返回值支持不稳定（真机上 `evaluateAsync` 拿不到 Promise 结果）。要拿二次请求的数据，用 **meta 两步协议**。
+2026-07 起引擎修好了微任务泵（真机验证）：`await context.http/crypto/...` 与 `.then` 链都会触发，入口与 `__processor` 均可返回 Promise。但**拿二次请求数据仍优先 `__meta` 两步**（引擎 Dart 侧预取更稳、少一层异步）；`context.crypto` 这类纯计算直接 await 即可（详见 `references/duanju-patterns.md` §1-2）。
 
 ```js
 function parseDetail(html, context) {
@@ -68,6 +68,7 @@ meta 支持的键：
 
 - 链式：`__processor` 返回的仍是 meta 描述符时会再走一跳，**最多 4 跳**（用于「先查 id 再提交」）。
 - 反查：脚本里写死要访问的地址时，拼 `context.baseUrl + '/path'`，不要写死域名。
+- Cookie 头特例：`__fetchHeaders` 显式声明的 `Cookie` 与会话 jar **按名合并**（同名显式优先），不会被 jar 里的会话 cookie 顶掉。「拦截页内联 JS 写 cookie 后自跳转」的自动挑战（无人工要素）靠它二跳携带挑战令牌，完整模式见 `references/troubleshoot.md` §0.4。
 
 ## 4. 各端点返回值形状
 
@@ -104,7 +105,7 @@ meta 支持的键：
 |---|---|---|
 | 脚本永远返回空 | 函数名和 `override.function` 不一致 | 改名或补 `function` 字段 |
 | `ctx is not defined` | 照抄了别家阅读器的脚本 | 本应用注入的是 `context`，全局替换 |
-| 返回 `[object Promise]` | 用了 async / 直接 `return context.http.get(...)` | 改 `__meta` 两步 |
+| 返回 `[object Promise]` | 直接 `return context.http.get(...)`（没 await 也没 __meta） | `await` 它，或改 `__meta` 两步 |
 | 第二次调用拿不到上次的变量 | 每次解析新建引擎，模块级变量会重置 | 用 `context.storage` |
 | 超时 | 循环里串行请求太多 | 用 `__fetchUrls` 批量，或拆成多跳 |
 | 脚本里 `?` / 箭头函数报错 | 个别引擎版本 | 用 ES5 写法（`var`、`function`、字符串拼接）最稳 |
