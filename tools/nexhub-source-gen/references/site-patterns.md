@@ -24,6 +24,18 @@ python scripts/probe_site.py https://站点首页
 - 播放页：地址常藏在 `player_aaaa={...}` 这类变量里 → 用 `script` 端点正则取出 JSON 再解出 `url`。
 - 分类页 URL 常带 `--------1---.html` 这种占位串，page 占位符要按站点规律放（如 `{page}` 在第几位）。
 
+### 1.5 聚合资源站（详情页挂多家第三方「线路」的影视站）
+
+特征：详情页有若干线路页签（tab/playlist 分块），每个线路一版选集列表；播放页从 `var now=` 这类变量取直链。本质是**聚合器**：每条线路对应一家第三方资源站家族，直链落在各家自己的 CDN 上。
+
+关键规律（站点无关）：
+
+1. **线路 ≠ 站点自己的服务器**。第三方 CDN 寿命不一，死法有四：500、域名消失（DNS 不存在）、连接挂起、被墙。站点「默认/激活」线路常先死——别把首线路当好线路。
+2. **播放页 URL 三段式 `{id}-{line}-{ep}`**：换 line 段即同集数换线路，无需解析选集 DOM 就能构造兄弟线路地址；播放页上通常也把全部线路的同集数链接都列出来。
+3. **线路存活只能探测**：对候选直链各拉一次 m3u8 文本，`#EXTM3U`/`#EXTINF` 即存活。解析式样见 `troubleshoot.md` §6.1（`__meta` 两跳批量探活）。
+4. **单线路影片上游死了就是死了**：站点网页端同样播不了，不要在这类条目上反复调解析。
+5. 搜索接口若已停用，可用站方 RSS/最新列表做标题过滤兜底（只覆盖最新内容、无封面，`description` 里向用户说明口径）。
+
 ### 2. 采集 API 系（`/api.php/provide/vod/?ac=list`）
 
 - 直接 `responseType: json`，列表 `$.list`，字段 `vod_id` / `vod_name` / `vod_pic`。
@@ -34,6 +46,7 @@ python scripts/probe_site.py https://站点首页
 
 不要凭经验猜，按下面顺序确认：
 
+0. **站方联想接口（免验证，优先试）**：MacCMS 系 `/index.php/ajax/suggest?mid=1&wd={keyword}&limit=50` 返回 `{list:[{id,name,pic}]}`——站内搜索框的自动补全数据源，通常不挂验证墙。搜索路由写 `responseType: json` + override `builtin`，选择器 `$.list/$.id/$.name/$.pic`。HTML 搜索页被验证墙拦时这是首选。
 1. **读首页表单**（最可靠）：`<form action="/search/-------------.html">` + `<input name="wd">` → `"/search/-------------.html?wd={keyword}"`。`probe_site.py` 会直接打印 action 与字段名。
 2. **路径式**：`/index.php/vod/search/page/1/wd/{keyword}.html`（MacCMS 常见，参考实现同款）。
 3. **查询式**：`/index.php/vod/search.html?wd={keyword}`、`/search.html?wd=`。

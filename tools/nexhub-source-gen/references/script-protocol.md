@@ -32,9 +32,12 @@
 
 > 沙箱内**没有** `fetch` / `XMLHttpRequest` / `document` / 文件系统；网络一律走 `context.http`。
 
-## 3. 铁律：二次请求数据优先 __meta；纯计算可 await
+## 3. 铁律：二次请求数据优先 __meta；入口函数一律写同步
 
-2026-07 起引擎修好了微任务泵（真机验证）：`await context.http/crypto/...` 与 `.then` 链都会触发，入口与 `__processor` 均可返回 Promise。但**拿二次请求数据仍优先 `__meta` 两步**（引擎 Dart 侧预取更稳、少一层异步）；`context.crypto` 这类纯计算直接 await 即可（详见 `references/duanju-patterns.md` §1-2）。
+2026-07 起引擎修好了微任务泵：`await context.http/crypto/...` 与 `.then` 链都会触发。但要注意分两条线：
+
+- **作为「最终数据出口」的入口函数（parseVideo / parseList / parseDetail…）一律写同步函数**，异步数据一律走 `__meta` 两步。真机实证（2026-11）：async 入口的**返回值提取**在部分真机批次失效——返回的 Promise 被字符串化成 `"Instance of 'Future<dynamic>'"` 当成结果透传，parseVideo 会产出一条垃圾「直链」直接进播放器黑屏；微任务泵修的是桥接调用通道，救不了脚本级返回值通道。
+- `context.crypto` 这类**纯计算**可以放心 await（详见 `references/duanju-patterns.md` §1-2）。
 
 ```js
 function parseDetail(html, context) {
@@ -106,7 +109,10 @@ meta 支持的键：
 | 脚本永远返回空 | 函数名和 `override.function` 不一致 | 改名或补 `function` 字段 |
 | `ctx is not defined` | 照抄了别家阅读器的脚本 | 本应用注入的是 `context`，全局替换 |
 | 返回 `[object Promise]` | 直接 `return context.http.get(...)`（没 await 也没 __meta） | `await` 它，或改 `__meta` 两步 |
-| 第二次调用拿不到上次的变量 | 每次解析新建引擎，模块级变量会重置 | 用 `context.storage` |
+| 直链/结果变成 `"Instance of ..."` 垃圾串 | 入口是 async 函数，真机上返回值提取失效（见 §3） | 入口改同步 + `__meta` |
+| 列表/详情封面全挂，图片直开却 200 | 脚本返回了相对路径封面；图片层把非 http(s) 当本地文件，**永不发请求**（图片缓存索引里该源 0 条记录是铁证） | 脚本内补全：`cover = baseUrl + path`（列表与详情两处都要；协议相对 `//x/y` 补 `https:`） |
+| 批量处理器把字符串当数组遍历 | 字符串也有 `.length`，`raw.length !== undefined` 判不出数组 | 用 `Array.isArray(raw)` |
+| 第二次调用拿不到上次的变量 | 每次解析新建引擎，模块级变量会重置 | 用 `context.storage`；同一 meta 链内各跳共享全局（引擎实例不销毁） |
 | 超时 | 循环里串行请求太多 | 用 `__fetchUrls` 批量，或拆成多跳 |
 | 脚本里 `?` / 箭头函数报错 | 个别引擎版本 | 用 ES5 写法（`var`、`function`、字符串拼接）最稳 |
 

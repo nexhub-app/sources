@@ -136,8 +136,8 @@ def check_script_entries(data: dict, out: list[Finding]) -> None:
         if re.search(r"\bawait\b", src):
             out.append(Finding(
                 INFO, "script-await",
-                f"overrides.{api} 脚本里出现 await：JS 引擎对 Promise 返回值支持不稳定，"
-                f"要拿二次请求的数据请改用 __meta 两步协议（见 references/script-protocol.md）。"))
+                f"overrides.{api} 脚本里出现 await：拿二次请求数据优先 __meta 两步；"
+                f"crypto 等纯计算 await 即可（微任务泵已修，见 references/script-protocol.md §3）。"))
         if re.search(r"\bctx\.", src) and not re.search(
                 r"(?:var|let|const)\s+ctx\s*=|ctx\s*=\s*context", src):
             out.append(Finding(

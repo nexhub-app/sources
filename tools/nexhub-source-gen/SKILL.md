@@ -100,15 +100,15 @@ python scripts/validate_source.py 源.json
 4. 漫画章节把 `id` 取成章节链接，`images` 路由写 `{chapterId}` 即可直通该章。
 5. `webview-html` 端点**不要**写 `script`：渲染后的 HTML 只交给声明式引擎。
 6. 要嗅探播放地址才用 `webview` + IIFE 脚本，脚本必须自己 `return` 字符串。
-7. JS 里对象叫 `context`（不是 `ctx`）；拿二次请求的数据用 `__meta` 两步；`context.crypto` 返回 Promise 可直接 `await`（微任务泵已修，真机可用）。加密/签名站先读 `references/duanju-patterns.md`。
+7. JS 里对象叫 `context`（不是 `ctx`）；拿二次请求的数据用 `__meta` 两步；`context.crypto` 返回 Promise 可直接 `await`（微任务泵已修，真机可用）。**入口函数（parseVideo/parseList 等）一律写同步**——async 入口的返回值在真机上会被字符串化成垃圾（`"Instance of ..."`），只能靠 `__meta`。加密/签名站先读 `references/duanju-patterns.md`；聚合多线路影视站的探活式样见 `references/troubleshoot.md` §6.1。
 8. `animeSource` 必须有 `routes.latest`，否则校验直接拒绝。
-9. 图片 403 / 全是占位图 → 先补 `antiHotlinking.referer`。
+9. 图片 403 / 全是占位图 → 先补 `antiHotlinking.referer`；脚本源封面全挂且图片直开 200 → 脚本返回了相对路径，须在脚本内补全绝对地址（图片层把非 http(s) 当本地文件，永不发请求；列表与详情两处都要）。
 10. 改内置源（`plugins/builtin/`）必须 `version` +1；该目录被 gitignore、需重编译才进包。
 11. 未经 `validate_source.py` 与真机验收，不说「做好了」。
 12. 站点专属逻辑只写在该站的 JSON 里，不进共享代码。
 13. **「抓不到」先判生死**：整站返回 `Welcome to nginx` / Apache 默认页 / 200 但只有几百字节 → 域名已弃用，改解析毫无意义（先找新域名，无解就标 `deprecated` + `migrationMessage`）。
 14. **人机验证（滑块/图形码/Cloudflare）只走 `webview-html`**：用户在应用内手动过一次，同 (源,路由,URL) 复用。不写自动过验证的脚本；只拦某端点就只给那个端点配，不要顺手开 `useWebview`。但**无人工要素**的 JS 自动挑战（200 小页面、内联写 cookie 自跳转）不走 webview：脚本两步现取令牌即可（§3 表与 `references/troubleshoot.md` §0.4）。
-15. **搜索地址不要猜**：读首页 `<form action>` + `input name`（probe 会打印），再决定路径式还是 `?wd=` 查询式。
+15. **搜索地址不要猜**：读首页 `<form action>` + `input name`（probe 会打印），再决定路径式还是 `?wd=` 查询式。搜索页挂人机验证墙时，**先找站方免验证的联想 JSON 接口**（MacCMS `/index.php/ajax/suggest` 形态），webview-html 是最后手段——自制验证页不在 App 检测特征库里，会被当正常内容解析、永远不弹验证入口（`references/duanju-patterns.md` §11）。
 
 ## 7. 交付与提交
 

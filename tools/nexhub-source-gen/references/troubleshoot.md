@@ -147,6 +147,7 @@ function parseX(raw, context) {
 |---|---|---|
 | 图片 0 张 | 阅读页图片由 JS 插入 | 端点改 `webview-html`；或脚本 `__webview: true` |
 | 图片全是占位图 / 5KB 小图 | 防盗链 | `antiHotlinking.referer` 填源站 origin |
+| 脚本源封面全挂、图片直开却 200 | 脚本返回相对路径封面；图片层把非 http(s) 一律当本地文件，**永不发请求**（诊断铁证：图片缓存索引里该源 0 条记录） | 脚本内补全绝对地址（列表+详情两处），见 `script-protocol.md` §6 |
 | 图片顺序乱 | 容器里混了广告/头像 | 收紧 `images` 选择器到正文容器内 |
 | 图片是碎块 | 站点切片 | 用 `imageTransform` 或 `config.mode` |
 | 正文夹广告 | 站点在正文里插了 div | 书源用 `##正则` 清；或 content 脚本 `context.content.clean` |
@@ -161,6 +162,50 @@ function parseX(raw, context) {
 | 只有一条线路 | 站点多线路没解析 | 脚本返回 `{url, lines:[{name,url}]}` |
 | 视频地址几分钟后失效 | 签名直链 | 正常现象；播放器重试会重新解析（缓存 5 分钟） |
 | m3u8 一直转圈 | 分片也要鉴权头 | 脚本返回的 `headers` 会随播放器请求带上，务必给全 |
+| **一部分影片能播、一部分永久转圈** | 聚合资源站：详情页聚合多家第三方资源「线路」，各线路独立 CDN、寿命不一（500 / 域名消失 / 连接挂起都会见到），站点默认线路常先死。死 CDN 上游无解，站点网页端自己也播不了 | `parseVideo` 做**探活**（§6.1）；注意单线路影片若上游已死则无解，不要误判成解析 bug |
+| curl 一切正常、App 里黑屏转圈 | 差异在解析流程或播放器装配，不在网络 | 按 §6.2 分层定位 |
+
+### 6.1 聚合资源站多线路探活（`__meta` 两跳，站点无关式样）
+
+这类站点播放页 URL 是三段式 `{id}-{line}-{ep}`，**换 line 段就是同集数换线路**；播放页上会列出全部线路的同集数链接。线路是否存活只能靠探测（HTTP 拉一次 m3u8 文本，`#EXTM3U` / `#EXTINF` 视为存活；500 / DNS 失败 / 挂起都会以异常或 null 形式出现在批量预取结果里）。式样：
+
+```js
+var CANDS = []; // 跨跳共享：同一条 meta 链内引擎实例不销毁
+function parseVideo(raw, context) {
+  var now = extractNow(raw);                    // 本线路直链（var now= 或全页正则兜底）
+  CANDS = now ? [now] : [];
+  var sibs = siblingPages(raw, context.url);    // 按 {id}-{line}-{ep} 换 line 段推导其余线路页
+  if (!sibs.length) return now || '';           // 单线路：无 alternate，保持旧行为
+  return { __meta: true, __fetchUrls: sibs, __fetchResponseType: 'text', __processor: 'pickPageNow' };
+}
+function pickPageNow(raw, context) {            // 跳1回：各线路播放页文本（失败项为 null）
+  var bodies = Array.isArray(raw) ? raw : [raw];
+  for (var i = 0; i < bodies.length; i++) {
+    var u = extractNow(bodies[i]);
+    if (u && CANDS.indexOf(u) < 0) CANDS.push(u);
+  }
+  if (CANDS.length <= 1) return CANDS[0] || ''; // 单候选不必探（没有替代者）
+  return { __meta: true, __fetchUrls: CANDS.slice(0), __fetchResponseType: 'text', __processor: 'pickLive' };
+}
+function pickLive(raw, context) {               // 跳2回：各候选 m3u8 文本，失败项为 null
+  var bodies = Array.isArray(raw) ? raw : [raw];
+  for (var i = 0; i < bodies.length; i++) {
+    var b = String(bodies[i] == null ? '' : bodies[i]);
+    if (/^\s*#EXTM3U/.test(b) || b.indexOf('#EXTINF') >= 0) return CANDS[i];
+  }
+  return CANDS[0] || '';                        // 全死回退本线路原链，别返回空
+}
+```
+
+要点：当前线路直链放 CANDS[0]——存活即原样返回，探活只在必要时付出代价；批量预取并发完成，单条失败填 null 不中断整批；站点对快速连发可能弹验证墙，批量结果整批为 null 时自然回退本线路原链，属可接受降级。
+
+### 6.2 「curl 全通但 App 黑屏」分层定位
+
+1. **单 URL 层**：curl 拉直链（主清单→子清单→随机抽几个分片，换 `-A` UA / 加 / 不加 Referer 各试一遍），确认资源本身活着。
+2. **播放内核层**：用 App 自带的 libmpv 动态库直接驱动（ctypes：`mpv_create → set_option_string`（复刻应用装配的全部属性，尤其 `demuxer-lavf-format=hls` 与 `demuxer-lavf-o` 里的 `protocol_whitelist`——漏了它复刻就不算数）`→ loadfile → mpv_wait_event` 循环收 log / end-file reason）。比 curl 更接近真相：能暴露 500、DNS 失败、TLS 链、挂起这四类死法。
+3. **多采样**：换 3-4 部不同影片（不同时期上传）各走一遍——聚合站按影片/线路轮换 CDN 家族，一部能播不代表全站能播。
+4. **崩溃日志**：控制台输出会被截断，落盘的崩溃日志（应用数据目录 `crash_log.txt`）里有完整的 Flutter 异常——转场黑掉、点击没反应这类「看起来像播放问题」的故障，真凶常在这里（例：空 id 条目让多张卡片共用同一 Hero 标签 → 转场抛 "multiple heroes share the same tag"，表现为点卡片没反应/闪红）。
+5. **解析流程层**：以上都干净再查解析（脚本→meta 链→播放器 open 路径），看解析日志里直链有没有被中间层改写。
 
 ## 7. 脚本类
 
