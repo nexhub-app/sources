@@ -1,0 +1,84 @@
+{
+  "_note": "接口型影视源（站点自带 JSON 接口）。全部字段名换成抓包看到的真实键名；列表路径用 $.a.b 形式的 JSONPath。",
+  "id": "tmpl_anime_api",
+  "version": 1,
+  "name": "示例接口影视",
+  "type": "animeSource",
+  "responseType": "json",
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com",
+    "mirrors": [
+      { "name": "主站", "domain": "example.com", "baseUrl": "https://example.com" }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": { "type": "jsonpath" },
+      "category": { "type": "jsonpath" },
+      "search": { "type": "jsonpath" },
+      "detail": { "type": "jsonpath" },
+      "episodes": { "type": "jsonpath" }
+    }
+  },
+  "routes": {
+    "latest": { "url": "/api/list?page={page}", "method": "get", "responseType": "json" },
+    "category": { "url": "/api/list?type={category}&page={page}", "method": "get", "responseType": "json" },
+    "search": { "url": "/api/search?wd={keyword}&page={page}", "method": "get", "responseType": "json" },
+    "detail": { "url": "/api/detail?id={id}", "method": "get", "responseType": "json" },
+    "episodes": { "url": "/api/detail?id={id}", "method": "get", "responseType": "json" },
+    "video": { "url": "{url}", "method": "get", "responseType": "html" }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$.data.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic",
+      "description": "$.vod_blurb",
+      "tags": "$.vod_class",
+      "updatedAt": "$.vod_time"
+    },
+    "category": {
+      "list": "$.data.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic"
+    },
+    "search": {
+      "list": "$.data.list",
+      "id": "$.vod_id",
+      "title": "$.vod_name",
+      "cover": "$.vod_pic"
+    },
+    "detail": {
+      "title": "$.data.vod_name",
+      "cover": "$.data.vod_pic",
+      "description": "$.data.vod_content",
+      "author": "$.data.vod_director",
+      "tags": "$.data.vod_class"
+    },
+    "episodes": {
+      "list": "$.data.episodes",
+      "id": "$.id",
+      "title": "$.name",
+      "url": "$.url"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      { "id": "1", "name": "日韩动漫" },
+      { "id": "2", "name": "国产动漫" }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最新更新", "route": "latest", "style": "grid", "limit": 18, "more": true }
+  ],
+  "antiHotlinking": { "referer": "https://example.com/" },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false
+}

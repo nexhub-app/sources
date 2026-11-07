@@ -1,0 +1,58 @@
+{
+  "bookSourceName": "TODO_演示小说",
+  "bookSourceUrl": "https://m.example.com",
+  "bookSourceType": 0,
+  "enabledExplore": true,
+  "enabledSearch": true,
+  "exploreUrl": "玄幻小说::https://m.example.com/xuanhuan/\n都市小说::https://m.example.com/dushi/",
+  "bookSourceGroup": "内置书源",
+  "concurrentRate": 0,
+  "ruleSearch": {
+    "bookList": ".bookbox",
+    "bookName": ".bookname a@text",
+    "bookAuthor": ".author@text",
+    "bookCoverUrl": ".bookimg img@src",
+    "bookUrl": ".bookname a@href",
+    "bookLastChapter": ".update a@text"
+  },
+  "ruleExplore": {
+    "bookList": ".bookbox",
+    "bookName": ".bookname a@text",
+    "bookAuthor": ".author@text",
+    "bookCoverUrl": ".bookimg img@src",
+    "bookUrl": ".bookname a@href"
+  },
+  "ruleBookInfo": {
+    "name": "h1@text",
+    "author": "p:contains(作者)@text",
+    "coverUrl": ".block_img2 img@src",
+    "intro": ".intro_info@text",
+    "tocUrl": "a[href^=\"/book_\"]@href",
+    "lastChapter": "p:contains(最新) a@text",
+    "bookStatus": "p:contains(状态) span@text",
+    "recommendations": "TODO_推荐书名选择器(可选)"
+  },
+  "ruleToc": {
+    "chapterList": "a[href^=\"/book_\"][href$=\".html\"]",
+    "chapterName": "@text",
+    "chapterUrl": "@href",
+    "nextTocUrl": "a:contains(下一页)@href"
+  },
+  "ruleContent": {
+    "content": "#nr1@html",
+    "title": "#nr_title@text",
+    "nextContentUrl": "a:contains(下一章)@href"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "content": {
+        "type": "script",
+        "function": "parseContent",
+        "script": "function parseContent(html, context){ var raw = context.dom.queryHtml(html, '#nr1') || context.dom.queryHtml(html, '#content') || ''; raw = raw.replace(/<script.*?<\\/script>/gi, ''); return context.content.clean(raw); }"
+      }
+    }
+  },
+  "bookSourceComment": "TODO_备注",
+  "_note": "全功能小说书源骨架（Legado 兼容）：exploreUrl 多分类、ruleToc 翻页、ruleContent 去掉脚本标签；TODO_ 处换成真实规则。"
+}

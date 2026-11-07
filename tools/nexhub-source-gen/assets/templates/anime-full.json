@@ -1,0 +1,247 @@
+{
+  "id": "TODO_demo_anime",
+  "name": "TODO_显示名",
+  "author": "TODO_作者可选",
+  "version": 1,
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "stealthMode": true,
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com",
+    "userAgent": "TODO_可选",
+    "cookies": "TODO_可选(整段会话Cookie做手动登录)",
+    "headers": {},
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "example.com",
+        "baseUrl": "https://example.com"
+      }
+    ],
+    "publishPageUrl": "TODO_可选",
+    "publishMirrorSelector": "TODO_可选"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "webview"
+      },
+      "recommend": {
+        "type": "builtin"
+      },
+      "week": {
+        "type": "builtin"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search?q={keyword}&page={page}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/detail/{id}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/detail/{id}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "recommend": {
+      "url": "/api/recommend?id={id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "week": {
+      "url": "/api/weekly",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "list": "TODO_list容器",
+    "title": "TODO_标题",
+    "cover": "TODO_封面img@src",
+    "id": "TODO_a@href",
+    "detail": {
+      "title": "TODO",
+      "cover": "TODO",
+      "description": "TODO",
+      "tags": "TODO",
+      "author": "TODO",
+      "status": "TODO",
+      "recommendations": {
+        "list": "TODO",
+        "title": "TODO",
+        "cover": "TODO",
+        "url": "TODO"
+      }
+    },
+    "episodes": "TODO_ul li a",
+    "video": "TODO_//video/@src 或 webview抽m3u8",
+    "recommend": {
+      "list": "TODO",
+      "title": "TODO",
+      "cover": "TODO",
+      "id": "TODO"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18
+    },
+    {
+      "id": "week",
+      "title": "周更列表",
+      "route": "week",
+      "style": "schedule",
+      "limit": 0,
+      "more": false
+    }
+  ],
+  "filters": {
+    "groups": [
+      {
+        "id": "TODO",
+        "title": "地区",
+        "type": "single",
+        "options": [
+          {
+            "id": "1",
+            "title": "国产"
+          }
+        ]
+      }
+    ],
+    "byCategory": {},
+    "defaults": {}
+  },
+  "antiHotlinking": {
+    "referer": "https://example.com",
+    "headers": {},
+    "userAgent": "TODO_可选"
+  },
+  "webviewConfig": {
+    "adblock": true,
+    "timeoutSeconds": 20
+  },
+  "comments": {
+    "provider": "source",
+    "routes": {
+      "list": {
+        "url": "/api/comments?book={id}",
+        "responseType": "json"
+      },
+      "replies": {
+        "url": "TODO_可选",
+        "responseType": "json"
+      },
+      "post": {
+        "url": "TODO_可选",
+        "responseType": "json"
+      },
+      "reply": {
+        "url": "TODO_可选",
+        "responseType": "json"
+      },
+      "like": {
+        "url": "TODO_可选",
+        "responseType": "json"
+      },
+      "report": {
+        "url": "TODO_可选",
+        "responseType": "json"
+      }
+    },
+    "selectors": {
+      "items": "TODO_$.list",
+      "content": "TODO_$.content",
+      "author": "TODO_$.user"
+    },
+    "login": {
+      "url": "https://example.com/login",
+      "checkCookie": "TODO_已登录Cookie键名",
+      "checkUrl": "https://example.com/me",
+      "loggedInSelector": "TODO_.user-info",
+      "sendTokenAs": "TODO_null|bearer|key",
+      "authScheme": "Key",
+      "apiKeyParam": "apiKey"
+    }
+  },
+  "network": {
+    "proxy": "TODO_direct|继承全局",
+    "dns": "TODO_system",
+    "hosts": {
+      "example.com": "TODO_IP"
+    },
+    "sni": {
+      "enabled": true,
+      "defaultSni": "-"
+    },
+    "ech": {
+      "enabled": true,
+      "configs": []
+    }
+  },
+  "webFavorite": {
+    "title": "我的书架",
+    "route": "webFavorite",
+    "url": "/user/bookshelf",
+    "addUrl": "/user/favorite/add?id={id}",
+    "requireLogin": true
+  },
+  "announcement": {
+    "title": "TODO_公告标题",
+    "body": "TODO_正文",
+    "url": "TODO_可选",
+    "updatedAt": 1700000000
+  },
+  "deprecated": false,
+  "migrationMessage": "TODO_可选",
+  "_note": "全功能影视源骨架：所有可选块（comments/login/network/webFavorite/announcement/schedule/recommend/filters/publishPage）都在位，TODO_ 处必须换成真实值，用不到的块整块删。"
+}

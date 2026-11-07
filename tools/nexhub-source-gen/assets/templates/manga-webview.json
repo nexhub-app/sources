@@ -1,0 +1,112 @@
+{
+  "_note": "有 Cloudflare / 人机验证的站点：列表详情交给内嵌浏览器渲染后再抽取（webview-html），不需要写抽取脚本。",
+  "id": "tmpl_manga_webview",
+  "version": 1,
+  "name": "示例漫画（需渲染）",
+  "type": "mangaSource",
+  "responseType": "html",
+  "useWebview": true,
+  "stealthMode": true,
+  "webviewConfig": {
+    "adblock": true,
+    "timeoutSeconds": 30
+  },
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "webview-html"
+      },
+      "search": {
+        "type": "webview-html"
+      },
+      "detail": {
+        "type": "webview-html"
+      },
+      "chapters": {
+        "type": "webview-html"
+      },
+      "images": {
+        "type": "webview-html"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search?q={keyword}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "chapters": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "images": {
+      "url": "{chapterId}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "div.item",
+      "id": "a@href",
+      "title": "h3",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a@href"
+    },
+    "search": {
+      "list": "div.item",
+      "id": "a@href",
+      "title": "h3",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a@href"
+    },
+    "detail": {
+      "title": "h1",
+      "cover": "div.cover img@src",
+      "description": "div.intro",
+      "tags": "a.tag"
+    },
+    "chapters": {
+      "list": "div.chapter-list a",
+      "id": "a@href",
+      "title": "a",
+      "url": "a@href"
+    },
+    "images": {
+      "images": "div.reader img@data-src, div.reader img@src"
+    }
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://example.com/"
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true
+}

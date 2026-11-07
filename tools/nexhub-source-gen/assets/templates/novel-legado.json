@@ -1,0 +1,35 @@
+{
+  "_note": "小说源直接用阅读器通用书源格式（bookSource* / rule*），应用会自动识别并转换，不要写 id/name/type/site。规则语法：CSS 选择器 + @text/@href/@html，## 正则替换，@js: 内嵌脚本。",
+  "bookSourceName": "示例书源",
+  "bookSourceUrl": "https://example.com",
+  "bookSourceGroup": "示例",
+  "bookSourceType": 0,
+  "bookSourceComment": "只写规则，不写站点逻辑",
+  "searchUrl": "/search?q={{key}}&page={{page}}",
+  "exploreUrl": "全部::/list/{{page}}\n玄幻::/sort/xuanhuan/{{page}}",
+  "ruleSearch": {
+    "bookList": "div.result-list div.item",
+    "bookName": "h3@text",
+    "bookUrl": "h3 a@href",
+    "bookAuthor": "span.author@text",
+    "bookCover": "img@src",
+    "bookIntro": "p.intro@text",
+    "lastChapter": "span.latest@text"
+  },
+  "ruleBookInfo": {
+    "name": "h1@text",
+    "author": "span.author@text",
+    "coverUrl": "div.cover img@src",
+    "intro": "div.intro@html",
+    "tocUrl": "",
+    "lastChapter": "a#latest@text"
+  },
+  "ruleToc": {
+    "chapterList": "ul#chapter-list li",
+    "chapterName": "a@text",
+    "chapterUrl": "a@href"
+  },
+  "ruleContent": {
+    "content": "div#content@html##<script[\\s\\S]*?</script>"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "_note": "服务端渲染的影视源。播放地址若在 <video src> 里，把 video 覆盖改成 builtin，并在 selectors 里加 \"video\": \"video@src\"；要嗅探真实地址就用 webview + script。",
+  "id": "tmpl_anime_html",
+  "version": 1,
+  "name": "示例影视（HTML）",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": true,
+  "stealthMode": true,
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": { "type": "builtin" },
+      "search": { "type": "builtin" },
+      "detail": { "type": "builtin" },
+      "episodes": { "type": "builtin" },
+      "video": {
+        "type": "webview",
+        "script": "(function(){var v=document.querySelector('video');if(v&&(v.src||v.currentSrc))return v.src||v.currentSrc;var s=document.querySelector('video source');if(s&&s.src)return s.src;var f=document.querySelector('iframe');if(f&&f.src)return f.src;return '';})()"
+      }
+    }
+  },
+  "routes": {
+    "latest": { "url": "/list/{page}.html", "method": "get", "responseType": "html" },
+    "search": { "url": "/search?wd={keyword}&page={page}", "method": "get", "responseType": "html" },
+    "detail": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "episodes": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "video": { "url": "{url}", "method": "get", "responseType": "html" }
+  },
+  "selectors": {
+    "latest": {
+      "list": "ul.vod-list li",
+      "id": "a@href",
+      "title": "a.title",
+      "cover": "img@data-original, img@src",
+      "detailUrl": "a@href",
+      "status": "span.note"
+    },
+    "search": {
+      "list": "ul.vod-list li",
+      "id": "a@href",
+      "title": "a.title",
+      "cover": "img@data-original, img@src",
+      "detailUrl": "a@href"
+    },
+    "detail": {
+      "title": "h1.title",
+      "cover": "div.pic img@src",
+      "description": "div.desc",
+      "director": "span.director",
+      "actors": "span.actor",
+      "tags": "div.tags a",
+      "status": "span.status"
+    },
+    "episodes": {
+      "list": "ul.play-list li a",
+      "id": "a@href",
+      "title": "a",
+      "url": "a@href"
+    }
+  },
+  "category": {
+    "categories": [
+      { "id": "japan", "name": "日韩动漫" },
+      { "id": "china", "name": "国产动漫" }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最新更新", "route": "latest", "style": "grid", "limit": 18, "more": true }
+  ],
+  "antiHotlinking": { "referer": "https://example.com/" },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true
+}

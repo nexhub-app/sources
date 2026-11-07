@@ -1,0 +1,38 @@
+{
+  "_note": "最小可用骨架：只做「搜索 + 详情」两件事，先跑通再加功能。复制本文件改 5 处即可：id / name / baseUrl / 搜索路由 / 列表选择器。",
+  "id": "tmpl_minimal",
+  "version": 1,
+  "name": "示例源（最小）",
+  "type": "mangaSource",
+  "responseType": "html",
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "search": { "type": "builtin" }
+    }
+  },
+  "routes": {
+    "search": { "url": "/search?q={keyword}", "method": "get", "responseType": "html" },
+    "detail": { "url": "{detailUrl}", "method": "get", "responseType": "html" }
+  },
+  "selectors": {
+    "search": {
+      "list": "div.book-item",
+      "title": "h3",
+      "cover": "img@src",
+      "detailUrl": "a@href"
+    },
+    "detail": {
+      "title": "h1",
+      "cover": "div.cover img@src",
+      "description": "div.intro"
+    }
+  },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true
+}

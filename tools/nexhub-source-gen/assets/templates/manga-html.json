@@ -1,0 +1,74 @@
+{
+  "_note": "服务端渲染的漫画源：目录和图片都靠 CSS 选择器抓。章节 id 建议取章节链接，图片路由用 {chapterId} 直通。",
+  "id": "tmpl_manga_html",
+  "version": 1,
+  "name": "示例漫画（HTML）",
+  "type": "mangaSource",
+  "responseType": "html",
+  "site": {
+    "domain": "example.com",
+    "baseUrl": "https://example.com"
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": { "type": "builtin" },
+      "search": { "type": "builtin" },
+      "detail": { "type": "builtin" },
+      "chapters": { "type": "builtin" },
+      "images": { "type": "builtin" }
+    }
+  },
+  "routes": {
+    "latest": { "url": "/list/{page}", "method": "get", "responseType": "html" },
+    "search": { "url": "/search?q={keyword}&page={page}", "method": "get", "responseType": "html" },
+    "detail": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "chapters": { "url": "{detailUrl}", "method": "get", "responseType": "html" },
+    "images": { "url": "{chapterId}", "method": "get", "responseType": "html" }
+  },
+  "selectors": {
+    "latest": {
+      "list": "ul.mh-list li",
+      "title": "a.title",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a@href",
+      "status": "span.status"
+    },
+    "search": {
+      "list": "ul.mh-list li",
+      "title": "a.title",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a@href"
+    },
+    "detail": {
+      "title": "h1.title",
+      "cover": "div.cover img@src",
+      "description": "div.desc",
+      "author": "span.author",
+      "tags": "div.tags a",
+      "status": "span.status"
+    },
+    "chapters": {
+      "list": "ul#chapter-list li",
+      "id": "a@href",
+      "title": "a",
+      "url": "a@href"
+    },
+    "images": {
+      "images": "div.reader img@data-src, div.reader img@src"
+    }
+  },
+  "category": {
+    "categories": [
+      { "id": "rexue", "name": "热血" },
+      { "id": "lianai", "name": "恋爱" }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最新更新", "route": "latest", "style": "grid", "limit": 18, "more": true }
+  ],
+  "antiHotlinking": { "referer": "https://example.com/" },
+  "ageRating": "general",
+  "enabled": true,
+  "enabledExplore": true
+}
