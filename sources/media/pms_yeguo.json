@@ -1,0 +1,278 @@
+{
+  "id": "pms_yeguo",
+  "version": 6,
+  "name": "野果短剧",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "mature",
+  "enabled": true,
+  "enabledExplore": true,
+  "description": "野果短剧（Nuxt3 SPA，18+ 成人内容，密钥动态分发，API 前缀 /api.php）：接口 = 当前站点 origin + /api.php + /api/...（pathinfo 路由，站点前端 bundle 实证）；信封 {errcode:0,data:AES密文}，解密后 {data:{业务}}（直出无 status 层）。key/iv 藏在 /_nuxt/*.js 模块（{version:\"v0\",mode:\"CBC\",padding:\"Pkcs7\",key,iv}，值支持 \"1_2_3\" 字节序列或直接字符串）。解析链（meta 协议 3-4 跳）：GET 首页 → 取入口 JS → 批量取 import 配置模块提取 key/iv → POST 业务 API → 解密抽取；遇 3xx 从响应头 Location 换域，遇「200 但内容不对」换下一候选。端点（POST form + 公共参数 bundleId/version=1.3.2/oauth_type/via/oauth_id/trace_id/token）：theater/exploreList（目录，响应自带 filters 维度：theme/setting/background/time/recommend，本源已静态内置全部选项——theme 7野果原创/8真人短剧/9魔改漫剧/10网红改编/11PMV裸舞，setting 23-29，background 39校园/40都市/41年代/43古代/44玄幻/45末世/46灵异，time 1-4 天数，recommend 1最新/2最热）、search/result（keyword+tab=video）、playlet/detail（详情+分集，episodes[].id/sort/title，is_adv 剔除）、playlet/play（video_url/video_url_h265，带时效签名 m3u8）。分集 url 形如 {site}/drama/detail/{vid}/#eid={eid}，video 端点从 fragment 取 episode_id。封面图床 pic.hdhwqx.cn 的图片字节同为 AES-CBC 密文（media_key/media_iv 已内置 imageTransform 声明，引擎图片层自动解密；图床更换时需发新版）。站点域名池会轮换（*.buxefaex.cc / *.fzchosdi.cc / *.lwblvxvy.cc / yeguodj.com），主域失效时切换镜像或发新版。",
+  "site": {
+    "domain": "buxefaex.cc",
+    "baseUrl": "https://analyze.buxefaex.cc",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "analyze.buxefaex.cc",
+        "baseUrl": "https://analyze.buxefaex.cc"
+      },
+      {
+        "name": "备用一",
+        "domain": "yeguodj.com",
+        "baseUrl": "https://yeguodj.com"
+      },
+      {
+        "name": "备用二",
+        "domain": "delta.ygrwdsgt.cc",
+        "baseUrl": "https://delta.ygrwdsgt.cc"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "// 野果源共用脚本 —— NexHub hybrid 源 parser.script，全部端点共享。\n// 协议约定：Nuxt3 SPA 站点；API 信封 {status:\"1\",data:...}；\n// data 可为 AES-CBC/PKCS7(base64) 密文，key/iv 藏在 /_nuxt/*.js 模块\n// （{version:\"v0\",mode:\"CBC\",padding:\"Pkcs7\",key:...,iv:...}，值可为 \"1_2_3\" 字节\n// 序列或直接字符串）。apiBase 取 __NUXT_DATA__.apiBaseURL 或入口 JS baseURL:fn()\n// 常量；兜底站点自身。跳链（引擎 meta 协议，同一次调用内全局变量共享）：\n//   入口(首页HTML) → P2 取入口JS → 批量取配置模块 → P3 存 key/iv\n//   → POST 业务 API → P4(解密+抽取) → 结果\n\n// 同一次 resolve 内共享的全局状态（引擎每 resolve 新建 runtime，跨调用天然重置）\nvar _ygS = null, _ygIS = null, __ygTrace = '', __ygApiBase = '', __ygEntry = '',\n  __ygKey = null, __ygIv = null, __ygPending = null, __ygMode = '',\n  __ygPre = null, __ygFns = null, __ygBaseList = null, __ygBaseIdx = 0;\n\n// ───────── 工具 ─────────\nfunction _ygLog(m) { try { context.log('[yeguo] ' + m); } catch (e) { } }\nfunction _ygOrigin() {\n  var b = context.baseUrl || __ygSite || '';\n  return String(b).replace(/\\/+$/, '');\n}\nfunction _ygTrace() {\n  if (!__ygTrace) {\n    var s = '';\n    for (var i = 0; i < 32; i++) s += '0123456789abcdef'.charAt(Math.floor(Math.random() * 16));\n    __ygTrace = s;\n  }\n  return __ygTrace;\n}\nfunction _ygCommon() {\n  var t = _ygTrace();\n  return 'bundleId=com.pwa.mater&version=1.3.2&oauth_type=web&language=zh&via=pwa&oauth_id=' + t + '&trace_id=' + t + '&token=';\n}\nfunction _ygAbs(base, ref) {\n  if (!ref) return '';\n  ref = String(ref);\n  if (/^https?:\\/\\//i.test(ref)) return ref;\n  if (ref.charAt(0) === '/') return base + ref;\n  if (ref.indexOf('./') === 0 || ref.indexOf('../') === 0) {\n    var dir = base.split('/'); dir.pop();\n    var parts = ref.split('/');\n    for (var i = 0; i < parts.length; i++) {\n      if (parts[i] === '.') continue;\n      if (parts[i] === '..') dir.pop(); else dir.push(parts[i]);\n    }\n    return dir.join('/');\n  }\n  return base + '/' + ref;\n}\n\n// ───────── 配置发现 ─────────\nfunction _ygEntryUrl(html) {\n  var re = /<script[^>]*type=[\"']module[\"'][^>]*src=[\"']([^\"']+)[\"'][^>]*>/gi, m, site = _ygOrigin();\n  var first = '', loose = '';\n  while ((m = re.exec(html))) {\n    var u = _ygAbs(site, m[1]);\n    if (!u || u.indexOf(site) !== 0 || !/\\.js(\\?|$)/.test(u)) continue;\n    if (!first) first = u;\n    if (!loose && /_nuxt\\//.test(u)) { loose = u; break; }\n  }\n  return loose || first;\n}\nfunction _ygNuxtApiBase(html) {\n  var m = html.match(/id=[\"']__NUXT_DATA__[\"'][^>]*>([\\s\\S]*?)<\\/script>/i);\n  if (!m) return '';\n  try {\n    var arr = JSON.parse(m[1]);\n    if (!(arr instanceof Array)) return '';\n    for (var i = 0; i < arr.length && i < 8000; i++) {\n      var o = arr[i];\n      if (o && typeof o === 'object' && o.apiBaseURL !== undefined) {\n        var ref = o.apiBaseURL;\n        if (typeof ref === 'number' && typeof arr[ref] === 'string' && /^https?:\\/\\//i.test(arr[ref])) return arr[ref];\n      }\n    }\n  } catch (e) { }\n  return '';\n}\n// 首页 head 里声明的跨域预连接候选（preconnect / dns-prefetch）——\n// 站点把 API 域与页面域分离时，这里通常列着真实接口域\nfunction _ygPreconnect(html) {\n  var out = [], re = /<link[^>]+rel=[\"'](?:preconnect|dns-prefetch)[\"'][^>]*>/gi, m;\n  var site = _ygOrigin();\n  while ((m = re.exec(html)) && out.length < 4) {\n    var h = (m[0].match(/href=[\"']([^\"']+)[\"']/i) || [])[1] || '';\n    if (!/^https?:\\/\\/[^\\/\"']+\\/*$/i.test(h)) continue;\n    var o = h.replace(/\\/+$/, '');\n    if (o && o !== site && out.indexOf(o) < 0) out.push(o);\n  }\n  return out;\n}\n// baseURL:fn() 调用点（空格容忍），返回 fn 名列表\nfunction _ygBaseCalls(js) {\n  var re = /baseURL:\\s*([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\(\\)/g, out = [], m;\n  while ((m = re.exec(js)) && out.length < 8) {\n    if (out.indexOf(m[1]) < 0) out.push(m[1]);\n  }\n  return out;\n}\n// 在文本内找 fn 名对应的 fn = () => \"https://...\" 定义（空格容忍）\nfunction _ygFnBaseIn(js, names) {\n  for (var i = 0; i < names.length; i++) {\n    var esc = names[i].replace(/\\$/g, '\\\\$');\n    var re = new RegExp('(?:^|[^A-Za-z0-9_$.])' + esc + '\\\\s*=\\\\s*\\\\(\\\\s*\\\\)\\\\s*=>\\\\s*[\"\\'`](https?://[^\"\\'`\\\\s]{1,512})[\"\\'`]');\n    var m = js.match(re);\n    if (m && m[1]) {\n      var u = m[1].replace(/\\/+$/, '');\n      if (/^https?:\\/\\//i.test(u) && u.indexOf('?') < 0) return u;\n    }\n  }\n  return '';\n}\nfunction _ygScriptApiBase(js) {\n  return _ygFnBaseIn(js, _ygBaseCalls(js));\n}\nfunction _ygConfigCandidates(js, entryUrl) {\n  var re = /import\\s*\\{[^{};]+\\}\\s*from\\s*[\"'`]([^\"'`]+)[\"'`]/g;\n  var seen = {}, out = [], site = _ygOrigin(), m;\n  while ((m = re.exec(js))) {\n    var u = _ygAbs(entryUrl, m[1]);\n    if (!u || seen[u] || u.indexOf(site) !== 0 || !/\\.js(\\?|$)/.test(u)) continue;\n    seen[u] = true; out.push(u);\n    if (out.length >= 8) break;\n  }\n  return out;\n}\nfunction _ygBytes(v) {\n  if (typeof v !== 'string' || !v) return null;\n  if (v.indexOf('_') < 0) {\n    var a = [];\n    for (var i = 0; i < v.length; i++) a.push(v.charCodeAt(i) & 255);\n    return a;\n  }\n  var p = v.split('_'), a2 = [];\n  for (var j = 0; j < p.length; j++) {\n    var n = parseInt(p[j], 10);\n    if (isNaN(n) || n < 0 || n > 255) return null;\n    a2.push(n);\n  }\n  return a2;\n}\nfunction _ygParseCfg(js) {\n  var f = {}, re = /\\b(version|mode|padding|key|iv|sign_key)\\s*:\\s*(?:[A-Za-z_$][A-Za-z0-9_$]*\\(\\s*)?[\"'`]([^\"'`\\\\\\r\\n]{1,512})[\"'`]/g, m;\n  while ((m = re.exec(js))) { if (f[m[1]] === undefined) f[m[1]] = m[2]; }\n  if (f.version !== 'v0' || f.mode !== 'CBC' || f.padding !== 'Pkcs7') return null;\n  var key = _ygBytes(f.key), iv = _ygBytes(f.iv);\n  if (!key || (key.length !== 16 && key.length !== 24 && key.length !== 32)) return null;\n  if (!iv || iv.length !== 16) return null;\n  return { key: key, iv: iv };\n}\n\n// ───────── 纯 JS AES-CBC-PKCS7 解密（S-box 运行时生成） ─────────\nfunction _ygTables() {\n  if (_ygS) return;\n  function xt(a) { return ((a << 1) ^ ((a & 0x80) ? 0x1b : 0)) & 255; }\n  var exp = [], log = {}, x = 1;\n  for (var i = 0; i < 255; i++) { exp[i] = x; log[x] = i; x = (x ^ xt(x)) & 255; }\n  function ginv(a) { return a === 0 ? 0 : exp[(255 - log[a]) % 255]; }\n  var s = [], is = [];\n  for (var b = 0; b < 256; b++) {\n    var v = ginv(b), r = v ^ 0x63, bb = v;\n    for (var k = 1; k < 5; k++) { bb = ((bb << 1) | (bb >>> 7)) & 255; r ^= bb; }\n    r &= 255; s[b] = r; is[r] = b;\n  }\n  _ygS = s; _ygIS = is;\n}\nfunction _ygMul(a, b) {\n  _ygTables();\n  var p = 0;\n  for (var i = 0; i < 8; i++) { if (b & 1) p ^= a; a = ((a << 1) ^ ((a & 0x80) ? 0x1b : 0)) & 255; b >>= 1; }\n  return p & 255;\n}\nfunction _ygExpand(key) {\n  _ygTables();\n  var nk = key.length / 4, nr = nk + 6, w = [], i, j, t;\n  for (i = 0; i < nk; i++) w[i] = [key[4 * i], key[4 * i + 1], key[4 * i + 2], key[4 * i + 3]];\n  var rc = 1;\n  for (i = nk; i < 4 * (nr + 1); i++) {\n    t = w[i - 1].slice();\n    if (i % nk === 0) { t = [_ygS[t[1]] ^ rc, _ygS[t[2]], _ygS[t[3]], _ygS[t[0]]]; rc = ((rc << 1) ^ ((rc & 0x80) ? 0x1b : 0)) & 255; }\n    else if (nk > 6 && i % nk === 4) { t = [_ygS[t[0]], _ygS[t[1]], _ygS[t[2]], _ygS[t[3]]]; }\n    w[i] = [w[i - nk][0] ^ t[0], w[i - nk][1] ^ t[1], w[i - nk][2] ^ t[2], w[i - nk][3] ^ t[3]];\n  }\n  return { w: w, nr: nr };\n}\nfunction _ygBlock(st, w, nr) {\n  var r, c, t, i;\n  function ark(rd) { for (r = 0; r < 4; r++) for (c = 0; c < 4; c++) st[c * 4 + r] ^= w[rd * 4 + c][r]; }\n  ark(nr);\n  for (i = nr - 1; i >= 1; i--) {\n    t = st.slice();\n    for (c = 0; c < 4; c++) for (r = 0; r < 4; r++) st[c * 4 + r] = _ygIS[t[((c - r + 4) % 4) * 4 + r]];\n    ark(i);\n    for (c = 0; c < 4; c++) {\n      var a0 = st[c * 4], a1 = st[c * 4 + 1], a2 = st[c * 4 + 2], a3 = st[c * 4 + 3];\n      st[c * 4] = _ygMul(a0, 14) ^ _ygMul(a1, 11) ^ _ygMul(a2, 13) ^ _ygMul(a3, 9);\n      st[c * 4 + 1] = _ygMul(a0, 9) ^ _ygMul(a1, 14) ^ _ygMul(a2, 11) ^ _ygMul(a3, 13);\n      st[c * 4 + 2] = _ygMul(a0, 13) ^ _ygMul(a1, 9) ^ _ygMul(a2, 14) ^ _ygMul(a3, 11);\n      st[c * 4 + 3] = _ygMul(a0, 11) ^ _ygMul(a1, 13) ^ _ygMul(a2, 9) ^ _ygMul(a3, 14);\n    }\n  }\n  t = st.slice();\n  for (c = 0; c < 4; c++) for (r = 0; r < 4; r++) st[c * 4 + r] = _ygIS[t[((c - r + 4) % 4) * 4 + r]];\n  ark(0);\n}\nfunction _ygB64(s) {\n  var K = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', o = [], buf = 0, bits = 0;\n  s = String(s).replace(/[^A-Za-z0-9+/=]/g, '').replace(/=+$/, '');\n  for (var i = 0; i < s.length; i++) {\n    var v = K.indexOf(s.charAt(i));\n    if (v < 0) continue;\n    buf = (buf << 6) | v; bits += 6;\n    if (bits >= 8) { bits -= 8; o.push((buf >> bits) & 255); }\n  }\n  return o;\n}\nfunction _ygUtf8(bytes) {\n  var out = '', i = 0, n = bytes.length;\n  while (i < n) {\n    var b = bytes[i];\n    if (b < 0x80) { out += String.fromCharCode(b); i++; }\n    else if (b >= 0xC0 && b < 0xE0 && i + 1 < n) { out += String.fromCharCode(((b & 0x1F) << 6) | (bytes[i + 1] & 0x3F)); i += 2; }\n    else if (b >= 0xE0 && b < 0xF0 && i + 2 < n) { out += String.fromCharCode(((b & 0x0F) << 12) | ((bytes[i + 1] & 0x3F) << 6) | (bytes[i + 2] & 0x3F)); i += 3; }\n    else if (b >= 0xF0 && i + 3 < n) {\n      var cp = ((b & 0x07) << 18) | ((bytes[i + 1] & 0x3F) << 12) | ((bytes[i + 2] & 0x3F) << 6) | (bytes[i + 3] & 0x3F);\n      cp -= 0x10000;\n      out += String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));\n      i += 4;\n    } else { out += String.fromCharCode(b); i++; }\n  }\n  return out;\n}\nfunction _ygAesDecryptB64(cipherB64, keyBytes, ivBytes) {\n  try {\n    var data = _ygB64(cipherB64);\n    if (!data.length || data.length % 16 !== 0) return '';\n    var ks = _ygExpand(keyBytes), w = ks.w, nr = ks.nr, out = [];\n    var iv = ivBytes.slice();\n    for (var off = 0; off < data.length; off += 16) {\n      var blk = data.slice(off, off + 16);\n      var prev = blk.slice();\n      _ygBlock(blk, w, nr);\n      for (var i = 0; i < 16; i++) blk[i] ^= iv[i];\n      iv = prev;\n      for (var j = 0; j < 16; j++) out.push(blk[j]);\n    }\n    var pad = out[out.length - 1];\n    if (pad < 1 || pad > 16 || pad > out.length) return '';\n    for (var k = out.length - pad; k < out.length; k++) if (out[k] !== pad) return '';\n    return _ygUtf8(out.slice(0, out.length - pad));\n  } catch (e) { return ''; }\n}\n\n// ───────── 信封解码 ─────────\n// 协议约定：外层 {status:\"1\",data:<AES base64 或 对象>}；\n// data 为密文时解密后的内容仍为 {status:\"1\",data:{业务}}（双层同构）。\n// 兼容防御：解密结果若不含 status（直接是业务对象）也接受。\nfunction _ygPayload(text) {\n  var env;\n  try { env = JSON.parse(text); } catch (e) { return null; }\n  if (!env || typeof env !== 'object') return null;\n  // Web 端信封：{errcode:0, timestamp, data:<AES base64>}；errcode 非 0 即失败\n  if (env.errcode !== undefined && Number(env.errcode) !== 0) return null;\n  var p = env;\n  if (typeof env.data === 'string' && env.data) {\n    if (!__ygKey || !__ygIv) return null;\n    var plain = _ygAesDecryptB64(env.data.replace(/\\s+/g, ''), __ygKey, __ygIv);\n    if (!plain) return null;\n    try { p = JSON.parse(plain); } catch (e) { return null; }\n    if (!p || typeof p !== 'object') return null;\n    if (p.status !== undefined) return String(p.status) === '1' ? p.data : null;\n    // 解密结果无 status：{data:{业务}}（成功态直出）→ 取内层 data\n    if (p.data !== undefined) return p.data;\n    return p;\n  }\n  if (env.data && typeof env.data === 'object') return env.data;\n  return env;\n}\n\n// ───────── 跳链公共处理器 ─────────\n// 引擎契约：单条预取处理器收 [body, respHeaders] 数组（text 模式 headers 恒为\n// 空对象），批量预收取 [list]（裸单参）。_ygOne 归一化两种形态，兼容旧引擎裸传。\nfunction _ygOne(payload) {\n  if (payload instanceof Array && payload.length === 2 &&\n    (payload[1] === null || (typeof payload[1] === 'object' && !(payload[1] instanceof Array)))) return payload[0];\n  return payload;\n}\nfunction _ygApiMeta() {\n  var base = (__ygBaseList && __ygBaseIdx < __ygBaseList.length ? __ygBaseList[__ygBaseIdx] : (__ygApiBase || _ygOrigin())).replace(/\\/+$/, '');\n  return {\n    __meta: true,\n    __fetchUrl: base + __ygPending.route,\n    __fetchMethod: 'post',\n    __fetchBody: __ygPending.body,\n    __fetchResponseType: 'text',\n    __fetchHeaders: {\n      'Content-Type': 'application/x-www-form-urlencoded',\n      'Origin': base,\n      'Referer': _ygOrigin() + '/'\n    },\n    __processor: '__ygApiStep'\n  };\n}\nfunction __ygEntryStep(payload) {\n  var js = _ygOne(payload);\n  _ygLog('入口JS ' + (js || '').length + ' 字符');\n  if (!__ygApiBase) __ygApiBase = _ygScriptApiBase(js || '');\n  __ygFns = _ygBaseCalls(js || '');\n  var urls = _ygConfigCandidates(js || '', __ygEntry || '');\n  _ygLog('apiBase=' + (__ygApiBase || '(未发现)') + ', baseURL调用 ' + __ygFns.length + ', 配置候选 ' + urls.length);\n  if (!urls.length) return [];\n  return { __meta: true, __fetchUrls: urls, __fetchResponseType: 'text', __fetchConcurrency: 6, __processor: '__ygConfigStep' };\n}\nfunction __ygConfigStep(list) {\n  var n = list instanceof Array ? list.length : 0;\n  for (var i = 0; i < n; i++) {\n    var t = list[i];\n    if (!t || typeof t !== 'string') continue;\n    var cfg = _ygParseCfg(t);\n    if (cfg && !__ygKey) { __ygKey = cfg.key; __ygIv = cfg.iv; }\n    if (!__ygApiBase) __ygApiBase = _ygScriptApiBase(t);           // 模块内自洽：调用点+定义同文\n    if (!__ygApiBase && __ygFns && __ygFns.length) __ygApiBase = _ygFnBaseIn(t, __ygFns); // 跨文件：入口的调用点 + 模块里的定义\n  }\n  if (!__ygKey) { _ygLog('配置模块中未找到 v0/CBC/Pkcs7 密钥'); return []; }\n  // apiBase 候选（去重）：**站点前端协议 = 当前 origin + /api.php**（pathinfo 风格\n  // 路由入口，真实抓包验证），随后代码声明值 / 预连接域 / 站点自身仅作兜底。\n  // HTTP 层 404 会中断 meta 链，「200 但内容不对」时由 __ygApiStep 换下一候选。\n  __ygBaseList = [];\n  var add = function (b) {\n    if (!b || !/^https?:\\/\\//i.test(b)) return;\n    b = b.replace(/\\/+$/, '');\n    if (__ygBaseList.indexOf(b) < 0 && __ygBaseList.length < 3) __ygBaseList.push(b);\n  };\n  add(_ygOrigin() + '/api.php');\n  add(__ygApiBase);\n  if (__ygPre instanceof Array) for (var k = 0; k < __ygPre.length; k++) add(__ygPre[k]);\n  add(_ygOrigin());\n  __ygBaseIdx = 0;\n  _ygLog('apiBase 候选: ' + __ygBaseList.join(' | '));\n  return _ygApiMeta();\n}\nfunction __ygApiStep(payload) {\n  var body = _ygOne(payload);\n  var hdr = null;\n  if (payload instanceof Array && payload.length === 2 &&\n    payload[1] && typeof payload[1] === 'object' && !(payload[1] instanceof Array)) hdr = payload[1];\n  var data = _ygPayload(String(body || ''));\n  if (!data) {\n    // 3xx 重定向：响应头 Location 给出真实接口域（引擎已关自动跟随）→ 换到候选最前\n    var loc = hdr ? (hdr['location'] || hdr['Location'] || '') : '';\n    if (loc) {\n      var m = String(loc).match(/^https?:\\/\\/[^\\/\"'\\s\\\\]+/i);\n      var next = m ? m[0].replace(/\\/+$/, '') : '';\n      var cur = __ygBaseList && __ygBaseIdx < __ygBaseList.length ? __ygBaseList[__ygBaseIdx] : '';\n      if (next && next.toLowerCase() !== String(cur).toLowerCase()) {\n        var rest = __ygBaseList ? __ygBaseList.slice(__ygBaseIdx + 1) : [];\n        var newList = [next];\n        for (var i = 0; i < rest.length && newList.length < 3; i++) {\n          if (String(rest[i]).toLowerCase() !== next.toLowerCase()) newList.push(rest[i]);\n        }\n        __ygBaseList = newList;\n        __ygBaseIdx = 0;\n        _ygLog('重定向换 apiBase: ' + next);\n        return _ygApiMeta();\n      }\n    }\n    if (__ygBaseList && __ygBaseIdx + 1 < __ygBaseList.length) {\n      __ygBaseIdx++;\n      _ygLog('API 响应异常，换 apiBase 候选重试: ' + __ygBaseList[__ygBaseIdx]);\n      return _ygApiMeta();\n    }\n    _ygLog('API 响应解码失败或 status!=1');\n    return [];\n  }\n  return __ygHandle(data);\n}\n\n// ───────── 行抽取 ─────────\nfunction _ygStr(row, keys) {\n  for (var i = 0; i < keys.length; i++) {\n    var v = row[keys[i]];\n    if (v !== undefined && v !== null && String(v) !== '') return String(v);\n  }\n  return '';\n}\nfunction _ygNum(row, keys) {\n  for (var i = 0; i < keys.length; i++) {\n    var v = row[keys[i]];\n    if (v === undefined || v === null) continue;\n    var n = parseInt(v, 10);\n    if (!isNaN(n) && n > 0) return n;\n  }\n  return 0;\n}\nfunction _ygCover(site, raw) {\n  // 站点不同接口封面字段名不一（列表 cover、detail/play 另有 cover_img /\n  // social_cover / share_cover / episode_cover），全量兜底\n  var c = _ygStr(raw, ['cover', 'cover_img', 'cover_url', 'thumbnail', 'social_cover', 'share_cover', 'episode_cover', 'pic', 'img']);\n  if (!c) return '';\n  if (/^https?:\\/\\//i.test(c)) return c;\n  return site + '/' + c.replace(/^\\/+/, '');\n}\nfunction _ygStatus(raw) {\n  var s = String(raw.serialize_status === undefined ? '' : raw.serialize_status);\n  if (s === '1') return '连载中';\n  if (s === '2') return '已完结';\n  return '';\n}\nfunction _ygTags(raw) {\n  var t = raw.tags, out = [];\n  if (t instanceof Array) {\n    for (var i = 0; i < t.length && out.length < 8; i++) {\n      var s = String(t[i] === undefined || t[i] === null ? '' : t[i]).replace(/^\\s+|\\s+$/g, '');\n      if (s && out.indexOf(s) < 0) out.push(s);\n    }\n  }\n  return out;\n}\nfunction _ygItem(site, raw) {\n  if (!raw || typeof raw !== 'object') return null;\n  var id = _ygStr(raw, ['video_id', 'id']);\n  var title = _ygStr(raw, ['title', 'name']);\n  if (!/^\\d+$/.test(id) || !title) return null;\n  return {\n    id: id,\n    title: title,\n    cover: _ygCover(site, raw),\n    detailUrl: site + '/drama/detail/' + id + '/',\n    description: _ygStr(raw, ['description', 'intro']),\n    status: _ygStatus(raw),\n    tags: _ygTags(raw)\n  };\n}\n\n// ───────── 各端点入口（override.function） ─────────\nfunction _ygDiscover(html) {\n  var site = _ygOrigin();\n  __ygApiBase = _ygNuxtApiBase(html || '');\n  __ygPre = _ygPreconnect(html || '');\n  var entry = _ygEntryUrl(html || '');\n  __ygEntry = entry;\n  _ygLog('入口=' + (entry || '(无)') + ' apiBase=' + (__ygApiBase || '(无)') + ' 预连接=' + (__ygPre ? __ygPre.join(',') : '(无)'));\n  if (!entry) return [];\n  return { __meta: true, __fetchUrl: entry, __fetchResponseType: 'text', __processor: '__ygEntryStep' };\n}\nfunction _ygListBody(cat) {\n  var extra = '';\n  if (cat && cat.indexOf(':') > 0) {\n    var p = cat.split(':');\n    if (/^(theme|setting|background|time|recommend)$/.test(p[0]) && /^\\d+$/.test(p[1])) extra = '&' + p[0] + '=' + p[1];\n  }\n  // 动态筛选（filters.groups param 与 API 筛选字段同名）：逗号分隔多选 → 同名多参数\n  var dims = ['theme', 'setting', 'background', 'time', 'recommend'];\n  for (var i = 0; i < dims.length; i++) {\n    var v = String(context[dims[i]] || '').trim();\n    if (!v) continue;\n    var parts = v.split(',');\n    for (var j = 0; j < parts.length; j++) {\n      if (/^\\d+$/.test(parts[j].trim())) extra += '&' + dims[i] + '=' + parts[j].trim();\n    }\n  }\n  return _ygCommon() + '&page=' + (parseInt(context.page, 10) || 1) + '&limit=20' + extra;\n}\n// latest / category / explore 共用：context.page / context.category\nfunction parseList(html) {\n  __ygMode = 'list';\n  __ygPending = { route: '/api/theater/exploreList', body: _ygListBody(context.category || '') };\n  return _ygDiscover(html);\n}\n// search：context.keyword / context.page\nfunction parseSearch(html) {\n  var kw = String(context.keyword || '').trim();\n  __ygMode = 'list';\n  if (kw) {\n    __ygPending = {\n      route: '/api/search/result',\n      body: _ygCommon() + '&keyword=' + encodeURIComponent(kw) + '&tab=video&page=' + (parseInt(context.page, 10) || 1) + '&limit=20'\n    };\n  } else {\n    __ygPending = { route: '/api/theater/exploreList', body: _ygListBody('') };\n  }\n  return _ygDiscover(html);\n}\n// detail：context.id（context.detailUrl 仅透传）\nfunction parseDetail(html) {\n  var id = String(context.id || '');\n  if (!/^\\d+$/.test(id)) return null;\n  __ygMode = 'detail';\n  __ygPending = { route: '/api/playlet/detail', body: _ygCommon() + '&video_id=' + id + '&id=' + id + '&episode_id=0&related_limit=0' };\n  return _ygDiscover(html);\n}\n// episodes：同 detail API，返回分集数组\nfunction parseEpisodes(html) {\n  var id = String(context.id || '');\n  if (!/^\\d+$/.test(id)) return [];\n  __ygMode = 'episodes';\n  __ygPending = { route: '/api/playlet/detail', body: _ygCommon() + '&video_id=' + id + '&id=' + id + '&episode_id=0&related_limit=0' };\n  return _ygDiscover(html);\n}\n// video：context.url = 每集 url（{site}/drama/detail/{vid}/#eid={eid}）\nfunction parseVideo(html) {\n  var u = String(context.url || '');\n  var eid = (u.match(/[#&?]eid=(\\d+)/) || [])[1] || '';\n  var vid = (u.match(/\\/drama\\/detail\\/(\\d+)/) || [])[1] || '';\n  if (!/^\\d+$/.test(eid) || !/^\\d+$/.test(vid)) { _ygLog('分集地址缺少 eid/vid: ' + u); return []; }\n  __ygMode = 'video';\n  __ygPending = { route: '/api/playlet/play', body: _ygCommon() + '&playlet_id=' + vid + '&video_id=' + vid + '&episode_id=' + eid };\n  return _ygDiscover(html);\n}\n\n// ───────── API 结果分发（P4） ─────────\nfunction __ygHandle(data) {\n  var site = _ygOrigin();\n  if (__ygMode === 'detail') {\n    var it = _ygItem(site, data);\n    return it || null;\n  }\n  if (__ygMode === 'episodes') {\n    var eps = data.episodes instanceof Array ? data.episodes : [];\n    var out = [], seen = {};\n    var vid = _ygStr(data, ['video_id', 'id']);\n    for (var i = 0; i < eps.length && out.length < 2000; i++) {\n      var ep = eps[i];\n      if (!ep || typeof ep !== 'object') continue;\n      if (String(ep.is_adv) === '1' || ep.is_adv === true) continue;\n      var eid = _ygStr(ep, ['id']);\n      var no = _ygNum(ep, ['sort', 'episode_sort', 'number']);\n      if (!/^\\d+$/.test(eid) || no < 1 || seen[eid]) continue;\n      seen[eid] = true;\n      var page = site + '/drama/detail/' + vid + '/#eid=' + eid;\n      out.push({ id: eid, title: _ygStr(ep, ['title']) || ('第 ' + no + ' 集'), url: page, number: no });\n    }\n    out.sort(function (a, b) { return a.number - b.number; });\n    _ygLog('分集 ' + out.length + ' 集');\n    return out;\n  }\n  if (__ygMode === 'video') {\n    var main = _ygStr(data, ['video_url']);\n    var h265 = _ygStr(data, ['video_url_h265']);\n    var res = { url: main, urls: [] };\n    if (main) res.urls.push({ url: main, name: '默认线路' });\n    if (h265 && h265 !== main) res.urls.push({ url: h265, name: 'H.265' });\n    return res;\n  }\n  // list\n  var rows = data.list instanceof Array ? data.list : [];\n  var items = [];\n  for (var k = 0; k < rows.length && items.length < 60; k++) {\n    var one = _ygItem(site, rows[k]);\n    if (one) items.push(one);\n  }\n  _ygLog('列表 ' + items.length + ' 项');\n  return items;\n}\n",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "explore": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "explore": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      }
+    ]
+  },
+  "filters": {
+    "groups": [
+      {
+        "id": "theme",
+        "title": "主题",
+        "param": "theme",
+        "options": [
+          {
+            "value": "7",
+            "label": "野果原创"
+          },
+          {
+            "value": "8",
+            "label": "真人短剧"
+          },
+          {
+            "value": "9",
+            "label": "魔改漫剧"
+          },
+          {
+            "value": "10",
+            "label": "网红改编"
+          },
+          {
+            "value": "11",
+            "label": "PMV裸舞"
+          }
+        ]
+      },
+      {
+        "id": "setting",
+        "title": "设定",
+        "param": "setting",
+        "options": [
+          {
+            "value": "23",
+            "label": "禁忌伦理"
+          },
+          {
+            "value": "24",
+            "label": "职场反差"
+          },
+          {
+            "value": "25",
+            "label": "改造调教"
+          },
+          {
+            "value": "26",
+            "label": "出轨绿帽"
+          },
+          {
+            "value": "27",
+            "label": "高H剧情"
+          },
+          {
+            "value": "28",
+            "label": "后宫多人"
+          },
+          {
+            "value": "29",
+            "label": "逆袭系统"
+          }
+        ]
+      },
+      {
+        "id": "background",
+        "title": "背景",
+        "param": "background",
+        "options": [
+          {
+            "value": "39",
+            "label": "校园"
+          },
+          {
+            "value": "40",
+            "label": "都市"
+          },
+          {
+            "value": "41",
+            "label": "年代"
+          },
+          {
+            "value": "43",
+            "label": "古代"
+          },
+          {
+            "value": "44",
+            "label": "玄幻"
+          },
+          {
+            "value": "45",
+            "label": "末世"
+          },
+          {
+            "value": "46",
+            "label": "灵异"
+          }
+        ]
+      },
+      {
+        "id": "time",
+        "title": "时间",
+        "param": "time",
+        "options": [
+          {
+            "value": "1",
+            "label": "7天内"
+          },
+          {
+            "value": "2",
+            "label": "14天内"
+          },
+          {
+            "value": "3",
+            "label": "30天内"
+          },
+          {
+            "value": "4",
+            "label": "90天内"
+          }
+        ]
+      },
+      {
+        "id": "recommend",
+        "title": "推荐",
+        "param": "recommend",
+        "options": [
+          {
+            "value": "1",
+            "label": "最新"
+          },
+          {
+            "value": "2",
+            "label": "最热"
+          }
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新短剧",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://analyze.buxefaex.cc/"
+  },
+  "imageTransform": {
+    "matchHosts": [
+      "pic.hdhwqx.cn"
+    ],
+    "decrypt": {
+      "algo": "aes-cbc",
+      "key": "f5d965df75336270",
+      "keyEncoding": "utf8",
+      "ivSource": "fixed",
+      "iv": "97b60394abc2fbe1",
+      "padding": "pkcs7"
+    }
+  }
+}
