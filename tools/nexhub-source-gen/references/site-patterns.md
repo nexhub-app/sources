@@ -23,6 +23,7 @@ python scripts/probe_site.py https://站点首页
 - 详情页选集：`ul.play-list li a`，或 `div.play-list a`。
 - 播放页：地址常藏在 `player_aaaa={...}` 这类变量里 → 用 `script` 端点正则取出 JSON 再解出 `url`。
 - 分类页 URL 常带 `--------1---.html` 这种占位串，page 占位符要按站点规律放（如 `{page}` 在第几位）。
+- 导航只有一个类型 ≠ 分类维度只有一种：完整浏览维度（年份/地区/排序）常在分类页筛选面板，走与搜索共用路由的查询串 → 用 `filters` 块 + `{param?}` 可选占位接入，见 `duanju-patterns.md` §15。
 
 ### 1.5 聚合资源站（详情页挂多家第三方「线路」的影视站）
 
