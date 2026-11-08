@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-07T04:13:44.476Z",
-  "count": 33,
+  "generatedAt": "2026-11-08T02:15:33.308Z",
+  "count": 34,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -283,6 +283,22 @@
       "version": 30,
       "baseUrl": "https://hanime1.me",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_hanime.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "mature"
+    },
+    {
+      "id": "media/pms_javchu",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "JavChu 源",
+      "version": 17,
+      "baseUrl": "https://javchu.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_javchu.json",
       "builtin": true,
       "desc": {
         "zh": "",
