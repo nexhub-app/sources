@@ -1,0 +1,141 @@
+{
+  "id": "pms_huangguo",
+  "version": 2,
+  "name": "黄果短剧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "ageRating": "mature",
+  "enabledExplore": true,
+  "enabled": true,
+  "description": "黄果短剧（AI短剧/原创短剧，成人内容，ageRating=mature）。2026-11 实测：站点前端全面改版后为「SSR 列表页 + 全 GET JSON API（免签名）」形态——列表/分类走服务端渲染 HTML（卡片 data-src 懒加载封面带时效签名），搜索/详情/播放走 /api/* GET 接口（基准快照里的信封 POST 网关已非必需，GET 直连同效）。播放直链为带时效 auth_key 签名的 AES-128 HLS（约 2 小时过期），选集只存剧集页地址、点播时由 video 脚本现取，永不过期。分页仅路径式 /{channel}/{page}/ 有效（query ?page= 被服务端忽略）；吃瓜频道无 /1/ 页，未纳入分类。⚠️ v2 关键：图床对图片字节整体 AES-128-CBC 加密（key/iv 为 16 字节 ASCII 常量，Content-Type 谎报 binary/octet-stream，.jpg 扩展名是幌子；HTTP 200 照常但直接解码全灭=列表/详情封面全空白），imageTransform 声明式解密后恢复正常；基准实现同款常量，离线 openssl 对拍出标准 JFIF。",
+  "site": {
+    "domain": "huangguoai.io",
+    "baseUrl": "https://huangguoai.io",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "huangguoai.io",
+        "baseUrl": "https://huangguoai.io"
+      }
+    ]
+  },
+  "antiHotlinking": {
+    "referer": "https://huangguoai.io/"
+  },
+  "imageTransform": {
+    "matchHosts": ["pic.drleao.cn"],
+    "decrypt": {
+      "algo": "aes-cbc",
+      "key": "f5d965df75336270",
+      "keyEncoding": "utf8",
+      "ivSource": "fixed",
+      "iv": "97b60394abc2fbe1",
+      "ivEncoding": "utf8",
+      "padding": "pkcs7"
+    }
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// 播放取址：剧集页本身不内嵌直链（无 data-hls/m3u8），需按「剧集 id + 集号」现取播放接口。\n// 入口同步返回 __meta 描述符（单条 GET 二跳），处理器里做引擎两代入参形态归一。\nfunction parseVideo(html, context) {\n  var url = String((context && (context.url || context.id)) || '');\n  var m = url.match(/\\/video\\/(\\d+)/);\n  var e = url.match(/ep-(\\d+)/);\n  if (!m) return '';\n  var ep = e ? Number(e[1]) : 1;\n  return {\n    __meta: true,\n    __fetchUrl: String((context && context.baseUrl) || '').replace(/\\/+$/, '') + '/api/videos/' + m[1] + '/play?ep=' + ep + '&page_texts=0',\n    __fetchResponseType: 'json',\n    __processor: 'hgPickPlay'\n  };\n}\nfunction hgPickPlay(raw) {\n  // 形态归一：单条 meta 处理器旧引擎收 ([响应体, 响应头], context)，新引擎逐参收 (响应体, ...)。\n  var body = (Array.isArray(raw) && raw.length > 0 && raw[0] && typeof raw[0] === 'object') ? raw[0] : raw;\n  var d = (body && typeof body === 'object') ? body : null;\n  if (!d && typeof body === 'string' && body) {\n    try { d = JSON.parse(body); } catch (err) { d = null; }\n  }\n  if (d && d.data && d.data.video_url) return String(d.data.video_url);\n  return '';\n}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/ai-duanju/{page}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/{category}/{page}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/api/search?q={keyword}&page={page}&size=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/api/videos/{id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/video/{id}/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      { "id": "ai-duanju", "title": "AI成人短剧" },
+      { "id": "ai-manju", "title": "AI成人漫剧" },
+      { "id": "ai-huanlian", "title": "AI换脸" },
+      { "id": "ai-mogai", "title": "AI魔改" }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "selectors": {
+    "latest": {
+      "list": "main div.hg-card-grid.is-active div.hg-drama-card",
+      "id": "substring-before(substring-after(.//a[contains(@class,'hg-drama-card__cover-link')]/@href, '/video/'), '/')",
+      "title": ".hg-drama-card__cover-link img@alt",
+      "cover": ".hg-drama-card__cover-link img@data-src, .hg-drama-card__cover-link img@src",
+      "detailUrl": ".//a[contains(@class,'hg-drama-card__cover-link')]/@href",
+      "description": ".hg-drama-card__desc",
+      "tags": ".hg-drama-card__tags a"
+    },
+    "category": {
+      "list": "main div.hg-card-grid.is-active div.hg-drama-card",
+      "id": "substring-before(substring-after(.//a[contains(@class,'hg-drama-card__cover-link')]/@href, '/video/'), '/')",
+      "title": ".hg-drama-card__cover-link img@alt",
+      "cover": ".hg-drama-card__cover-link img@data-src, .hg-drama-card__cover-link img@src",
+      "detailUrl": ".//a[contains(@class,'hg-drama-card__cover-link')]/@href",
+      "description": ".hg-drama-card__desc",
+      "tags": ".hg-drama-card__tags a"
+    },
+    "search": {
+      "list": "$.data.items",
+      "id": "$.id",
+      "title": "$.title",
+      "cover": "$.cover",
+      "description": "$.description",
+      "episodeCount": "$.episode_count"
+    },
+    "detail": {
+      "id": "$.data.id",
+      "title": "$.data.title",
+      "cover": "$.data.cover",
+      "description": "$.data.description",
+      "author": "$.data.author.name",
+      "episodeCount": "$.data.episode_count"
+    },
+    "episodes": {
+      "list": "div.hg-web-play__ep-grid a.hg-web-play__ep",
+      "url": "@href",
+      "id": "@href",
+      "number": "@data-ep-id"
+    }
+  }
+}
