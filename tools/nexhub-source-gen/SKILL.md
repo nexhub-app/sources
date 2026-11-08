@@ -1,6 +1,6 @@
 ---
 name: nexhub-source-gen
-description: 在 NexHub 里生成或修好一个源（动漫/漫画/小说）。既能产出「覆盖评论/登录/网络/收藏/公告/周表/筛选」的全功能 TODO 骨架，也能按「源即插件」写真实可用的源、排查抓不到/播不了。含 15 条硬规则、五步工作流、站点探测与自检脚本、8 套模板、选择器与 JS 沙箱协议、排障手册，以及不会编程的人让 AI 代做源的对话剧本。当用户说「生成/写一个源」「按教程出完整源」「加个源」「适配某个网站」「源不能用了」「抓不到封面」「播不了」「搜索没结果」时使用。
+description: 在 NexHub 里生成或修好一个源（动漫/漫画/小说）。既能产出「覆盖评论/登录/网络/收藏/公告/周表/筛选」的全功能 TODO 骨架，也能按「源即插件」写真实可用的源、排查抓不到/播不了。含 17 条硬规则、五步工作流、站点探测与自检脚本、8 套模板、选择器与 JS 沙箱协议、排障手册，以及不会编程的人让 AI 代做源的对话剧本。当用户说「生成/写一个源」「按教程出完整源」「加个源」「适配某个网站」「源不能用了」「抓不到封面」「播不了」「搜索没结果」时使用。
 type: skill
 agent_created: true
 ---
@@ -92,7 +92,7 @@ python scripts/validate_source.py 源.json
 2. 需要哪些块、每个块的关键字段 → `references/full-feature-blocks.md`（含 comments.login 三种登录、network 生效顺序、schedule/recommend/filters 写法）。
 3. 字段真值仍以 `references/field-spec.md` 为准。
 
-## 6. 十五条硬规则（踩过的坑）
+## 6. 十七条硬规则（踩过的坑）
 
 1. `selectors.<端点>` 必须有 `list`；不写默认 `div.item`，基本抓空。
 2. 多分支兜底用**逗号**：`"img@data-src, img@src"`。`||` 只在书源规则里有效。
@@ -109,6 +109,8 @@ python scripts/validate_source.py 源.json
 13. **「抓不到」先判生死**：整站返回 `Welcome to nginx` / Apache 默认页 / 200 但只有几百字节 → 域名已弃用，改解析毫无意义（先找新域名，无解就标 `deprecated` + `migrationMessage`）。
 14. **人机验证（滑块/图形码/Cloudflare）只走 `webview-html`**：用户在应用内手动过一次，同 (源,路由,URL) 复用。不写自动过验证的脚本；只拦某端点就只给那个端点配，不要顺手开 `useWebview`。但**无人工要素**的 JS 自动挑战（200 小页面、内联写 cookie 自跳转）不走 webview：脚本两步现取令牌即可（§3 表与 `references/troubleshoot.md` §0.4）。
 15. **搜索地址不要猜**：读首页 `<form action>` + `input name`（probe 会打印），再决定路径式还是 `?wd=` 查询式。搜索页挂人机验证墙时，**先找站方免验证的联想 JSON 接口**（MacCMS `/index.php/ajax/suggest` 形态），webview-html 是最后手段——自制验证页不在 App 检测特征库里，会被当正常内容解析、永远不弹验证入口（`references/duanju-patterns.md` §11）。
+16. **XPath 谓词只写属性函数形态**：`[contains(@k,'x')]` / `[starts-with(@k,'v')]` / `[@k='v']` / 多段串联 `[c1][c2]`。**节点集谓词（谓词里写路径：`li[.//a[...]]`、`li[a]`、`li[contains(.,'x')]`）与 `and`/`or` 组合一律静默返回 0 条**——页面肉眼有内容、日志 elements=0 时先怀疑这个。修法=把条目定成叶子锚点（`//容器//a[卡片类]`，字段写 `@title`/`@href` 截取）；lxml 自测通过不算数，拿不准用引擎能力探针（`references/selectors.md` 能力边界表 + `references/troubleshoot.md` §0）。
+17. **「分类不全」先查筛选面板再猜 type id**：nav 常只有一个类型，完整浏览维度（年份/地区/排序）藏在分类页筛选面板、走与搜索共用的查询串。用 `filters` 块 + `{param?}` 可选占位接入（空值整段移除），别把年份做成十几个分类 Tab；「视频不清晰」按三分法排查（路径标签≠码率 → 签名对照 → 素材上限），见 `references/duanju-patterns.md` §15/§16 与 `scripts/probe_play_quality.py`。
 
 ## 7. 交付与提交
 
