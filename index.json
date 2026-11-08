@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:26:42.872Z",
-  "count": 46,
+  "generatedAt": "2026-11-08T02:27:16.050Z",
+  "count": 47,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -625,6 +625,22 @@
         "en": ""
       },
       "ageRating": "mature"
+    },
+    {
+      "id": "media/pms_hanxiaoquan",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "韩小圈",
+      "version": 2,
+      "baseUrl": "https://www.jennyhow.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_hanxiaoquan.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
     },
     {
       "id": "media/pms_fanguo",
