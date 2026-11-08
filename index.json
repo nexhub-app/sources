@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-08T02:24:17.245Z",
+  "generatedAt": "2026-11-08T02:24:51.352Z",
   "count": 44,
   "sources": [
     {
@@ -408,7 +408,7 @@
       "type": "media",
       "format": "nexhub",
       "name": "剧果",
-      "version": 1,
+      "version": 2,
       "baseUrl": "https://huangju.net",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_juiguo.json",
       "builtin": true,
