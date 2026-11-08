@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:17:14.422Z",
-  "count": 37,
+  "generatedAt": "2026-11-08T02:17:39.008Z",
+  "count": 38,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -475,6 +475,22 @@
       "version": 2,
       "baseUrl": "https://www.mgnacg.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_mgnacg.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_duanjuwang",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "短剧网",
+      "version": 3,
+      "baseUrl": "https://www.duanju2.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_duanjuwang.json",
       "builtin": true,
       "desc": {
         "zh": "",
