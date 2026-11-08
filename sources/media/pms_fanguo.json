@@ -1,0 +1,139 @@
+{
+  "id": "pms_xifan",
+  "version": 1,
+  "name": "饭果短剧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "饭果短剧：全 JSON 接口。目录用搜索接口按题材关键词取（该站没有独立的分类列表），详情一次返回整本分集，每集 playUrl 是 302 跳转到签名 mp4 的入口。分集只存集 ID，点播时现取 playUrl，交给播放器跟随跳转。",
+  "site": {
+    "domain": "xifan-api-cn.youlishipin.com",
+    "baseUrl": "https://xifan-api-cn.youlishipin.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "xifan-api-cn.youlishipin.com",
+        "baseUrl": "https://xifan-api-cn.youlishipin.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "// 搜索接口返回 result.elements[].contents[].duanjuVo。\n// 详情接口必须同时带 duanjuId 与 source，所以把 source 追加进 id：\n// id = \"1013&source=jiuzhou\"，详情路由拼进 ?duanjuId={id} 后正好是完整查询串。\nfunction fgJson(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction fgItems(json){\n  var els = ((json || {}).result || {}).elements || [];\n  var out = [], seen = {};\n  for (var i = 0; i < els.length; i++) {\n    var cs = els[i].contents || [];\n    for (var j = 0; j < cs.length; j++) {\n      var d = cs[j].duanjuVo;\n      if (!d || !d.duanjuId) continue;\n      var id = String(d.duanjuId) + '&source=' + (d.source || '');\n      if (seen[id]) continue;\n      seen[id] = 1;\n      out.push({\n        id: id,\n        title: d.title || '',\n        cover: d.coverImageUrl || '',\n        description: d.desc || '',\n        episodeCount: d.total || 0,\n        status: d.updateStatus === 'over' ? '已完结' : '',\n        tags: (d.categories || []).join(',')\n      });\n    }\n  }\n  return out;\n}\nfunction parseList(raw, context){ return fgItems(fgJson(raw)); }"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function fgJson(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction fgItems(json){\n  var els = ((json || {}).result || {}).elements || [];\n  var out = [], seen = {};\n  for (var i = 0; i < els.length; i++) {\n    var cs = els[i].contents || [];\n    for (var j = 0; j < cs.length; j++) {\n      var d = cs[j].duanjuVo;\n      if (!d || !d.duanjuId) continue;\n      var id = String(d.duanjuId) + '&source=' + (d.source || '');\n      if (seen[id]) continue;\n      seen[id] = 1;\n      out.push({\n        id: id,\n        title: d.title || '',\n        cover: d.coverImageUrl || '',\n        description: d.desc || '',\n        episodeCount: d.total || 0,\n        status: d.updateStatus === 'over' ? '已完结' : '',\n        tags: (d.categories || []).join(',')\n      });\n    }\n  }\n  return out;\n}\nfunction parseList(raw, context){ return fgItems(fgJson(raw)); }"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function fgJson(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction fgItems(json){\n  var els = ((json || {}).result || {}).elements || [];\n  var out = [], seen = {};\n  for (var i = 0; i < els.length; i++) {\n    var cs = els[i].contents || [];\n    for (var j = 0; j < cs.length; j++) {\n      var d = cs[j].duanjuVo;\n      if (!d || !d.duanjuId) continue;\n      var id = String(d.duanjuId) + '&source=' + (d.source || '');\n      if (seen[id]) continue;\n      seen[id] = 1;\n      out.push({\n        id: id,\n        title: d.title || '',\n        cover: d.coverImageUrl || '',\n        description: d.desc || '',\n        episodeCount: d.total || 0,\n        status: d.updateStatus === 'over' ? '已完结' : '',\n        tags: (d.categories || []).join(',')\n      });\n    }\n  }\n  return out;\n}\nfunction parseList(raw, context){ return fgItems(fgJson(raw)); }"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes",
+        "script": "// 详情接口的 result.episodeList 已是整本分集；playUrl 是 302 入口（有效期内才可用），\n// 分集只存「详情接口地址 + #ep=集ID」，点播时再取一次详情拿当前 playUrl。\nfunction fgJson(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction fgBase(ctx){ var b = (ctx && ctx.baseUrl) || ''; return b.charAt(b.length - 1) === '/' ? b.slice(0, -1) : b; }\nfunction parseEpisodes(raw, context){\n  var json = fgJson(raw);\n  var api = fgBase(context) + '/xifan/drama/getDuanjuInfo?duanjuId=' + ((context && context.id) || '');\n  var list = ((json || {}).result || {}).episodeList || [];\n  var out = [];\n  for (var i = 0; i < list.length; i++) {\n    var e = list[i];\n    if (!e.episodeId) continue;\n    out.push({\n      id: String(e.episodeId),\n      title: e.title || ('第' + (e.index || (i + 1)) + '集'),\n      number: e.index || (i + 1),\n      url: api + '#ep=' + encodeURIComponent(e.episodeId)\n    });\n  }\n  return out;\n}"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// playUrl 形如 https://dj.youlishipin.com/duanju/video302?source=&duanjuId=&episodeId=\n// 它 302 跳到带签名的 mp4（约 1 小时有效）。返回该 302 入口即可，由播放器自行跟随；\n// 若预取拿不到详情（首次进入该集时路由 URL 缺 source），用 __meta 再取一次。\nvar FG_EP = '';\nfunction fgJson(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction fgFind(json, epId){\n  var list = ((json || {}).result || {}).episodeList || [];\n  for (var i = 0; i < list.length; i++) {\n    if (String(list[i].episodeId) === String(epId)) return list[i].playUrl || '';\n  }\n  return '';\n}\nfunction parseVideo(raw, context){\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  FG_EP = cut >= 0 ? decodeURIComponent(url.slice(cut + 4)) : '';\n  var hit = fgFind(fgJson(raw), FG_EP);\n  if (hit) return hit;\n  var target = cut >= 0 ? url.slice(0, cut) : url;\n  if (target.indexOf('http') === 0) {\n    return { __meta: true, __fetchUrl: target, __fetchResponseType: 'json', __processor: 'fgPick' };\n  }\n  return '';\n}\nfunction fgPick(raw){ return fgFind(fgJson(raw), FG_EP); }"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/xifan/search/getSearchList?reqType=search&offset=0&keyword=%E9%83%BD%E5%B8%82&quickEngineVersion=-1&scene=",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/xifan/search/getSearchList?reqType=search&offset=0&keyword={category}&quickEngineVersion=-1&scene=",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/xifan/search/getSearchList?reqType=search&offset=0&keyword={keyword}&quickEngineVersion=-1&scene=",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/xifan/drama/getDuanjuInfo?duanjuId={id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/xifan/drama/getDuanjuInfo?duanjuId={id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "detail": {
+      "title": "$.result.title",
+      "cover": "$.result.coverImageUrl",
+      "description": "$.result.desc",
+      "episodeCount": "$.result.total"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "都市",
+        "title": "都市"
+      },
+      {
+        "id": "甜宠",
+        "title": "甜宠"
+      },
+      {
+        "id": "逆袭",
+        "title": "逆袭"
+      },
+      {
+        "id": "战神",
+        "title": "战神"
+      },
+      {
+        "id": "古装",
+        "title": "古装"
+      },
+      {
+        "id": "穿越",
+        "title": "穿越"
+      },
+      {
+        "id": "萌宝",
+        "title": "萌宝"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "推荐",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "enabled": true
+}
