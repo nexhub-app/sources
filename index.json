@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:16:43.200Z",
-  "count": 36,
+  "generatedAt": "2026-11-08T02:17:14.422Z",
+  "count": 37,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -491,6 +491,22 @@
       "version": 4,
       "baseUrl": "https://api.xifanacg.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_xifandm.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_huasheng",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "花生短剧",
+      "version": 2,
+      "baseUrl": "https://www.zywest263.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_huasheng.json",
       "builtin": true,
       "desc": {
         "zh": "",
