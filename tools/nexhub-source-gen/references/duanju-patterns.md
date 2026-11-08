@@ -15,11 +15,12 @@
 
 ## 1. 引擎事实（实测修正旧文档）
 
-1. **`await` / `.then` 在脚本里可用**（微任务泵已修，真机验证）。入口函数与 `__processor` 都可以返回 Promise。`context.crypto` 这类纯计算直接 `await`；**拿到二次请求数据仍优先 `__meta`**（少一层异步，更稳）。
+1. **入口函数一律同步**；`await`/`.then` 仅限脚本内部与 `__processor`。async 入口在引擎层有三策略降级链（Promise 引用 → async IIFE 重跑 + handlePromise → .then 轮询）：flutter_js 的 FFI QuickJS 把挂起 JS Promise 包成 **pending Dart Future**（`isPromise` 恒 false，stringResult 是 Future 的 toString——`"Instance of 'Future<dynamic>'"`），引擎已修为识别该形态转 `handlePromise`（await rawResult + 20ms 泵 job 队列），桌面端实证 async 入口可落地；但那是三档降级链，真机/鸿蒙桥语义未验，**签名站不要赌，md5 等签名一律内嵌纯 JS 同步现算**（见 §2.5）。拿到二次请求数据仍优先 `__meta`（少一层异步，更稳）。
 2. **`context.crypto.aesEcb/aesCbc` 的 key/data/iv 一律按 `encoding` 参数解码**（`base64` 或 `hex`），不是原始字符串！要传「16 字节 ASCII 密钥」需先 `btoa(key16)`。解密返回 utf8 字符串；ECB/CBC 均自带 PKCS7 填充。
 3. **`btoa`/`atob` 沙箱有宽松 polyfill**（>0xFF 码位截断）：全 ASCII payload 放心用；任意字节串转 base64 用 `String.fromCharCode` 循环 + `btoa`。
 4. **`__meta` 链上限 4 跳**（每一跳都计入，含第一个 meta）。预取失败非致命（raw=''，脚本仍执行）——所以「脚本端点 + 哑路由 `/`」是合法形态：脚本完全自取数据。
 5. `__fetchResponseType: 'text'` 让预取返回原始文本。三种场景必需：加密响应、内嵌 JSON 的 HTML、**大整数 JSON**（§3）。
+6. **处理器首参形态要看清**：单条 meta 预取的处理器收到 `[data, headers]` JSON 数组（headers 供提取响应头凭证/令牌），批量 meta 才是裸响应列表。明确知道是单条跳的处理器用 `Array.isArray(raw) ? raw[0] : raw` 归一化——批量场景的响应体本就可能是数组，盲目归一化会吞掉批量数据。
 
 ## 2. 签名/加密四套路（形态学）
 
@@ -37,6 +38,34 @@
 ### 2.4 设备指纹与登录 token
 - 设备指纹类请求头：固定设备信息 JSON → base64 → **逐字符过映射表**（本质是 base64 字母表置换）→ 拼串求 md5 作头签名。密钥/映射表/设备串属于站点机密，只写在源 JSON 里。
 - 匿名登录换 token：`context.storage` 缓存 `{t, ts}`，带 TTL（基准缓存时长留 10% 余量），登录请求**加重试**（首跑抖动实测会失败一次）。
+
+### 2.5 签名同步化：内嵌纯 JS 哈希
+签名每请求现算 + 入口必须同步 ⇒ `context.crypto.md5`（异步桥）用不了 ⇒ **脚本内嵌纯 JS md5**（~2.5KB，RFC 1321，UTF-8 手工编码以兼容无 `unescape` 的沙箱）。写对它的两个铁坑：
+
+- **两半加法的进位**：`add(x,y)` 的高 16 位必须含 `(x>>16)+(y>>16)+(l>>16)` 三项——漏掉任一项症状是「输出每条都错、且不同输入的错法有公共后缀（最高寄存器近似不动）」，结构看起来完全正常。对拍是唯一防线。
+- **常量表与对拍**：64 轮常量手抄必错，用脚本按 `floor(|sin(i+1)|·2^32)` 生成或直接 hashlib 对拍；对拍集必须覆盖**空串、纯 ASCII、真实签名串、中文、emoji**（代理对路径独立出错的成本极高）。
+
+```js
+// 签名处直接同步调用；URL 参数签名与头签名共用同一个内嵌实现
+var sign = md5('k=v&…' + KEY);   // 签名串里的查询词用原文，URL 里才转义
+```
+
+配套模式（每请求现算签名 + 入口同步）：
+
+```js
+function meta(context, url, processor) {
+  var q = deviceParams();                       // 现算设备指纹
+  return { __meta: true, __fetchUrl: url,
+    __fetchHeaders: { 'sign': md5(authPrefix + q + KEY), /* … */ },
+    __fetchResponseType: 'json', __processor: processor };
+}
+function parseList(raw, context) {
+  var p = Number((context && context.page) || 1);
+  return meta(context, base(context) + '/list?page=' + p + '&sign=' + md5('page=' + p + KEY), 'pickList');
+}
+```
+
+**选集存「接口 + #ep=集号」且签名每请求现算的站**：点播入口必须从存储 URL 抽出业务参数**补算签名**再发（选集落库时签名是旧的，且不含在 URL 里）——否则点播恒「验签失败」。抽参用 `url.match(/param_id=([^&#]+)/)`。
 
 ## 3. 大整数 ID 精度陷阱（>2^53）
 
@@ -159,6 +188,9 @@ MacCMS 站常见多播放线路（同内容多 CDN：pills/tab 切换、`hl-tabs
 - [ ] 中文搜索词实测过（§4 两类坑都可能在这暴露）
 - [ ] POST 头 Content-Type 显式声明（§4）
 - [ ] 每请求的签名头都走了统一 helper（漏头=全空，且只空不报错，§2.1）
+- [ ] 入口已同步化：签名用内嵌纯 JS 哈希且经 hashlib 对拍（空串/中文/emoji 向量齐，§2.5）；若保留 async 入口，桌面探针必须实证 Phase3 落地
+- [ ] 单条 meta 处理器已归一化 `[data, headers]` 形态（§1.6）
+- [ ] 选集存「接口+#ep」且签名现算时，点播入口已从 URL 抽参补算签名（§2.5）
 - [ ] 加密响应的 base64 padding 容错（§2.3）
 - [ ] 播放端点第一跳不落在时效直链/大文件上（§6）
 - [ ] 协议若含 gzip/二进制体 → 已放弃并注明（§7）

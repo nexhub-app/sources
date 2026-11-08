@@ -70,6 +70,7 @@ meta 支持的键：
 | `__webviewScroll` | `true` 时渲染后逐屏滚动，触发懒加载 |
 
 - 链式：`__processor` 返回的仍是 meta 描述符时会再走一跳，**最多 4 跳**（用于「先查 id 再提交」）。
+- 处理器首参形态：**单条** meta 收到 `[data, headers]` JSON 数组（headers 供提取响应头凭证），**批量** meta 收到裸响应列表。单条跳的处理器开头做 `if (Array.isArray(raw)) raw = raw[0];` 归一化（批量响应体本就可能是数组，别盲目归一）。
 - 反查：脚本里写死要访问的地址时，拼 `context.baseUrl + '/path'`，不要写死域名。
 - Cookie 头特例：`__fetchHeaders` 显式声明的 `Cookie` 与会话 jar **按名合并**（同名显式优先），不会被 jar 里的会话 cookie 顶掉。「拦截页内联 JS 写 cookie 后自跳转」的自动挑战（无人工要素）靠它二跳携带挑战令牌，完整模式见 `references/troubleshoot.md` §0.4。
 
