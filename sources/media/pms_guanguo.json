@@ -1,0 +1,184 @@
+{
+  "id": "pms_guanguo",
+  "version": 4,
+  "name": "观果短剧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "观果短剧（围观 API）：目录/搜索走 /drama/home/search（POST，clientInfo=md5(毫秒时间戳后10位)）。关键坑：站方后端只接受 \\uXXXX 转义的 JSON 体，原生 UTF-8 中文一律 500（基准应用「详情接口返回空数据待验证」的真根因），本源统一对 body 做非 ASCII 转义。⚠️ 详情/选集端点 shortVideoDetail 站方故障（2026-11 实测恒返回空），目录与搜索可用。⚠️ v4：App 详情端点 shortVideoDetail 站方故障（任意 id 恒返 data:null），详情/选集/播放改走站方 H5 链路 /drama/play/h5/detail（os_type=2 + storage 持久化 deviceId；带 playOrder 取单集，h5PlayUrl 为 AES-256-CBC 密文、IV=密文前 16 字节，明文 {super,high,normal} 三档直链择优）。分类=站方 subject 字典（实测仅 19 题材可过滤，条目 shortPlayTag 长词不在字典不可作筛选值）+ 男/女频道（audience 字段）。",
+  "site": {
+    "domain": "api.drama.9ddm.com",
+    "baseUrl": "https://api.drama.9ddm.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "api.drama.9ddm.com",
+        "baseUrl": "https://api.drama.9ddm.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "// 观果：POST JSON 体里的中文必须转义成 \\uXXXX，否则站方 500。\n// clientInfo = md5(毫秒时间戳字符串的后 10 位)，每次请求现算。\nfunction ggBody(raw) {\n  // 形态归一：单条 meta 预取的处理器入参在旧引擎是打包数组 [响应体, 响应头]，\n  // 新引擎逐参传递后首参即响应体。所有处理器都经 ggParse，在此一处归一。\n  return (Array.isArray(raw) && raw.length > 0 && raw[0] && typeof raw[0] === 'object') ? raw[0] : raw;\n}\nfunction ggParse(raw) {\n  raw = ggBody(raw);\n  if (raw && typeof raw === 'object') return raw;\n  if (typeof raw !== 'string' || !raw) return null;\n  try { return JSON.parse(raw); } catch (e) { return null; }\n}\nfunction ggEscape(text) {\n  return String(text == null ? '' : text).replace(/[\\u0080-\\uffff]/g, function (ch) {\n    var hex = ch.charCodeAt(0).toString(16);\n    while (hex.length < 4) hex = '0' + hex;\n    return '\\\\u' + hex;\n  });\n}\nfunction ggStrip(base) { return String(base || '').replace(/\\/+$/, ''); }\nfunction ggCommon() {\n  return 'version_code=1500&version_name=1.5.0&device_name=Pixel%208%20Pro&device_type=phone&is_first_day=true&is_first_24h=true&app_launch_way=icon&default_homepage=homepage_interaction&device_owning_firm=Google&font_scale=default&os_type=1';\n}\nfunction ggViews(count) {\n  count = Number(count) || 0;\n  if (count <= 0) return '';\n  if (count >= 10000) return (Math.round(count / 1000) / 10) + '万次播放';\n  return count + '次播放';\n}\nfunction ggItems(json) {\n  var out = [];\n  var rows = (json && json.data) || [];\n  for (var i = 0; i < rows.length; i++) {\n    var node = rows[i];\n    var id = node.oneId || node.one_id || node.id;\n    if (!id) continue;\n    out.push({\n      id: String(id),\n      title: node.title || node.name || '',\n      cover: node.vertPoster || node.horzPoster || node.cover || '',\n      description: node.description || node.desc || '',\n      episodeCount: node.episodeCount || node.totalEpisodeCount || '',\n      tags: node.shortPlayTag || [],\n      views: ggViews(node.viewCount)\n    });\n  }\n  return out;\n}\nfunction ggSearch(context, overrides) {\n  var page = (context && Number(context.page)) || 1;\n  if (page > 500) return [];\n  var body = {\n    audience: '\\u5168\\u90e8',\n    order: '\\u6700\\u65b0',\n    page: page,\n    pageSize: 30,\n    searchWord: (context && context.keyword) || '',\n    subject: (context && context.category) || ''\n  };\n  if (overrides) {\n    for (var key in overrides) { body[key] = overrides[key]; }\n  }\n  var pairs = [];\n  for (var k in body) { pairs.push('\"' + k + '\":' + (typeof body[k] === 'number' ? body[k] : '\"' + ggEscape(body[k]) + '\"')); }\n  var payload = '{' + pairs.join(',') + '}';\n  return ggMeta(context, '/drama/home/search', payload);\n}\nfunction ggMeta(context, path, payload) {\n  return context.crypto.md5(String(Date.now()).slice(-10)).then(function (ci) {\n    return {\n      __meta: true,\n      __fetchUrl: ggStrip(context && context.baseUrl) + path + '?' + ggCommon() + '&clientInfo=' + ci,\n      __fetchMethod: 'post',\n      __fetchBody: payload,\n      __fetchHeaders: { 'Content-Type': 'application/json; charset=utf-8' },\n      __processor: 'ggPickRaw'\n    };\n  });\n}\nfunction ggPickRaw(raw) {\n  var json = ggParse(raw);\n  return ggItems(json);\n}\nfunction parseList(raw, context) { return ggSearch(context, null); }\nfunction parseCategory(raw, context) {\n  var c = (context && context.category) || '';\n  // 频道维度（男频/女频）走 audience 字段；题材维度走 subject 字典。\n  if (c === '男频' || c === '女频') return ggSearch(context, { audience: c, subject: '' });\n  return ggSearch(context, null);\n}\nfunction parseSearch(raw, context) { return ggSearch(context, null); }\n// 详情/选集：GET shortVideoDetail（站方 2026-11 故障恒空，脚本原样透传空产出）。\n// 详情/选集/播放（v4）：App 详情端点 shortVideoDetail 2026-11 起对任意 id 恒返 data:null\n// （站方数据故障，基准同期失效），改走站方 H5 现行链路：\n//   GET /drama/play/h5/detail?deviceId=..&os_type=2&oneId=..[&playOrder=N]\n// 不带 playOrder=剧集概要（title/description/episodeCount/subjectTags）；带 playOrder=\n// 该集 h5PlayUrl+h5PlayKey：AES-256-CBC（密文 base64 前 16 字节为 IV，key 32 字节，\n// PKCS7），明文 JSON {super,high,normal} 三档带时效签名 mp4 直链。\nasync function ggDeviceId(context) {\n  var saved = '';\n  try { saved = (await context.storage.get('gg_device')) || ''; } catch (e) {}\n  if (saved) return saved;\n  var d = 'device_nexhub_' + String(Date.now()) + '_' + String(Math.floor(Math.random() * 1000000));\n  try { await context.storage.set('gg_device', d); } catch (e) {}\n  return d;\n}\nasync function ggH5Meta(context, playOrder, processor) {\n  var dev = await ggDeviceId(context);\n  var oneId = String((context && context.id) || '');\n  var u = ggStrip(context && context.baseUrl) + '/drama/play/h5/detail?deviceId=' + encodeURIComponent(dev) + '&os_type=2&oneId=' + encodeURIComponent(oneId);\n  if (Number(playOrder) > 0) u += '&playOrder=' + Number(playOrder);\n  return { __meta: true, __fetchUrl: u, __fetchResponseType: 'json', __processor: processor };\n}\nfunction parseDetail(raw, context) { return ggH5Meta(context, 0, 'ggDetailRaw'); }\nfunction ggDetailRaw(raw, context) {\n  var json = ggParse(raw);\n  if (!json) return { id: '' };\n  var d = json.data || json || {};\n  var cid = String((context && context.id) || '');\n  return {\n    id: String(d.oneId || cid),\n    title: d.title || '',\n    cover: d.vertPoster || '',\n    description: d.description || '',\n    tags: d.subjectTags || [],\n    episodeCount: Number(d.episodeCount) || ''\n  };\n}\nvar GG_DEV = '';\nasync function parseEpisodes(raw, context) {\n  GG_DEV = await ggDeviceId(context);\n  return ggH5Meta(context, 0, 'ggPickEpisodes');\n}\nfunction ggH5EpisodeUrl(context, oneId, n) {\n  return ggStrip(context && context.baseUrl) + '/drama/play/h5/detail?deviceId=' + encodeURIComponent(GG_DEV) + '&os_type=2&oneId=' + encodeURIComponent(String(oneId)) + '&playOrder=' + n + '#ep=' + n;\n}\nfunction ggPickEpisodes(raw, context) {\n  var json = ggParse(raw);\n  if (!json) return [];\n  var d = json.data || json || {};\n  var oneId = String(d.oneId || (context && context.id) || '');\n  var total = Number(d.episodeCount) || 0;\n  if (!oneId || total <= 0) return [];\n  var out = [];\n  for (var i = 1; i <= total; i++) {\n    out.push({\n      id: oneId + '_' + i,\n      title: '第' + i + '集',\n      number: i,\n      url: ggH5EpisodeUrl(context, oneId, i)\n    });\n  }\n  return out;\n}\nasync function parseVideo(raw, context) {\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  var env = ggParse(raw);\n  var d = env && (env.data || env);\n  if (!d || !d.h5PlayUrl) {\n    var target = cut >= 0 ? url.slice(0, cut) : url;\n    if (target.indexOf('http') !== 0 && target.indexOf('/') === 0) target = ggStrip(context && context.baseUrl) + target;\n    if (target.indexOf('http') === 0) {\n      try { env = ggParse(await context.http.getJson(target)); } catch (e) { env = null; }\n      d = env && (env.data || env);\n    }\n  }\n  if (!d || !d.h5PlayUrl || !d.h5PlayKey) return '';\n  try {\n    var bin = atob(d.h5PlayUrl);\n    var text = await context.crypto.aesCbc(d.h5PlayKey, btoa(bin.slice(16)), btoa(bin.slice(0, 16)), false, 'base64');\n    var o = JSON.parse(text);\n    return o.super || o.high || o.normal || '';\n  } catch (e) { return '';\n}\n}",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "男频",
+        "title": "男频"
+      },
+      {
+        "id": "女频",
+        "title": "女频"
+      },
+      {
+        "id": "都市",
+        "title": "都市"
+      },
+      {
+        "id": "逆袭",
+        "title": "逆袭"
+      },
+      {
+        "id": "总裁",
+        "title": "总裁"
+      },
+      {
+        "id": "家庭",
+        "title": "家庭"
+      },
+      {
+        "id": "甜宠",
+        "title": "甜宠"
+      },
+      {
+        "id": "虐恋",
+        "title": "虐恋"
+      },
+      {
+        "id": "复仇",
+        "title": "复仇"
+      },
+      {
+        "id": "重生",
+        "title": "重生"
+      },
+      {
+        "id": "萌宝",
+        "title": "萌宝"
+      },
+      {
+        "id": "爱情",
+        "title": "爱情"
+      },
+      {
+        "id": "穿越",
+        "title": "穿越"
+      },
+      {
+        "id": "奇幻",
+        "title": "奇幻"
+      },
+      {
+        "id": "职场",
+        "title": "职场"
+      },
+      {
+        "id": "战神",
+        "title": "战神"
+      },
+      {
+        "id": "古装",
+        "title": "古装"
+      },
+      {
+        "id": "宫廷",
+        "title": "宫廷"
+      },
+      {
+        "id": "青春",
+        "title": "青春"
+      },
+      {
+        "id": "神豪",
+        "title": "神豪"
+      },
+      {
+        "id": "年代",
+        "title": "年代"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最新上架",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "enabled": true
+}
