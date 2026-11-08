@@ -1,0 +1,180 @@
+{
+  "id": "pms_guipian",
+  "version": 2,
+  "name": "鬼片网",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "teen",
+  "enabledExplore": true,
+  "description": "鬼片网（MacCMS 风格 HTML 站，需移动端 UA）：目录 /list/{分类}.html（-{page}.html 翻页）；详情 /nv/{id}.html 多线路 ewave-playlist{N} 取分集最多的线路；播放页 var now= 直链，站点聚合多家第三方资源线路、部分线路 CDN 常年失效，parseVideo 用 __meta 两跳并发探活（本线路 m3u8 + 兄弟线路播放页 → 各线路 m3u8），回第一个存活的直链，全部失效才回退本线路原链。封面在脚本内补全为绝对地址（引擎不补脚本源的相对封面）。站点搜索接口已停用（基准口径）：搜索改用 /xml/rss.xml 最新 100 条做标题匹配，只覆盖最新影片且无封面。恐怖题材默认 teen 分级。",
+  "site": {
+    "domain": "guipianwu.com",
+    "baseUrl": "https://guipianwu.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "guipianwu.com",
+        "baseUrl": "https://guipianwu.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "// 鬼片网：卡片/详情/分集解析与基准正则一一对应；播放页 var now= 直链。\nfunction gpAbs(base, u) {\n  u = String(u == null ? '' : u).trim();\n  if (!u) return '';\n  if (u.indexOf('//') === 0) return 'https:' + u;\n  if (/^https?:\\/\\//i.test(u)) return u;\n  var b = gpStrip(base);\n  return u.indexOf('/') === 0 ? b + u : b + '/' + u;\n}\nfunction gpStrip(base) { return String(base || '').replace(/\\/+$/, ''); }\nfunction gpClean(text) {\n  return String(text == null ? '' : text).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '\"').replace(/&#39;/g, \"'\").replace(/\\u3000/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction gpItems(raw, context) {\n  var html = String(raw || '');\n  var out = [], seen = {};\n  var re = /<a class=\"video-link\" href=\"\\/nv\\/(\\d+)\\.html\"[^>]*title=\"([^\"]*)\"([\\s\\S]*?)<\\/a>/gi;\n  var m;\n  while ((m = re.exec(html))) {\n    var id = m[1];\n    if (seen[id]) continue;\n    seen[id] = 1;\n    var chunk = m[3].slice(0, 800);\n    var cover = '';\n    var cm = /data-(?:original|background)=\"([^\"]+)\"/i.exec(chunk);\n    if (cm) cover = gpAbs(context.baseUrl, cm[1]);\n    var remark = '';\n    var rm = /<div class=\"video-duration\">([\\s\\S]*?)<\\/div>/i.exec(chunk);\n    if (rm) remark = gpClean(rm[1]);\n    var title = gpClean(m[2]);\n    if (!title) continue;\n    out.push({ id: id, title: title.slice(0, 512), cover: cover, detailUrl: '/nv/' + id + '.html', status: remark.slice(0, 64) });\n    if (out.length > 500) break;\n  }\n  return out;\n}\nfunction parseList(raw, context) { return gpItems(raw, context); }\nfunction parseCategory(raw, context) { return gpItems(raw, context); }\nfunction parseSearch(raw, context) {\n  var html = String(raw || '');\n  var keyword = String((context && context.keyword) || '').toLowerCase();\n  var out = [], seen = {};\n  var items = html.match(/<item>[\\s\\S]*?<\\/item>/gi) || [];\n  for (var i = 0; i < items.length && out.length < 30; i++) {\n    var tm = /<title>\\s*(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?\\s*<\\/title>/i.exec(items[i]);\n    var lm = /\\/nv\\/(\\d+)\\.html/i.exec(items[i]);\n    if (!tm || !lm) continue;\n    var title = gpClean(tm[1]);\n    if (!title || title.toLowerCase().indexOf(keyword) < 0) continue;\n    var id = lm[1];\n    if (seen[id]) continue;\n    seen[id] = 1;\n    out.push({ id: id, title: title.slice(0, 512), cover: '', detailUrl: '/nv/' + id + '.html' });\n  }\n  return out;\n}\nfunction gpDetail(raw, context) {\n  var html = String(raw || '');\n  var title = '';\n  var tm = /<h1 class=\"media-title[^\"]*\">([\\s\\S]*?)<\\/h1>/i.exec(html);\n  if (tm) title = gpClean(tm[1]);\n  if (!title) {\n    var tt = /<title>([\\s\\S]*?)<\\/title>/i.exec(html);\n    if (tt) title = gpClean(tt[1]);\n  }\n  if (!title) return { id: (context && context.id) || '' };\n  var cover = '';\n  var c1 = /<div class=\"detail-img\"><img[^>]+src=\"([^\"]+)\"/i.exec(html);\n  var c2 = /<div class=\"detail-cover[^\"]*\"[^>]*data-original=\"([^\"]+)\"/i.exec(html);\n  if (c1) cover = gpAbs(context.baseUrl, c1[1]);\n  else if (c2) cover = gpAbs(context.baseUrl, c2[1]);\n  var desc = '';\n  var dm = /简介：([\\s\\S]*?)<\\/li>/i.exec(html);\n  if (dm) desc = gpClean(dm[1]);\n  var tags = [];\n  var ym = /年份：<span>([\\s\\S]*?)<\\/span>/i.exec(html);\n  if (ym && gpClean(ym[1])) tags.push(gpClean(ym[1]) + '年');\n  var drm = /导演：([\\s\\S]*?)<\\/span>/i.exec(html);\n  if (drm && gpClean(drm[1])) tags.push('导演 ' + gpClean(drm[1]).slice(0, 32));\n  var am = /主演：([\\s\\S]*?)<\\/span>/i.exec(html);\n  if (am && gpClean(am[1])) tags.push('主演 ' + gpClean(am[1]).slice(0, 48));\n  var sm = /状态：([\\s\\S]*?)<\\/span>/i.exec(html);\n  return {\n    id: String((context && context.id) || ''),\n    title: title.slice(0, 512),\n    cover: cover,\n    description: desc.slice(0, 12000),\n    tags: tags,\n    status: sm ? gpClean(sm[1]).slice(0, 64) : ''\n  };\n}\nfunction parseDetail(raw, context) { return gpDetail(raw, context); }\nfunction parseEpisodes(raw, context) {\n  var html = String(raw || '');\n  if (!html) return [];\n  var lineIDs = [];\n  var tabRe = /<li class=\"swiper-slide ewave-tab[^\"]*\" data-target=\"#(ewave-playlist-\\d+)\">([^<]+)<\\/li>/gi;\n  var tab;\n  while ((tab = tabRe.exec(html))) {\n    if (lineIDs.indexOf(tab[1]) < 0) lineIDs.push(tab[1]);\n  }\n  var best = null;\n  for (var i = 0; i < lineIDs.length; i++) {\n    var marker = 'id=\"' + lineIDs[i] + '\"';\n    var start = html.indexOf(marker);\n    if (start < 0) continue;\n    var segment = html.slice(start + marker.length);\n    var next = segment.indexOf('id=\"ewave-playlist');\n    if (next >= 0) segment = segment.slice(0, next);\n    var eps = [];\n    var epSeen = {};\n    var epRe = /<li><a title='([^']*)' href='([^']+)'/gi;\n    var ep;\n    while ((ep = epRe.exec(segment))) {\n      if (epSeen[ep[2]]) continue;\n      epSeen[ep[2]] = 1;\n      eps.push([ep[1], ep[2]]);\n    }\n    if (!best || eps.length > best.length) { best = eps; }\n  }\n  if (!best) {\n    best = [];\n    var epRe2 = /<li><a title='([^']*)' href='([^']+)'/gi;\n    var ep2, seen2 = {};\n    while ((ep2 = epRe2.exec(html))) {\n      if (seen2[ep2[2]]) continue;\n      seen2[ep2[2]] = 1;\n      best.push([ep2[1], ep2[2]]);\n    }\n  }\n  var out = [];\n  for (var k = 0; k < best.length; k++) {\n    var href = best[k][1];\n    if (href.indexOf('//') === 0) href = 'https:' + href;\n    else if (href.indexOf('/') === 0) href = gpStrip(context.baseUrl) + href;\n    if (!/guipianwu\\.com/i.test(href) || !/\\/play\\/\\d+-\\d+-\\d+\\.html/i.test(href)) continue;\n    var title = gpClean(best[k][0]);\n    var number = 0;\n    var nm = /(\\d+)/.exec(title);\n    if (nm) number = parseInt(nm[1], 10);\n    if (!number || number <= 0) number = out.length + 1;\n    out.push({ id: String(number), title: title || ('第' + number + '集'), number: number, url: href });\n  }\n  return out;\n}\nvar GP_NOW = /var\\s+now\\s*=\\s*[\"']([^\"']+)[\"']/i;\nvar GP_M3U_URLS = [];\nfunction gpExtractNow(html) {\n  var m = GP_NOW.exec(String(html || ''));\n  var url = m ? m[1] : '';\n  if (!url) {\n    var any = /https?:\\/\\/[^\"'\\s<>]+\\.(?:m3u8|mp4)(?:\\?[^\"'\\s<>]*)?/i.exec(html);\n    url = any ? any[0] : '';\n  }\n  if (url && url.indexOf('//') === 0) url = 'https:' + url;\n  return url;\n}\n// 播放页 URL 三段式 {id}-{line}-{ep}：换 line 段即换线路。\n// 从本页收集其余线路同集数的播放页地址（聚合资源站常见部分线路 CDN 已失效）。\nfunction gpSiblingPages(html, pageUrl, context) {\n  var pm = /play\\/([0-9]+)-([0-9]+)-([0-9]+)\\.html/i.exec(String(pageUrl || ''));\n  if (!pm) return [];\n  var id = pm[1], curLine = pm[2], ep = pm[3];\n  var seen = {}, out = [];\n  var re = /play\\/([0-9]+)-([0-9]+)-([0-9]+)\\.html/gi, m;\n  while ((m = re.exec(String(html || '')))) {\n    if (m[1] !== id || m[2] === curLine || seen[m[2]]) continue;\n    seen[m[2]] = 1;\n    out.push(gpAbs(context.baseUrl, '/play/' + id + '-' + m[2] + '-' + ep + '.html'));\n    if (out.length >= 4) break;\n  }\n  return out;\n}\nfunction parseVideo(raw, context) {\n  var now = gpExtractNow(raw);\n  GP_M3U_URLS = [];\n  if (now) GP_M3U_URLS.push(now);\n  var sibs = gpSiblingPages(raw, context.url, context);\n  if (!sibs.length) return now || '';\n  // 两跳探活：跳1 取其余线路播放页，跳2 并发探测各线路 m3u8，回第一个存活的。\n  return {\n    __meta: true,\n    __fetchUrls: sibs,\n    __fetchResponseType: 'text',\n    __processor: 'gpPickPageNow'\n  };\n}\nfunction gpPickPageNow(raw, context) {\n  var bodies = Array.isArray(raw) ? raw : [raw];\n  for (var i = 0; i < bodies.length; i++) {\n    var u = gpExtractNow(bodies[i]);\n    if (u && GP_M3U_URLS.indexOf(u) < 0) GP_M3U_URLS.push(u);\n  }\n  if (GP_M3U_URLS.length <= 1) return GP_M3U_URLS[0] || '';\n  return {\n    __meta: true,\n    __fetchUrls: GP_M3U_URLS.slice(0),\n    __fetchResponseType: 'text',\n    __processor: 'gpPickLive'\n  };\n}\nfunction gpPickLive(raw, context) {\n  var bodies = Array.isArray(raw) ? raw : [raw];\n  for (var i = 0; i < bodies.length; i++) {\n    var b = String(bodies[i] == null ? '' : bodies[i]);\n    if (/^\\s*#EXTM3U/.test(b) || b.indexOf('#EXTINF') >= 0) return GP_M3U_URLS[i] || '';\n  }\n  return GP_M3U_URLS[0] || '';\n}",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/list/3.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/list/{category}_{page}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/xml/rss.xml",
+      "method": "get",
+      "responseType": "text"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "3",
+        "title": "恐怖片"
+      },
+      {
+        "id": "6",
+        "title": "大陆鬼片"
+      },
+      {
+        "id": "7",
+        "title": "日韩鬼片"
+      },
+      {
+        "id": "8",
+        "title": "林正英鬼片"
+      },
+      {
+        "id": "9",
+        "title": "港台鬼片"
+      },
+      {
+        "id": "10",
+        "title": "泰国鬼片"
+      },
+      {
+        "id": "11",
+        "title": "欧美鬼片"
+      },
+      {
+        "id": "31",
+        "title": "剧情片"
+      },
+      {
+        "id": "12",
+        "title": "国产剧"
+      },
+      {
+        "id": "13",
+        "title": "美剧"
+      },
+      {
+        "id": "14",
+        "title": "韩剧"
+      },
+      {
+        "id": "15",
+        "title": "日剧"
+      },
+      {
+        "id": "16",
+        "title": "泰剧"
+      },
+      {
+        "id": "17",
+        "title": "港台剧"
+      },
+      {
+        "id": "18",
+        "title": "其他剧"
+      },
+      {
+        "id": "23",
+        "title": "日韩动漫"
+      },
+      {
+        "id": "24",
+        "title": "国产动漫"
+      },
+      {
+        "id": "25",
+        "title": "欧美动漫"
+      },
+      {
+        "id": "26",
+        "title": "港台动漫"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "恐怖片",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://guipianwu.com/",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+  },
+  "enabled": true
+}
