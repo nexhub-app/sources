@@ -1,0 +1,108 @@
+{
+  "id": "pms_yaguo",
+  "version": 2,
+  "name": "芽果短剧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "芽果短剧（星芽 API）：先以固定 device 匿名登录换 token（跨域 u.shytkjgs.com），之后所有请求带 authorization/platform/version_name 头。目录 /cloud/v2/theater/home_page（分类=剧场/榜单，榜单走 first_level_ranking 兜底接口）、搜索 POST /v3/search、详情 /v2/theater_parent/detail 一次返回全部分集。分集 son_video_url 带时效签名，故只存「详情接口 + #ep=集号」，点播时现取。",
+  "site": {
+    "domain": "app.whjzjx.cn",
+    "baseUrl": "https://app.whjzjx.cn",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "app.whjzjx.cn",
+        "baseUrl": "https://app.whjzjx.cn"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "// 芽果：device 匿名登录换 token，storage 缓存 5.5 小时（基准为 6h，留余量）。\nvar YG_LOGIN_URL = 'https://u.shytkjgs.com/user/v1/account/login';\nvar YG_DEVICE = '24250683a3bdb3f118dff25ba4b1cba1a';\nvar YG_TTL = 5.5 * 3600 * 1000;\nfunction ygStrip(base) { return String(base || '').replace(/\\/+$/, ''); }\nfunction ygBody(raw) {\n  // 形态归一：单条 meta 预取的处理器入参在旧引擎是打包数组 [响应体, 响应头]，\n  // 新引擎逐参传递后首参即响应体。所有处理器都经 ygParse，在此一处归一。\n  return (Array.isArray(raw) && raw.length > 0 && raw[0] && typeof raw[0] === 'object') ? raw[0] : raw;\n}\nfunction ygParse(raw) {\n  raw = ygBody(raw);\n  if (raw && typeof raw === 'object') return raw;\n  if (typeof raw !== 'string' || !raw) return null;\n  try { return JSON.parse(raw); } catch (e) { return null; }\n}\nasync function ygToken(context) {\n  var cached = null;\n  try { cached = await context.storage.get('yg_token'); } catch (e) { cached = null; }\n  if (cached) {\n    try {\n      var box = JSON.parse(cached);\n      if (box && box.t && box.ts && (Date.now() - box.ts) < YG_TTL) return box.t;\n    } catch (e) {}\n  }\n  var token = '';\n  for (var attempt = 0; attempt < 2 && !token; attempt++) {\n    try {\n      var raw = await context.http.post(YG_LOGIN_URL, JSON.stringify({ device: YG_DEVICE }), { 'platform': '1', 'Content-Type': 'application/json' });\n      var json = ygParse(raw);\n      if (json && json.data) token = json.data.token || json.token || '';\n    } catch (e) { token = ''; }\n  }\n  if (!token) throw new Error('芽果登录失败：未返回令牌');\n  try { await context.storage.set('yg_token', JSON.stringify({ t: token, ts: Date.now() })); } catch (e) {}\n  return token;\n}\nasync function ygHeaders(context) {\n  var token = await ygToken(context);\n  return { 'authorization': token, 'platform': '1', 'version_name': '3.8.3.1' };\n}\nfunction ygDrama(node) {\n  var t = (node && node.theater) || node || {};\n  var id = t.id || t.theater_id || t.theater_parent_id;\n  if (!id) return null;\n  var tags = t.tags || [];\n  return {\n    id: String(id),\n    title: t.title || t.name || '',\n    cover: t.cover_url || t.son_cover_url || t.cover || '',\n    description: t.descrip || t.introduction || t.desc || '',\n    episodeCount: t.total || t.total_num || t.current_num || '',\n    tags: Array.isArray(tags) ? tags : []\n  };\n}\nasync function ygCatalog(context) {\n  var headers = await ygHeaders(context);\n  var cls = String((context && context.category) || '1');\n  var page = Number((context && context.page) || 1);\n  var url;\n  if (cls === '9') {\n    url = ygStrip(context.baseUrl) + '/cloud/v1/first_level_ranking/detail?id=1';\n  } else {\n    if (cls !== '1' && !/^\\d+$/.test(cls)) cls = '1';\n    url = ygStrip(context.baseUrl) + '/cloud/v2/theater/home_page?theater_class_id=' + encodeURIComponent(cls) + '&type=1&class2_ids=0&page_num=' + page + '&page_size=24';\n  }\n  return {\n    __meta: true,\n    __fetchUrl: url,\n    __fetchHeaders: headers,\n    __fetchResponseType: 'json',\n    __processor: 'ygPickList'\n  };\n}\nfunction ygRows(json) {\n  if (!json) return [];\n  var data = json.data || {};\n  if (Array.isArray(data.list)) return data.list;\n  if (data.theater && Array.isArray(data.theater.search_data)) return data.theater.search_data;\n  return [];\n}\nfunction ygPickList(raw) {\n  var rows = ygRows(ygParse(raw));\n  var out = [];\n  for (var i = 0; i < rows.length; i++) {\n    var item = ygDrama(rows[i]);\n    if (item) out.push(item);\n  }\n  return out;\n}\nfunction parseList(raw, context) { return ygCatalog(context); }\nfunction parseCategory(raw, context) { return ygCatalog(context); }\nasync function parseSearch(raw, context) {\n  var headers = await ygHeaders(context);\n  var query = (context && context.keyword) || '';\n  return {\n    __meta: true,\n    __fetchUrl: ygStrip(context.baseUrl) + '/v3/search',\n    __fetchMethod: 'post',\n    __fetchBody: JSON.stringify({ text: query }),\n    __fetchHeaders: (function(){ var h = {}; for (var k in headers) { h[k] = headers[k]; } h['Content-Type'] = 'application/json'; return h; })(),\n    __fetchResponseType: 'json',\n    __processor: 'ygPickList'\n  };\n}\nasync function ygDetailMeta(context, processor) {\n  var headers = await ygHeaders(context);\n  var id = (context && context.id) || '';\n  return {\n    __meta: true,\n    __fetchUrl: ygStrip(context.baseUrl) + '/v2/theater_parent/detail?theater_parent_id=' + encodeURIComponent(String(id)),\n    __fetchHeaders: headers,\n    __fetchResponseType: 'json',\n    __processor: processor\n  };\n}\nfunction parseDetail(raw, context) { return ygDetailMeta(context, 'ygPickDetail'); }\nfunction ygPickDetail(raw) {\n  var json = ygParse(raw);\n  var data = (json && json.data) || {};\n  var total = Number(data.total) || ((data.theaters || []).length) || '';\n  var item = {\n    id: String((context && context.id) || data.theater_parent_id || data.id || ''),\n    title: data.title || data.share_title || '',\n    cover: data.cover_url || data.share_cover || '',\n    description: data.descrip || data.introduction || '',\n    episodeCount: total,\n    status: Number(data.is_over) === 2 ? 'finished' : ''\n  };\n  return item;\n}\nfunction parseEpisodes(raw, context) { return ygDetailMeta(context, 'ygPickEpisodes'); }\nfunction ygPickEpisodes(raw) {\n  var json = ygParse(raw);\n  var data = (json && json.data) || {};\n  var id = data.theater_parent_id || data.id || '';\n  var rows = data.theaters || [];\n  var out = [];\n  for (var i = 0; i < rows.length; i++) {\n    var node = rows[i];\n    var video = node.son_video_url || node.video_url || '';\n    if (!video) continue;\n    var number = Number(node.num || node.sort) || (i + 1);\n    out.push({\n      id: String(node.id || number),\n      title: node.son_title || node.title || ('第' + number + '集'),\n      number: number,\n      url: '/v2/theater_parent/detail?theater_parent_id=' + encodeURIComponent(String(id)) + '#ep=' + encodeURIComponent(String(number))\n    });\n  }\n  return out;\n}\nvar YG_EP = '';\nfunction ygFindPlay(json, epKey) {\n  if (!json || !json.data) return '';\n  var rows = json.data.theaters || [];\n  for (var i = 0; i < rows.length; i++) {\n    var node = rows[i];\n    var number = String(Number(node.num || node.sort) || (i + 1));\n    if (number === String(epKey) || String(node.id) === String(epKey)) {\n      return node.son_video_url || node.video_url || '';\n    }\n  }\n  return '';\n}\nfunction ygPickVideo(raw) { return ygFindPlay(ygParse(raw), YG_EP); }\nasync function parseVideo(raw, context) {\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  YG_EP = cut >= 0 ? decodeURIComponent(url.slice(cut + 4)) : '';\n  var hit = ygFindPlay(ygParse(raw), YG_EP);\n  if (hit) return hit;\n  var target = cut >= 0 ? url.slice(0, cut) : url;\n  // 路由级预取不带脚本现取的令牌（sourceAuthHeader 只有声明式登录），常态拿到\n  // data=null 的空壳，二次请求才是带权取流；选集 url 是相对路径，先补全再判断。\n  if (target.indexOf('http') !== 0 && target.indexOf('/') === 0) {\n    target = ygStrip((context && context.baseUrl) || '') + target;\n  }\n  if (target.indexOf('http') === 0) {\n    var headers = await ygHeaders(context);\n    return {\n      __meta: true,\n      __fetchUrl: target,\n      __fetchHeaders: headers,\n      __fetchResponseType: 'json',\n      __processor: 'ygPickVideo'\n    };\n  }\n  return '';\n}",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "1",
+        "title": "剧场"
+      },
+      {
+        "id": "9",
+        "title": "榜单"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "剧场精选",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "enabled": true
+}
