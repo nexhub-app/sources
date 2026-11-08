@@ -12,7 +12,7 @@ python scripts/probe_site.py https://站点首页
 | 直连能拿到完整 HTML，正文密度正常 | **服务端渲染型** | `hybrid` + 端点 `builtin` + CSS/XPath | `assets/templates/anime-html.json` / `manga-html.json` |
 | 403/503、`Just a moment`、`cf-chl`、`人机验证` | **强反爬型** | `useWebview: true` + 列表详情 `webview-html` + 播放 `webview`+script | `assets/templates/manga-webview.json` |
 | 正文密度极低 + `__NEXT_DATA__` / `window.__NUXT__` / `<div id="app">` | **前端渲染型** | 先找内联 JSON（脚本直接读），否则 `webview-html` | `anime-html.json`（改 overrides） |
-| 图片地址是 base64 块 / 需要解密 / 需要拼 referer | **加密图型** | 脚本 + `context.crypto`，配合 `imageTransform` | 在 manga 模板上加 images 脚本 |
+| 图片地址是 base64 块 / 图片字节整体加密 / 需要拼 referer | **加密图型** | 优先 `imageTransform` 声明式解密（`aes-cbc`/`aes-ecb`/`rc4`/`xor`，块字段见 field-spec §7.5），密钥从站方 JS 或基准实现找；仅「密钥按 URL 参数动态推导」才写脚本 + `context.crypto` | 对应模板加 `imageTransform` 块 |
 | `bookSourceUrl` / `ruleSearch` 结构 | **小说书源** | 直接写 Legado 书源 JSON | `assets/templates/novel-legado.json` |
 
 ## 常见站点形态的取数套路

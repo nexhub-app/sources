@@ -151,6 +151,7 @@ function parseX(raw, context) {
 | 症状 | 根因 | 修法 |
 |---|---|---|
 | 图片 0 张 | 阅读页图片由 JS 插入 | 端点改 `webview-html`；或脚本 `__webview: true` |
+| **200 一排但图片解码全灭**（列表/详情封面全空白，无任何报错） | **图片字节整体加密**：Content-Type 常谎报 `binary/octet-stream`，`.jpg` 扩展名是幌子；HTTP 层一切正常，解码层全灭 | 验尸看响应头 4 字节魔数（App HTTP 日志行尾 `[0x……]` 就是它）：`FFD8`/JPEG、`8950`/PNG、`RIFF…WEBP`、`….ftyp` 都不是 → 密文。源 JSON `imageTransform` 声明解密（算法与字段见 field-spec §7.5），密钥从站方 JS 或基准 native 实现的 decrypt 常量里找；修完用 openssl 离线对拍出标准魔数再交付 |
 | 图片全是占位图 / 5KB 小图 | 防盗链 | `antiHotlinking.referer` 填源站 origin |
 | 脚本源封面全挂、图片直开却 200 | 脚本返回相对路径封面；图片层把非 http(s) 一律当本地文件，**永不发请求**（诊断铁证：图片缓存索引里该源 0 条记录） | 脚本内补全绝对地址（列表+详情两处），见 `script-protocol.md` §6 |
 | 图片顺序乱 | 容器里混了广告/头像 | 收紧 `images` 选择器到正文容器内 |

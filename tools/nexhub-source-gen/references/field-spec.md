@@ -141,10 +141,14 @@
 
 ```json
 "category": {
-  "categories": [ { "id": "rexue", "name": "热血" } ],
-  "dynamicCategories": false
+  "dynamicCategories": false,
+  "categoryEntries": [ { "id": "rexue", "title": "热血" } ]
 }
 ```
+
+> ⚠️ 权威实现（`plugin_config.dart` 的 `CategoryConfig`）：静态分类列表的字段名是
+> **`categoryEntries`**（每项 `{"id":…, "title":…}`）。顶层 `categories` 是 **String** 类型
+> 的动态分类选择器（JSONPath/CSS），写成对象数组会直接解析失败。`name` 不是合法键。
 
 ```json
 "homeSections": [
@@ -172,6 +176,43 @@
 源未写 `referer` 时，取图会兜底用源站 origin。图片 403 / 拿到 5KB 占位图 → 先补这一项。
 
 `network` 仅在上游有特殊网络要求时用（hosts 钉 IP、SNI、DoH、源级代理）；字段定义见 `lib/core/network/model/`，不确定时不要写，继承全局配置更稳。
+
+### 7.5 `imageTransform`：图片字节解密（图床整体加密的站）
+
+部分站点对**图片字节本身**加密（浏览器端由站方 JS 解密渲染）：HTTP 200 一切正常、
+`Content-Type` 谎报 `binary/octet-stream`、`.jpg` 扩展名是幌子——无论怎么配防盗链头，
+解码层全灭，列表/详情封面全空白（判定法见 troubleshoot.md §5「200 但解码全灭」行）。
+此类站在源 JSON 声明解密方式，引擎在图片下载层统一处理（封面/详情图/阅读器正文全生效，
+解密后明文进缓存，save/share 自动继承）：
+
+```json
+"imageTransform": {
+  "matchHosts": ["img-cdn.example.com"],
+  "decrypt": {
+    "algo": "aes-cbc",
+    "key": "16字节密钥原文",
+    "keyEncoding": "utf8",
+    "ivSource": "fixed",
+    "iv": "16字节IV原文",
+    "ivEncoding": "utf8",
+    "padding": "pkcs7"
+  }
+}
+```
+
+| 键 | 取值 / 说明 |
+|---|---|
+| `matchHosts` | 需解密的图片 CDN host 列表（精确匹配，忽略大小写）。**必须枚举全部**下发图片的 host——漏一个该镜像的图就是密文坏图 |
+| `algo` | `aes-cbc`（缺省）/ `aes-ecb` / `rc4` / `xor` |
+| `key` + `keyEncoding` | 密钥原文与编码：`utf8`（缺省）/ `base64` / `hex`；AES 校验 16/24/32 字节 |
+| `ivSource` | `prefixBytes`（文件头 N 字节为 IV，最常见）/ `fixed`（用 `iv` 字段）/ `none`（全零 IV）；流密码与 ECB 下退化为「跳过文件头 N 字节」 |
+| `iv` + `ivEncoding` | `ivSource: fixed` 时的固定 IV（须 16 字节）；`ivEncoding` 缺省沿用 `keyEncoding` |
+| `padding` | `pkcs7`（缺省）/ `none` |
+
+语义要点：注册时机在 `PluginConfig.fromJson`（导入/启动/Hive 回灌都会走到），规则按 host 幂等覆盖；
+**解密失败按原字节交还**（换源图片、密钥轮换不会崩，交给上层按坏图处理）；
+密钥/算法全部来自源 JSON，引擎不写死任何站点逻辑。密钥从哪找：站方前端 JS 的解密函数，
+或同站基准 native 实现里的 decrypt 常量；修完先用 openssl 离线对拍出标准图片魔数（`FFD8`/`8950`/`RIFF`）再交付。
 
 ## 8. 校验与拒绝
 
