@@ -1,0 +1,137 @@
+{
+  "id": "pms_duanju55",
+  "version": 4,
+  "name": "五五短剧",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "五五短剧（duanju55.com）——**当前已失效**：主域只返回 nginx 默认页。解析逻辑按服务端渲染站点编写：搜索三级地址兜底 + 通用卡片扫描（不依赖类名）、分类从首页导航动态发现、播放收集全页候选并按清晰度排序给出线路。",
+  "site": {
+    "domain": "www.duanju55.com",
+    "baseUrl": "https://www.duanju55.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.duanju55.com",
+        "baseUrl": "https://www.duanju55.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "var WW_BASE = (typeof context !== \"undefined\" && context.baseUrl)\n  ? String(context.baseUrl).replace(/\\/+$/, \"\")\n  : \"https://www.duanju55.com\";\nvar WW_DETAIL_RE = /\\/vod\\/detail\\/id\\/(\\d+)\\.html/;\n\nfunction wwArg(a) {\n  if (typeof a === \"string\") return a;\n  if (a && typeof a === \"object\" && a.length && typeof a[0] === \"string\") return a[0];\n  return \"\";\n}\nfunction wwCtx(k) {\n  return (typeof context !== \"undefined\" && context[k] != null) ? String(context[k]) : \"\";\n}\nfunction wwDec(s) {\n  try { return decodeURIComponent(String(s)); } catch (e) { return String(s); }\n}\nfunction wwText(s) {\n  return String(s == null ? \"\" : s)\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, \" \")\n    .replace(/<[^>]*>/g, \" \")\n    .replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\")\n    .replace(/&quot;/gi, '\"').replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, \" \").trim();\n}\nfunction wwAttr(tag, name) {\n  var m = new RegExp(name + \"\\\\s*=\\\\s*[\\\"']([^\\\"']+)[\\\"']\", \"i\").exec(tag || \"\");\n  return m ? m[1] : \"\";\n}\nfunction wwAbs(u) {\n  u = String(u || \"\").trim();\n  if (!u) return \"\";\n  if (/^https?:\\/\\//i.test(u)) return u;\n  if (u.indexOf(\"//\") === 0) return \"https:\" + u;\n  if (u.charAt(0) === \"/\") return WW_BASE + u;\n  return \"\";\n}\nfunction wwCover(block) {\n  var re = /<img\\b[^>]*>/gi, m;\n  while ((m = re.exec(block))) {\n    var u = wwAttr(m[0], \"data-src\") || wwAttr(m[0], \"data-original\") || wwAttr(m[0], \"src\");\n    if (!u || u.indexOf(\"data:\") === 0) continue;\n    if (/logo|avatar|icon|blank|placeholder|loading|qrcode/i.test(u)) continue;\n    return wwAbs(u);\n  }\n  return \"\";\n}\n// 通用卡片扫描：不依赖站点 CSS module 类名，靠详情页链接定位每张卡\nfunction wwCards(html) {\n  var out = [], seen = {};\n  if (!html) return out;\n  var re = /<a\\b[^>]*href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>/gi, m;\n  while ((m = re.exec(html))) {\n    var idm = WW_DETAIL_RE.exec(m[1] || \"\");\n    if (!idm) continue;\n    var id = idm[1];\n    if (seen[id]) continue;\n    seen[id] = 1;\n    var start = m.index - 900; if (start < 0) start = 0;\n    var end = m.index + 900; if (end > html.length) end = html.length;\n    var block = html.substring(start, end);\n    var after = html.substring(m.index, end);\n    var close = after.indexOf(\"</a>\");\n    var inner = close >= 0 ? after.substring(0, close + 4) : after.substring(0, 200);\n    var title = wwText(inner);\n    if (!title) title = wwAttr(m[0], \"title\");\n    if (!title) {\n      var alt = /<img\\b[^>]*alt\\s*=\\s*[\"']([^\"']+)[\"']/i.exec(block);\n      if (alt) title = wwText(alt[1]);\n    }\n    if (!title) continue;\n    out.push({\n      id: id,\n      title: title,\n      cover: wwCover(block),\n      detailUrl: WW_BASE + \"/index.php/vod/detail/id/\" + id + \".html\"\n    });\n  }\n  return out;\n}\n// ---------- 分集：覆盖 content__playlist / playlink / pcDrama_catalog* / catalogItem / playlist ----------\nfunction wwEpisodeTitle(t) {\n  return !!t && !/^(播放|立即播放|在线播放|下载|收藏|分享|详情)$/.test(t);\n}\nfunction parseEpisodes(raw) {\n  var html = wwArg(raw);\n  if (!html) return [];\n  var out = [], seen = {};\n  var re = /<a\\b[^>]*href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)<\\/a>/gi, m;\n  while ((m = re.exec(html))) {\n    var href = m[1] || \"\";\n    if (!/\\/play\\/|^play\\/|vodplay|drama-play|episode_id=/i.test(href)) continue;\n    var title = wwText(m[2]);\n    if (!wwEpisodeTitle(title)) continue;\n    if (/^javascript:/i.test(href)) continue;\n    var url = wwAbs(href);\n    if (!url && href) url = WW_BASE + \"/\" + href.replace(/^\\.?\\//, \"\");\n    if (!url || seen[url]) continue;\n    seen[url] = 1;\n    out.push({ id: url, title: title, url: url });\n  }\n  return out;\n}\n\nfunction wwDead(html) {\n  return /Welcome to nginx|nginx\\.org/i.test(String(html || \"\")) && String(html || \"\").length < 2000;\n}\nfunction wwBlocked(html) {\n  if (!html) return true;\n  // 站点已停用/域名被回收：nginx 默认页（此时任何兜底地址都没意义，直接终止）\n  if (wwDead(html)) return false;\n  if (/没有找到|暂无相关|无相关|没有数据|没有内容|暂无内容/.test(html)) return false;\n  if (html.length < 600) return true;\n  if (/系统错误|访问验证|安全验证|请升级会员|会员专享|Just a moment|captcha/i.test(html)) return true;\n  return false;\n}\n\n// ---------- 搜索：先按原地址解析，失败再依次换 3 种常见搜索地址 ----------\nfunction wwSearchForms() {\n  var e = encodeURIComponent(wwCtx(\"keyword\"));\n  var page = wwCtx(\"page\") || \"1\";\n  return [\n    \"/index.php/vod/search/wd/\" + e + \".html\",\n    \"/index.php/vod/search.html?wd=\" + e,\n    \"/index.php/vod/search/page/\" + page + \"/wd/\" + e\n  ];\n}\nfunction wwSearchFallback(i) {\n  var forms = wwSearchForms();\n  if (!wwCtx(\"keyword\") || i >= forms.length) return [];\n  return {\n    __meta: true,\n    __fetchUrl: forms[i],\n    __fetchResponseType: \"text\",\n    __processor: \"searchHop\" + (i + 1)\n  };\n}\nfunction wwSearchCheck(raw, i) {\n  var html = wwArg(raw);\n  var items = wwCards(html);\n  if (items.length) return items;\n  if (!wwBlocked(html)) return [];\n  return wwSearchFallback(i);\n}\nfunction parseSearch(raw) {\n  var items = wwCards(wwArg(raw));\n  if (items.length) return items;\n  if (!wwBlocked(wwArg(raw))) return [];\n  return wwSearchFallback(0);\n}\nfunction searchHop1(raw) { return wwSearchCheck(raw, 1); }\nfunction searchHop2(raw) { return wwSearchCheck(raw, 2); }\nfunction searchHop3(raw) { return wwSearchCheck(raw, 3); }\n\n// ---------- 分类：从首页导航发现，不写死任何类型 id ----------\nfunction parseCategories(raw) {\n  var html = wwArg(raw);\n  var out = [], seen = {};\n  var re = /<a\\b[^>]*href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)<\\/a>/gi, m;\n  while ((m = re.exec(html))) {\n    var t = /\\/vod\\/type\\/(?:id\\/)?(\\d+)/.exec(m[1] || \"\");\n    if (!t) continue;\n    var id = t[1];\n    var title = wwText(m[2]);\n    if (!title || title.length > 8) continue;\n    if (/首页|全部|更多|排行|登录|注册|下载|APP|我的/i.test(title)) continue;\n    if (seen[id]) continue;\n    seen[id] = 1;\n    out.push({ id: id, title: title });\n    if (out.length >= 24) break;\n  }\n  return out;\n}\nfunction parseCategory(raw) {\n  var html = wwArg(raw);\n  var items = wwCards(html);\n  if (items.length) return items;\n  if (wwDead(html)) return [];\n  var cat = wwCtx(\"category\");\n  var page = wwCtx(\"page\") || \"1\";\n  if (cat === \"all\" || !cat) {\n    return { __meta: true, __fetchUrl: \"/\", __fetchResponseType: \"text\", __processor: \"categoryHome\" };\n  }\n  if (page !== \"1\") {\n    return {\n      __meta: true,\n      __fetchUrl: \"/index.php/vod/type/id/\" + cat + \"/page/\" + page + \".html\",\n      __fetchResponseType: \"text\",\n      __processor: \"categoryPage\"\n    };\n  }\n  return [];\n}\nfunction categoryHome(raw) { return wwCards(wwArg(raw)); }\nfunction categoryPage(raw) { return wwCards(wwArg(raw)); }\n\n// ---------- 播放：先取播放器配置，再全页收集候选并按清晰度排序 ----------\nfunction wwPlayerCfg(html) {\n  var i = html.indexOf(\"player_aaaa\");\n  if (i < 0) return null;\n  var k = html.indexOf(\"{\", i);\n  if (k < 0) return null;\n  var d = 0, e = -1, j;\n  for (j = k; j < html.length; j++) {\n    var c = html.charAt(j);\n    if (c === \"{\") d++;\n    else if (c === \"}\") { d--; if (d === 0) { e = j + 1; break; } }\n  }\n  if (e < 0) return null;\n  var txt = html.substring(k, e);\n  try { return JSON.parse(txt); } catch (err) {}\n  var u = /\"url\"\\s*:\\s*\"([^\"]*)\"/.exec(txt);\n  var en = /\"encrypt\"\\s*:\\s*\"?(\\d+)\"?/.exec(txt);\n  if (!u) return null;\n  return { url: u[1], encrypt: en ? parseInt(en[1], 10) : 0 };\n}\nfunction wwDecodePlay(u, enc) {\n  var s = String(u || \"\");\n  if (!s) return \"\";\n  enc = parseInt(enc || 0, 10);\n  if (enc === 2) { try { s = atob(s); } catch (e) {} s = wwDec(s); }\n  else if (enc === 1) { s = wwDec(s); }\n  if (!/^https?:\\/\\//i.test(s) && !/^\\/\\//.test(s)) {\n    if (s.charAt(0) === \"/\") s = WW_BASE + s;\n    else if (s) s = WW_BASE + \"/\" + s;\n  }\n  return s;\n}\nfunction wwUnescape(u) {\n  var s = String(u || \"\").replace(/\\\\\\//g, \"/\");\n  s = s.replace(/^[,\\\\。，;；\\s]+/, \"\").replace(/[,\\\\。，;；\\s]+$/, \"\");\n  return s;\n}\n// 短剧 CDN 常见：路径倒数第二段是 \\uXXXX 转义的中文目录（p.* / c1.* 节点），\n// 直接拼进播放器会 404；还原成中文目录后指向 index.m3u8（对齐参考实现的归一化）。\nfunction wwFixUnicodeFolder(u) {\n  if (!/p\\.|c1\\./i.test(u)) return \"\";\n  var parts = String(u).split(\"/\");\n  if (parts.length < 3) return \"\";\n  var folder = parts[parts.length - 2];\n  if (!/\\\\?u[0-9a-fA-F]{4}/.test(folder)) return \"\";\n  var decoded = folder.replace(/\\\\?u([0-9a-fA-F]{4})/g, function (_, h) {\n    return String.fromCharCode(parseInt(h, 16));\n  });\n  if (decoded === folder) return \"\";\n  var base = parts.slice(0, parts.length - 2).join(\"/\");\n  return base + \"/\" + encodeURIComponent(decoded) + \"/index.m3u8\";\n}\nfunction wwScore(u) {\n  var l = String(u || \"\").toLowerCase(), s = 0;\n  if (/2160|4k/.test(l)) s += 400;\n  if (/1080|fhd|blu/.test(l)) s += 300;\n  if (/720|hd/.test(l)) s += 200;\n  if (/540/.test(l)) s += 120;\n  if (/480/.test(l)) s += 60;\n  if (/360|sd/.test(l)) s += 20;\n  if (/master\\.m3u8/.test(l)) s += 80;\n  if (/\\.m3u8/.test(l)) s += 30;\n  if (/preview|trailer|sample|试看|广告|ad\\./.test(l)) s -= 500;\n  return s;\n}\nfunction wwLabel(u, i) {\n  var l = String(u || \"\").toLowerCase();\n  if (/2160|4k/.test(l)) return \"4K\";\n  if (/1080/.test(l)) return \"1080P\";\n  if (/720/.test(l)) return \"720P\";\n  if (/540/.test(l)) return \"540P\";\n  if (/480/.test(l)) return \"480P\";\n  if (/360/.test(l)) return \"360P\";\n  return \"线路\" + (i + 1);\n}\nfunction wwAdd(list, seen, u, bonus, anyOk) {\n  u = wwAbs(wwUnescape(u));\n  if (!u) return;\n  var fixed = wwFixUnicodeFolder(u);\n  if (fixed) {\n    if (!seen[fixed]) {\n      seen[fixed] = 1;\n      list.push({ url: fixed, score: wwScore(fixed) + (bonus || 0) + 200 });\n    }\n  }\n  if (!anyOk && !/\\.(m3u8|mp4)(\\?|$)/i.test(u)) return;\n  if (seen[u]) return;\n  seen[u] = 1;\n  list.push({ url: u, score: wwScore(u) + (bonus || 0) });\n}\nfunction parseVideo(raw) {\n  var html = wwArg(raw);\n  if (!html) return \"\";\n  var cands = [], seen = {}, i, m;\n  var cfg = wwPlayerCfg(html);\n  if (cfg && cfg.url) wwAdd(cands, seen, wwDecodePlay(cfg.url, cfg.encrypt), 50, true);\n  var tagRe = /<(?:video|source)\\b[^>]*>/gi;\n  while ((m = tagRe.exec(html))) {\n    wwAdd(cands, seen, wwAttr(m[0], \"data-src\") || wwAttr(m[0], \"src\"), 40, true);\n  }\n  var flat = html.replace(/\\\\\\//g, \"/\");\n  var urlRe = /https?:\\/\\/[^\"'\\\\\\s,)\\]]+?\\.(?:m3u8|mp4)(?:\\?[^\"'\\\\\\s,)\\]]*)?/gi;\n  while ((m = urlRe.exec(flat))) wwAdd(cands, seen, m[0], 0);\n  if (!cands.length) return \"\";\n  cands.sort(function (a, b) { return b.score - a.score; });\n  var lines = [], max = cands.length < 5 ? cands.length : 5;\n  for (i = 0; i < max; i++) {\n    lines.push({ name: wwLabel(cands[i].url, i), url: cands[i].url });\n  }\n  var best = cands[0].url;\n  return {\n    url: best,\n    type: /m3u8/i.test(best) ? \"m3u8\" : \"mp4\",\n    lines: lines\n  };\n}",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory"
+      },
+      "categories": {
+        "type": "script",
+        "function": "parseCategories"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/index.php/vod/search/page/{page}/wd/{keyword}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "categories": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/index.php/vod/type/id/{category}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/index.php/vod/detail/id/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/index.php/vod/detail/id/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "//div[contains(@class,'SecondList_secondListItem')]",
+      "id": "substring-before(substring-after(.//a[contains(@class,'SecondList_bookName')]/@href,'/id/'),'.html')",
+      "title": ".//a[contains(@class,'SecondList_bookName')]",
+      "cover": ".//img/@src",
+      "status": ".//a[contains(@class,'SecondList_totalChapterNum')]"
+    },
+    "search": {
+      "list": "//div[contains(@class,'TagBookList_tagItem')]",
+      "id": "substring-before(substring-after(.//a[contains(@class,'TagBookList_bookName')]/@href,'/id/'),'.html')",
+      "title": ".//a[contains(@class,'TagBookList_bookName')]",
+      "cover": ".//img/@src",
+      "status": ".//a[contains(@class,'TagBookList_totalChapterNum')]"
+    },
+    "detail": {
+      "title": "//h1[contains(@class,'DramaDetail_bookName')]",
+      "cover": "//img[contains(@class,'DramaDetail_bookCover')]/@src",
+      "description": "//div[contains(@class,'DramaDetail_intro')], //div[contains(@class,'adm-ellipsis')], //meta[@name='description']/@content"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "all",
+        "title": "全部"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最近更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.duanju55.com/"
+  },
+  "enabled": true,
+  "deprecated": true,
+  "migrationMessage": "站点主域已停用：duanju55.com / www.duanju55.com 目前只返回 nginx 默认页（612 字节，标题 Welcome to nginx!），站方已迁走或弃用该域名。拿到新域名后，把 site.baseUrl、site.mirrors[0].baseUrl/domain 改成新域即可恢复；解析逻辑（搜索三级兜底 / 分类发现 / 播放清晰度排序）已按新结构写好，无需重写。"
+}
