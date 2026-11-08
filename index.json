@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:23:02.520Z",
-  "count": 42,
+  "generatedAt": "2026-11-08T02:23:33.228Z",
+  "count": 43,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -571,6 +571,22 @@
       "version": 2,
       "baseUrl": "https://app.whjzjx.cn",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_yaguo.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_kanmovie",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "西瓜影视",
+      "version": 1,
+      "baseUrl": "https://www.kanmovie.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_kanmovie.json",
       "builtin": true,
       "desc": {
         "zh": "",
