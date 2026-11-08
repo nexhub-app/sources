@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:21:48.406Z",
-  "count": 40,
+  "generatedAt": "2026-11-08T02:22:24.666Z",
+  "count": 41,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -459,6 +459,22 @@
       "version": 9,
       "baseUrl": "https://www.sbdl.cc",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_dalvdm.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_duodutek",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "星果短剧",
+      "version": 1,
+      "baseUrl": "https://read.api.duodutek.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_duodutek.json",
       "builtin": true,
       "desc": {
         "zh": "",
