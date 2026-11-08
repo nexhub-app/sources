@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:24:51.352Z",
-  "count": 44,
+  "generatedAt": "2026-11-08T02:26:06.081Z",
+  "count": 45,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -641,6 +641,22 @@
         "en": ""
       },
       "ageRating": "general"
+    },
+    {
+      "id": "media/pms_huangguo",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "黄果短剧",
+      "version": 2,
+      "baseUrl": "https://huangguoai.io",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_huangguo.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "mature"
     },
     {
       "id": "novel/novel_linovelib",
