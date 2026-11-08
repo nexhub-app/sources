@@ -59,6 +59,21 @@ python scripts/probe_site.py https://站点首页
 - 同一站可能只有 `/search/` 被验证墙拦住，其它页面正常 → 只给 `search` 配 `webview-html`。
 - 搜索结果页通常复用列表模板（同一套卡片 class），选择器可直接照抄 `latest`；先用 lxml 在列表页验证。
 
+### 2.6 聚合前端站（SPA 壳 + 站方聚合接口 + 上游采集 API 扇出）
+
+特征：首页正文密度极低（`<div id="app">`）但内嵌 `ul.xxx-list` 等 SEO 服务端渲染列表；详情/搜索路由返回纯壳（几 KB，只有 `<script src="/assets/index-*.js">`）；noscript 提示「搜索和播放需启用 JS」。本质是**元聚合器**：自家服务器只做聚合索引（搜索联想/最新），真实数据平面在前端 bundle 里硬编码的一批上游采集 API（`api.php/provide/vod` 家族）。
+
+识别与拆解（站点无关）：
+
+1. **bundle 挖矿**：壳 HTML 里只有一个应用 JS → 下载它，`grep -oE '"/api/[a-z0-9/_-]+'` 列同源接口，`grep -oE 'fetch\([^)]{0,120}'` 列数据流。上游映射表是形如 `"key":{name:…,api:"https://…",detail:"https://…",alive:!0,search:!0,playable:!0,adult:!1}` 的对象——用平衡括号逐条解析（正则 `\{.*?\}` 会被嵌套截断）。`adult:!0` 的条目按 ageRating 诉求剔除。
+2. **双平面接入**：搜索用站方聚合接口（服务端已聚合去重、元数据最全，但**有条数上限**——先探 limit 递增值，超限返回 `{"error":"invalid limit"}` 这类错误体）；列表/分类/详情/选集用上游采集 API 扇出。详情 URL 编码 `(sourceKey~vodId)` 复合 id，详情/选集脚本从 `context.id` 拆 key→查映射→`?ac=videolist&ids=` 直查上游。
+3. **扇出用 `__fetchUrls` 批量预取**：并发默认 6，失败项为 null（按序对齐扇出清单，处理器里跳过即可），整批不会因单源死而失败。入口函数把路由预取回来的站方聚合数据存模块级变量，处理器再合并——meta 链内模块变量共享。
+4. **分类判定用构建期类型表**：上游 videolist 条目**不带类型名**（只有 `type_id`/`vod_class`），且 `type_id_1` 各源不统一（有的 1=电影/2=剧，有的完全自定）。正解：构建期抓各源 `ac=list` 的 `class` 树（`type_id/type_pid/type_name`），沿 pid 链走到根，把根名归一到四大类，蒸馏成 `{type_id: 分类}` 静态表内嵌进脚本——运行时零额外请求。未知 type_id 走 `vod_class` 文本正则兜底；仍判不出就过滤（顺带把理论片/伦理片等成人根挡在外面）。
+5. **采集站三段式选集合并**：`vod_play_from` 与 `vod_play_url` 都是三段式——`$$$` 分线路、`#` 分集、`$` 分标题与地址。脚本端点选集按「首集是直连媒体（.m3u8/.mp4）的线路优先」稳定排序，跨线路按集号（标题里的数字）去重先到先得；引擎脚本端点选集不支持 lineName 分组，只能合并扁平化。**集 URL 里的非 ASCII 字符（中文路径）必须 percent-encode**，否则引擎预取与播放器都会挂。
+6. **播放中转页判定树**（预取体=集 URL 的响应）：`#EXTM3U` 开头→是播放列表文本，直接回 `context.url`；`var main = "/path/index.m3u8?sign=…"`→根相对路径按中转页 origin 补全；`player_aaaa={url,encrypt}`→按 encrypt 解码（1=URL 解码，2=base64+URL 解码）；最后正则兜底取第一个 m3u8/mp4 直链。直链集无需任何请求（预取即是校验）。
+7. **哑路由预取最小化**：script 端点也会先预取路由 URL。latest/category 这类数据全靠 `__meta` 扇出的端点，路由 URL 指向站内极轻量且保证 200 的文件（如 robots.txt，约 90 字节），别指首页（数百 KB）；search 若站方聚合接口本身就是数据源之一，直接把路由 URL 写成它（预取即取数，`responseType: json` 时 raw 已是解析对象）。
+8. **体积预算**：一页扇出 15 源 × 20 条 ≈ 全链路 40-60 秒内（真机网络会更慢）。扇出清单按实测延迟排序，砍掉 >3s 的源；聚合搜索条数上限决定第 1 页质量，翻页靠上游 `pg={page}`。
+
 ### 3. 漫画站
 
 - 章节列表常在详情页里：`chapters` 路由 = `{detailUrl}`。
