@@ -1,0 +1,148 @@
+{
+  "id": "pms_duodutek",
+  "version": 1,
+  "name": "星果短剧",
+  "type": "animeSource",
+  "responseType": "json",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "星果短剧：全 JSON 接口，目录/搜索列 book 列表，详情接口直接返回分集与 m3u8 直链。播放地址带时效签名，故分集里只存「详情接口 + #ep=集ID」，点播时再由脚本现取地址。",
+  "site": {
+    "domain": "read.api.duodutek.com",
+    "baseUrl": "https://read.api.duodutek.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "read.api.duodutek.com",
+        "baseUrl": "https://read.api.duodutek.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "category": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes",
+        "script": "// 详情接口一次返回整本分集，每集带 shortPlayList[].chapterShortPlayVoList[].shortPlayUrl。\n// 该地址是带时效的签名直链，不能存进分集列表（下次打开会 403），\n// 因此分集 url 只存「详情接口地址 + #ep=集记录ID」，点播时由 parseVideo 现取。\nvar XG_API = '/novel-api/basedata/book/getChapterList?bookId=';\nvar XG_QS = '&productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626';\nfunction xgStrip(base){ if (!base) return ''; return base.charAt(base.length-1)==='/' ? base.slice(0, base.length-1) : base; }\nfunction xgParse(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction xgEpIdOf(node, index){\n  var lists = node.shortPlayList || [];\n  for (var k = 0; k < lists.length; k++) {\n    var eps = lists[k].chapterShortPlayVoList || [];\n    if (eps.length) return eps[0].id || node.chapterId || '';\n  }\n  return node.chapterId || String(index + 1);\n}\nfunction parseEpisodes(raw, context){\n  var json = xgParse(raw);\n  var data = (json && json.data) || [];\n  if (!data.length) return [];\n  var base = xgStrip((context && context.baseUrl) || '');\n  var bookId = data[0].bookId || '';\n  var api = base + XG_API + bookId + XG_QS;\n  var out = [];\n  for (var i = 0; i < data.length; i++) {\n    var ch = data[i];\n    out.push({\n      id: String(ch.chapterId || ''),\n      title: ch.chapterName || ('第' + (ch.chapterIndex || (i + 1)) + '集'),\n      number: ch.chapterIndex || (i + 1),\n      url: api + '#ep=' + encodeURIComponent(xgEpIdOf(ch, i))\n    });\n  }\n  return out;\n}\nvar XG_EP = '';\nfunction xgFind(json, epId){\n  var data = (json && json.data) || [];\n  for (var i = 0; i < data.length; i++) {\n    var lists = data[i].shortPlayList || [];\n    for (var k = 0; k < lists.length; k++) {\n      var eps = lists[k].chapterShortPlayVoList || [];\n      for (var j = 0; j < eps.length; j++) {\n        if (String(eps[j].id) === String(epId)) return eps[j].shortPlayUrl || '';\n      }\n    }\n    if (String(data[i].chapterId) === String(epId)) {\n      var first = ((data[i].shortPlayList || [])[0] || {}).chapterShortPlayVoList || [];\n      if (first.length) return first[0].shortPlayUrl || '';\n    }\n  }\n  return '';\n}\nfunction parseVideo(raw, context){\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  XG_EP = cut >= 0 ? decodeURIComponent(url.slice(cut + 4)) : '';\n  var hit = xgFind(xgParse(raw), XG_EP);\n  if (hit) return hit;\n  var target = cut >= 0 ? url.slice(0, cut) : url;\n  if (target.indexOf('http') === 0) {\n    return { __meta: true, __fetchUrl: target, __fetchResponseType: 'json', __processor: 'xgPick' };\n  }\n  return '';\n}\nfunction xgPick(raw){ return xgFind(xgParse(raw), XG_EP); }"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// 分集 url 形如「详情接口地址#ep=集记录ID」：播放时现取该接口，\n// 按集记录 ID 找到 shortPlayList[].chapterShortPlayVoList[].shortPlayUrl。\nvar XG_EP = '';\nfunction xgParse(raw){ if (typeof raw !== 'string') return raw || {}; try { return JSON.parse(raw); } catch (e) { return {}; } }\nfunction xgFind(json, epId){\n  var data = (json && json.data) || [];\n  for (var i = 0; i < data.length; i++) {\n    var lists = data[i].shortPlayList || [];\n    for (var k = 0; k < lists.length; k++) {\n      var eps = lists[k].chapterShortPlayVoList || [];\n      for (var j = 0; j < eps.length; j++) {\n        if (String(eps[j].id) === String(epId)) return eps[j].shortPlayUrl || '';\n      }\n    }\n    if (String(data[i].chapterId) === String(epId)) {\n      var first = ((data[i].shortPlayList || [])[0] || {}).chapterShortPlayVoList || [];\n      if (first.length) return first[0].shortPlayUrl || '';\n    }\n  }\n  return '';\n}\nfunction parseVideo(raw, context){\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  XG_EP = cut >= 0 ? decodeURIComponent(url.slice(cut + 4)) : '';\n  var hit = xgFind(xgParse(raw), XG_EP);\n  if (hit) return hit;\n  var target = cut >= 0 ? url.slice(0, cut) : url;\n  if (target.indexOf('http') === 0) {\n    return { __meta: true, __fetchUrl: target, __fetchResponseType: 'json', __processor: 'xgPick' };\n  }\n  return '';\n}\nfunction xgPick(raw){ return xgFind(xgParse(raw), XG_EP); }"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/novel-api/app/pageModel/getResourceById?productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626&resourceId=1287&pageNum={page}&pageSize=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/novel-api/app/pageModel/getResourceById?productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626&resourceId={category}&pageNum={page}&pageSize=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "search": {
+      "url": "/novel-api/basedata/book/searchBook?productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626&key={keyword}&pageNum=1&pageSize=20",
+      "method": "get",
+      "responseType": "json"
+    },
+    "detail": {
+      "url": "/novel-api/basedata/book/getChapterList?productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626&bookId={id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "episodes": {
+      "url": "/novel-api/basedata/book/getChapterList?productId=2a8c14d1-72e7-498b-af23-381028eb47c0&vestId=2be070e0-c824-4d0e-a67a-8f688890cadb&channel=oppo19&osType=android&version=20&token=202509271001001446030204698626&bookId={id}",
+      "method": "get",
+      "responseType": "json"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "json"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "$.data.datalist",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.icon",
+      "description": "$.introduction",
+      "episodeCount": "$.chapterCount"
+    },
+    "category": {
+      "list": "$.data.datalist",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.icon",
+      "description": "$.introduction",
+      "episodeCount": "$.chapterCount"
+    },
+    "search": {
+      "list": "$.data.datalist",
+      "id": "$.id",
+      "title": "$.name",
+      "cover": "$.icon",
+      "description": "$.introduction",
+      "episodeCount": "$.chapterCount"
+    },
+    "detail": {
+      "title": "$.data[0].bookName",
+      "cover": "$.data[0].iconUrl",
+      "episodeCount": "$.data[0].chapterCount"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "1287",
+        "title": "推荐一"
+      },
+      {
+        "id": "1288",
+        "title": "推荐二"
+      },
+      {
+        "id": "1289",
+        "title": "推荐三"
+      },
+      {
+        "id": "1290",
+        "title": "推荐四"
+      },
+      {
+        "id": "1291",
+        "title": "推荐五"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最近更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "enabled": true
+}
