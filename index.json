@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:23:33.228Z",
-  "count": 43,
+  "generatedAt": "2026-11-08T02:24:17.245Z",
+  "count": 44,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -587,6 +587,22 @@
       "version": 1,
       "baseUrl": "https://www.kanmovie.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_kanmovie.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_guanguo",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "观果短剧",
+      "version": 4,
+      "baseUrl": "https://api.drama.9ddm.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_guanguo.json",
       "builtin": true,
       "desc": {
         "zh": "",
