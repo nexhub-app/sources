@@ -1,0 +1,162 @@
+{
+  "id": "pms_kuaikaw",
+  "version": 1,
+  "name": "河果短剧",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "河果短剧：站点是 Next.js 服务端渲染，数据全在 <script id=\"__NEXT_DATA__\"> 的 props.pageProps 里。首页给推荐位与三个栏目，分类页 /browse/{tag}/{page}，详情页一次返回整本分集且每集带播放地址。分集只存「详情页地址 + #ep=集ID」，点播时现取地址，避免签名过期。",
+  "site": {
+    "domain": "www.kuaikaw.cn",
+    "baseUrl": "https://www.kuaikaw.cn",
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.kuaikaw.cn",
+        "baseUrl": "https://www.kuaikaw.cn"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList",
+        "script": "// 站点数据在 SSR 注入的 __NEXT_DATA__ JSON 里：props.pageProps。\n// 首页把内容拆成 bannerList / seoColumnVos[].bookInfos 几块，逐个收集并按 bookId 去重。\nfunction hgProps(raw){\n  if (typeof raw !== 'string') return null;\n  var i = raw.indexOf('__NEXT_DATA__');\n  if (i < 0) return null;\n  var s = raw.indexOf('>', i);\n  if (s < 0) return null;\n  var e = raw.indexOf('</script>', s);\n  if (e < 0) return null;\n  try {\n    var data = JSON.parse(raw.slice(s + 1, e));\n    return (data && data.props && data.props.pageProps) || null;\n  } catch (err) { return null; }\n}\nfunction hgBase(ctx){\n  var b = (ctx && ctx.baseUrl) || '';\n  return b.charAt(b.length - 1) === '/' ? b.slice(0, -1) : b;\n}\nfunction hgItem(book, base){\n  if (!book || !book.bookId) return null;\n  var cover = book.coverWap || book.wapUrl || book.pcUrl || '';\n  if (cover.indexOf('//') === 0) cover = 'https:' + cover;\n  var total = parseInt(book.totalChapterNum, 10);\n  return {\n    id: String(book.bookId),\n    title: book.bookName || '',\n    cover: cover,\n    description: book.introduction || '',\n    episodeCount: isNaN(total) ? 0 : total,\n    status: book.statusDesc || ''\n  };\n}\nfunction hgCollect(list, base, out, seen){\n  if (!list) return;\n  for (var i = 0; i < list.length; i++) {\n    var it = hgItem(list[i], base);\n    if (!it || seen[it.id]) continue;\n    seen[it.id] = 1;\n    out.push(it);\n  }\n}\nfunction parseList(raw, context){\n  var props = hgProps(raw);\n  if (!props) return [];\n  var base = hgBase(context), out = [], seen = {};\n  hgCollect(props.bannerList, base, out, seen);\n  hgCollect(props.bookList, base, out, seen);\n  hgCollect(props.recommendList, base, out, seen);\n  var cols = props.seoColumnVos || [];\n  for (var i = 0; i < cols.length; i++) hgCollect(cols[i].bookInfos, base, out, seen);\n  return out;\n}"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseList",
+        "script": "function hgProps(raw){\n  if (typeof raw !== 'string') return null;\n  var i = raw.indexOf('__NEXT_DATA__');\n  if (i < 0) return null;\n  var s = raw.indexOf('>', i);\n  if (s < 0) return null;\n  var e = raw.indexOf('</script>', s);\n  if (e < 0) return null;\n  try {\n    var data = JSON.parse(raw.slice(s + 1, e));\n    return (data && data.props && data.props.pageProps) || null;\n  } catch (err) { return null; }\n}\nfunction hgBase(ctx){\n  var b = (ctx && ctx.baseUrl) || '';\n  return b.charAt(b.length - 1) === '/' ? b.slice(0, -1) : b;\n}\nfunction hgItem(book, base){\n  if (!book || !book.bookId) return null;\n  var cover = book.coverWap || book.wapUrl || book.pcUrl || '';\n  if (cover.indexOf('//') === 0) cover = 'https:' + cover;\n  var total = parseInt(book.totalChapterNum, 10);\n  return {\n    id: String(book.bookId),\n    title: book.bookName || '',\n    cover: cover,\n    description: book.introduction || '',\n    episodeCount: isNaN(total) ? 0 : total,\n    status: book.statusDesc || ''\n  };\n}\nfunction parseList(raw, context){\n  var props = hgProps(raw);\n  if (!props) return [];\n  var base = hgBase(context), out = [], seen = {};\n  var list = props.bookList || [];\n  for (var i = 0; i < list.length; i++) {\n    var it = hgItem(list[i], base);\n    if (!it || seen[it.id]) continue;\n    seen[it.id] = 1;\n    out.push(it);\n  }\n  return out;\n}"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail",
+        "script": "function hgProps(raw){\n  if (typeof raw !== 'string') return null;\n  var i = raw.indexOf('__NEXT_DATA__');\n  if (i < 0) return null;\n  var s = raw.indexOf('>', i);\n  if (s < 0) return null;\n  var e = raw.indexOf('</script>', s);\n  if (e < 0) return null;\n  try {\n    var data = JSON.parse(raw.slice(s + 1, e));\n    return (data && data.props && data.props.pageProps) || null;\n  } catch (err) { return null; }\n}\nfunction hgBase(ctx){\n  var b = (ctx && ctx.baseUrl) || '';\n  return b.charAt(b.length - 1) === '/' ? b.slice(0, -1) : b;\n}\nfunction hgItem(book, base){\n  if (!book || !book.bookId) return null;\n  var cover = book.coverWap || book.wapUrl || book.pcUrl || '';\n  if (cover.indexOf('//') === 0) cover = 'https:' + cover;\n  var total = parseInt(book.totalChapterNum, 10);\n  return {\n    id: String(book.bookId),\n    title: book.bookName || '',\n    cover: cover,\n    description: book.introduction || '',\n    episodeCount: isNaN(total) ? 0 : total,\n    status: book.statusDesc || ''\n  };\n}\nfunction parseDetail(raw, context){\n  var props = hgProps(raw);\n  if (!props) return null;\n  var book = props.bookInfoVo;\n  if (!book) return null;\n  return hgItem(book, hgBase(context));\n}"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes",
+        "script": "// 详情页的 props.pageProps.chapterList 已包含整本分集，且每集 chapterVideoVo 带播放地址。\n// 地址带时效签名，不能直接存进分集（过一段时间再点就 403），\n// 因此分集 url 存「详情页地址 + #ep=集ID」，播放时重新取详情页现取地址。\nfunction hgProps(raw){\n  if (typeof raw !== 'string') return null;\n  var i = raw.indexOf('__NEXT_DATA__');\n  if (i < 0) return null;\n  var s = raw.indexOf('>', i);\n  if (s < 0) return null;\n  var e = raw.indexOf('</script>', s);\n  if (e < 0) return null;\n  try {\n    var data = JSON.parse(raw.slice(s + 1, e));\n    return (data && data.props && data.props.pageProps) || null;\n  } catch (err) { return null; }\n}\nfunction hgBase(ctx){\n  var b = (ctx && ctx.baseUrl) || '';\n  return b.charAt(b.length - 1) === '/' ? b.slice(0, -1) : b;\n}\nfunction parseEpisodes(raw, context){\n  var props = hgProps(raw);\n  if (!props) return [];\n  var base = hgBase(context);\n  var book = props.bookInfoVo || {};\n  var bookId = book.bookId || (context && context.id) || '';\n  var pageUrl = base + '/drama/' + bookId;\n  var list = props.chapterList || [];\n  var out = [];\n  for (var i = 0; i < list.length; i++) {\n    var c = list[i];\n    if (!c.chapterId) continue;\n    out.push({\n      id: String(c.chapterId),\n      title: c.chapterName || ('第' + (i + 1) + '集'),\n      number: c.chapterIndex || (i + 1),\n      url: pageUrl + '#ep=' + encodeURIComponent(c.chapterId)\n    });\n  }\n  return out;\n}"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// 分集 url 形如「/drama/{bookId}#ep={chapterId}」：预取详情页后按集 ID 取 chapterVideoVo。\nvar HG_EP = '';\nfunction hgProps(raw){\n  if (typeof raw !== 'string') return null;\n  var i = raw.indexOf('__NEXT_DATA__');\n  if (i < 0) return null;\n  var s = raw.indexOf('>', i);\n  if (s < 0) return null;\n  var e = raw.indexOf('</script>', s);\n  if (e < 0) return null;\n  try {\n    var data = JSON.parse(raw.slice(s + 1, e));\n    return (data && data.props && data.props.pageProps) || null;\n  } catch (err) { return null; }\n}\nfunction hgPick(props, epId){\n  var list = (props && props.chapterList) || [];\n  for (var i = 0; i < list.length; i++) {\n    if (String(list[i].chapterId) !== String(epId)) continue;\n    var v = list[i].chapterVideoVo || {};\n    return v.m3u8 || v.m3u8720p || v.vodMp4Url || v.mp4 || '';\n  }\n  return '';\n}\nfunction parseVideo(raw, context){\n  var url = (context && context.url) || '';\n  var cut = url.indexOf('#ep=');\n  HG_EP = cut >= 0 ? decodeURIComponent(url.slice(cut + 4)) : '';\n  var hit = hgPick(hgProps(raw), HG_EP);\n  if (hit) return hit;\n  var target = cut >= 0 ? url.slice(0, cut) : url;\n  if (target.indexOf('http') === 0) {\n    return { __meta: true, __fetchUrl: target, __fetchResponseType: 'text', __processor: 'hgPick2' };\n  }\n  return '';\n}\nfunction hgPick2(raw){ return hgPick(hgProps(raw), HG_EP); }"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/browse/{category}/{page}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/seo/video/6007",
+      "method": "post",
+      "responseType": "json",
+      "headers": {
+        "Content-Type": "application/json",
+        "pname": "www.kuaikaw.cn"
+      },
+      "body": "{\"sourceType\":1,\"keyword\":\"{keyword}\",\"index\":1}"
+    },
+    "detail": {
+      "url": "/drama/{id}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/drama/{id}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "text"
+    }
+  },
+  "selectors": {
+    "search": {
+      "list": "$.data.bookList",
+      "id": "$.bookId",
+      "title": "$.bookName",
+      "cover": "$.coverWap",
+      "description": "$.introduction",
+      "status": "$.statusDesc"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "462",
+        "title": "甜宠"
+      },
+      {
+        "id": "585",
+        "title": "豪门恩怨"
+      },
+      {
+        "id": "1145",
+        "title": "现代言情"
+      },
+      {
+        "id": "1102",
+        "title": "古装仙侠"
+      },
+      {
+        "id": "1170",
+        "title": "青春"
+      },
+      {
+        "id": "417-464",
+        "title": "逆袭"
+      },
+      {
+        "id": "439-465",
+        "title": "重生"
+      },
+      {
+        "id": "1159",
+        "title": "系统"
+      },
+      {
+        "id": "1147",
+        "title": "总裁"
+      },
+      {
+        "id": "943",
+        "title": "职场商战"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "推荐",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.kuaikaw.cn/"
+  },
+  "enabled": true
+}
