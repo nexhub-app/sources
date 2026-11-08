@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:26:06.081Z",
-  "count": 45,
+  "generatedAt": "2026-11-08T02:26:42.872Z",
+  "count": 46,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -641,6 +641,22 @@
         "en": ""
       },
       "ageRating": "general"
+    },
+    {
+      "id": "media/pms_guipian",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "鬼片网",
+      "version": 2,
+      "baseUrl": "https://guipianwu.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_guipian.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "teen"
     },
     {
       "id": "media/pms_huangguo",
