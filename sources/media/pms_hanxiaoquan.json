@@ -1,0 +1,112 @@
+{
+  "id": "pms_hanxiaoquan",
+  "version": 2,
+  "name": "韩小圈",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "韩小圈（jennyhow.com，MacCMS 苹果CMS 标准模板，韩剧/韩国电影/综艺/动漫，基准实测 2026-09 + 本轮实测 2026-11）：目录 /hxq/{分类}.html（-{page}.html 翻页，-1 形态已实测有效）；搜索 /search.php?searchword=（站内搜索无翻页；端点有 JS 自动挑战拦截页——脚本首跳现取挑战令牌、__meta 二跳带 Cookie 头重取，2026-11 实测）；详情 /hanxiaoquan/{id}.html，多线路 playlist{N} 容器取分集最多的线路（基准口径）；播放页 var now= 直链（兜底全页 m3u8/mp4 扫描）。封面/直链需带站 Referer。",
+  "site": {
+    "domain": "www.jennyhow.com",
+    "baseUrl": "https://www.jennyhow.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.jennyhow.com",
+        "baseUrl": "https://www.jennyhow.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "// 韩小圈：详情取分集最多的线路（基准 hanxiaoquanPickPlaylist 口径）。\nfunction hxqStrip(base) { return String(base || '').replace(/\\/+$/, ''); }\nfunction hxqClean(text) {\n  return String(text == null ? '' : text).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '\"').replace(/&#39;/g, \"'\").replace(/\\u3000/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction parseEpisodes(raw, context) {\n  var html = String(raw || '');\n  if (!html) return [];\n  var out = [], seen = {};\n  var push = function (title, href) {\n    if (!href || seen[href]) return;\n    seen[href] = 1;\n    var url = href;\n    if (url.indexOf('//') === 0) url = 'https:' + url;\n    else if (url.indexOf('/') === 0) url = hxqStrip(context.baseUrl) + url;\n    if (!/jennyhow\\.com/i.test(url) || !/\\/play\\/\\d+-\\d+-\\d+\\.html/i.test(url)) return;\n    var number = 0;\n    var nm = /(\\d+)/.exec(title);\n    if (nm) { number = parseInt(nm[1], 10); }\n    if (!number || number <= 0) { number = out.length + 1; }\n    out.push({ id: String(number), title: hxqClean(title) || ('第 ' + number + ' 集'), number: number, url: url });\n  };\n  // 多线路：取分集最多的 playlist 容器。\n  var lineIDs = [];\n  var tabRe = /href=\"#playlist(\\d+)\"[^>]*>[\\s\\S]{0,120}?<i[^>]*><\\/i>\\s*([^<]+)/gi;\n  var tab;\n  while ((tab = tabRe.exec(html))) {\n    if (lineIDs.indexOf(tab[1]) < 0) lineIDs.push(tab[1]);\n  }\n  lineIDs.sort();\n  if (lineIDs.length === 0) { lineIDs = ['']; }\n  var best = null;\n  for (var i = 0; i < lineIDs.length; i++) {\n    var segment = html;\n    if (lineIDs[i] !== '') {\n      var marker = 'id=\"playlist' + lineIDs[i] + '\"';\n      var start = html.indexOf(marker);\n      if (start < 0) continue;\n      segment = html.slice(start + marker.length);\n      var end = segment.indexOf('id=\"playlist');\n      if (end >= 0) segment = segment.slice(0, end);\n      else {\n        var footer = segment.indexOf('class=\"module-footer\"');\n        if (footer >= 0) segment = segment.slice(0, footer);\n      }\n    }\n    var eps = [];\n    var epSeen = {};\n    var epRe = /<a title=\"([^\"]*)\" href=\"(\\/play\\/\\d+-\\d+-\\d+\\.html)\"/gi;\n    var ep;\n    while ((ep = epRe.exec(segment))) {\n      if (epSeen[ep[2]]) continue;\n      epSeen[ep[2]] = 1;\n      eps.push([ep[1], ep[2]]);\n    }\n    if (!best || eps.length > best.length) { best = eps; }\n  }\n  if (best) {\n    for (var k = 0; k < best.length; k++) { push(best[k][0], best[k][1]); }\n  }\n  return out;\n}\nvar HXQ_NOW = /var\\s+now\\s*=\\s*[\"']([^\"']+)[\"']/i;\nfunction parseVideo(raw, context) {\n  var html = String(raw || '');\n  var m = HXQ_NOW.exec(html);\n  var url = m ? m[1] : '';\n  if (!url) {\n    var any = /https?:\\/\\/[^\"'\\s<>\\\\]+\\.(?:m3u8|mp4)(?:\\?[^\"'\\s<>\\\\]*)?/i.exec(html);\n    url = any ? any[0] : '';\n  }\n  if (url && url.indexOf('//') === 0) url = 'https:' + url;\n  return url;\n}\n// 搜索端点受「JS 自动挑战」保护：拦截页 200 返回极小体积，内联脚本写挑战\n// cookie 后带 pass 参数自跳转（无人工要素）。首跳直接拿到真实结果页则原地\n// 解析；否则从拦截页提取新鲜挑战令牌，__meta 二跳以 Cookie 头携带令牌重取\n// 真实结果——令牌每次现取，站点轮换自愈。二跳 Cookie 头需引擎「显式头与\n// 会话 jar 按名合并」语义支持（同名显式优先）。\nfunction hxqAbsUrl(context, href) {\n  var u = String(href || '');\n  if (!u) return '';\n  if (u.indexOf('//') === 0) return 'https:' + u;\n  if (/^https?:\\/\\//i.test(u)) return u;\n  return hxqStrip(context.baseUrl) + (u.charAt(0) === '/' ? u : '/' + u);\n}\nfunction hxqSearchList(html, context) {\n  var page = String(html || '');\n  if (!page || page.indexOf('module-item') < 0) return [];\n  var out = [];\n  var seen = {};\n  var re = /<div class=\"module-item\">([\\s\\S]*?)(?=<div class=\"module-item\">|<div class=\"module-footer\")/g;\n  var m;\n  while ((m = re.exec(page))) {\n    var block = m[1];\n    var href = '', title = '';\n    var tagM = /<a\\b[^>]*class=\"module-item-pic\"[^>]*>/.exec(block);\n    if (tagM) {\n      var h = /href=\"([^\"]+)\"/.exec(tagM[0]);\n      var t = /title=\"([^\"]*)\"/.exec(tagM[0]);\n      if (h) href = h[1];\n      if (t) title = hxqClean(t[1]);\n    }\n    if (!href) {\n      var anyA = /<a\\b[^>]*href=\"([^\"]+)\"/.exec(block);\n      if (anyA) href = anyA[1];\n    }\n    if (!href || seen[href]) continue;\n    seen[href] = 1;\n    if (!title) {\n      var t2 = /class=\"module-item-title\"[^>]*>([^<]*)</.exec(block);\n      if (t2) title = hxqClean(t2[1]);\n    }\n    if (!title) continue;\n    var cover = '';\n    var c1 = /data-src=\"([^\"]+)\"/.exec(block);\n    if (c1) cover = c1[1];\n    if (!cover) {\n      var c2 = /<img\\b[^>]*\\ssrc=\"([^\"]+)\"/.exec(block);\n      if (c2 && c2[1].indexOf('loading.') < 0) cover = c2[1];\n    }\n    var st = /class=\"module-item-text\"[^>]*>([^<]*)</.exec(block);\n    var idm = /\\/(\\d+)\\.html/i.exec(href);\n    out.push({\n      id: idm ? idm[1] : String(out.length + 1),\n      title: title,\n      cover: cover,\n      detailUrl: hxqAbsUrl(context, href),\n      status: st ? hxqClean(st[1]) : ''\n    });\n  }\n  return out;\n}\nfunction parseSearch(raw, context) {\n  var page = String(raw || '');\n  var list = hxqSearchList(page, context);\n  if (list.length > 0) return list;\n  var m = /idc_search_browser=([0-9a-fA-F]{8,})/.exec(page);\n  if (!m) return list;\n  var kw = encodeURIComponent(String(context.keyword || ''));\n  return {\n    __meta: true,\n    __fetchUrl: hxqAbsUrl(context, '/search.php?searchword=' + kw + '&_idc_pass=1'),\n    __fetchHeaders: { 'Cookie': 'idc_search_browser=' + m[1] },\n    __fetchResponseType: 'text',\n    __processor: 'hxqSearchList'\n  };\n}\n",
+    "overrides": {
+      "latest": { "type": "builtin" },
+      "category": { "type": "builtin" },
+      "search": { "type": "script", "function": "parseSearch" },
+      "detail": { "type": "builtin" },
+      "episodes": { "type": "script", "function": "parseEpisodes" },
+      "video": { "type": "script", "function": "parseVideo" }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/hxq/1.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/hxq/{category}-{page}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search.php?searchword={keyword}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": ".module-item",
+      "title": "a.module-item-pic@title, a.module-item-title",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a.module-item-pic@href, a@href",
+      "status": ".module-item-text"
+    },
+    "category": {
+      "list": ".module-item",
+      "title": "a.module-item-pic@title, a.module-item-title",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a.module-item-pic@href, a@href",
+      "status": ".module-item-text"
+    },
+    "search": {
+      "list": ".module-item",
+      "title": "a.module-item-pic@title, a.module-item-title",
+      "cover": "img@data-src, img@src",
+      "detailUrl": "a.module-item-pic@href, a@href",
+      "status": ".module-item-text"
+    },
+    "detail": {
+      "title": "h1.page-title",
+      "cover": "meta[property=og:image]@content, .video-cover img@data-src, .video-cover img@src",
+      "description": ".vod_content, .video-info-item.video-info-content",
+      "tags": ".video-info-actor a, .video-info-itemtitle a"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      { "id": "1", "title": "最新韩剧" },
+      { "id": "2", "title": "韩国电影" },
+      { "id": "3", "title": "韩国综艺" },
+      { "id": "4", "title": "韩国动漫" }
+    ]
+  },
+  "homeSections": [
+    { "id": "latest", "title": "最新韩剧", "route": "latest", "style": "grid", "limit": 18, "more": true }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.jennyhow.com/",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+  },
+  "enabled": true
+}
