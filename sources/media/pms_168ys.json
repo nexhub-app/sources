@@ -1,0 +1,177 @@
+{
+  "id": "pms_168ys",
+  "version": 2,
+  "name": "168影院",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "168影院（xzyx168.com）：MacCMS 类站点。分类页 /xzyxvt/{slug}.html 单页列出全部条目，搜索 /xzyxvc/{keyword}-wdyswzqun1num.html，详情 /xzyxvd/{id}.html，播放 /xzyxvp/{id}n{sid}m{nid}.html。",
+  "site": {
+    "domain": "www.xzyx168.com",
+    "baseUrl": "https://www.xzyx168.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.xzyx168.com",
+        "baseUrl": "https://www.xzyx168.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "category": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// 播放页内嵌 player_aaaa 配置对象（url/encrypt），encrypt=1 走 URL 解码、=2 走 base64 + URL 解码；\n// 配置缺失时回退到页面里第一个 m3u8/mp4 明文地址。\nfunction _xfAtob(s){var k='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';var o='';s=String(s).replace(/[^A-Za-z0-9+\\/=]/g,'').replace(/=+$/,'');for(var i=0;i<s.length;i+=4){var a=k.indexOf(s.charAt(i)),b=k.indexOf(s.charAt(i+1)),c=i+2<s.length?k.indexOf(s.charAt(i+2)):-1,d=i+3<s.length?k.indexOf(s.charAt(i+3)):-1;if(c<0)c=0;if(d<0)d=0;o+=String.fromCharCode((a<<2)|(b>>4));if(i+2<s.length)o+=String.fromCharCode(((b&15)<<4)|(c>>2));if(i+3<s.length)o+=String.fromCharCode(((c&3)<<6)|d);}return o;}\nfunction _xfPlayer(html){var i=html.indexOf('player_aaaa');if(i<0)return '';var k=html.indexOf('{',i);if(k<0)return '';var d=0,e=-1;for(var j=k;j<html.length;j++){var c=html.charAt(j);if(c=='{')d++;else if(c=='}'){d--;if(d==0){e=j+1;break;}}}if(e<0)return '';var cfg=JSON.parse(html.substring(k,e));var u=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u=_xfAtob(u);try{u=decodeURIComponent(u);}catch(x){}}else if(enc==1){try{u=decodeURIComponent(u);}catch(x){}}return u;}\nfunction parseVideo(html){try{var u=_xfPlayer(html);if(u&&u.indexOf('http')===0)return u;var m=html.match(/https?:\\/\\/[^\"'\\s,]+?\\.(?:m3u8|mp4)[^\"'\\s,]*/);if(m)return m[0];return '';}catch(e){return '';}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/xzyxvt/duanjun.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/xzyxvc/{keyword}-wdyswzqun1num.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/xzyxvt/{category}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/xzyxvd/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/xzyxvd/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "//li//a[contains(@class,'stui-vodlist__thumb')]",
+      "id": "substring-before(substring-after(@href,'/xzyxvd/'),'.html')",
+      "title": "@title",
+      "cover": "@data-original"
+    },
+    "search": {
+      "list": "//li//a[contains(@class,'stui-vodlist__thumb')]",
+      "id": "substring-before(substring-after(@href,'/xzyxvd/'),'.html')",
+      "title": "@title",
+      "cover": "@data-original"
+    },
+    "category": {
+      "list": "//li//a[contains(@class,'stui-vodlist__thumb')]",
+      "id": "substring-before(substring-after(@href,'/xzyxvd/'),'.html')",
+      "title": "@title",
+      "cover": "@data-original"
+    },
+    "detail": {
+      "title": "substring-before(substring-after(//title,'《'),'》')",
+      "cover": "//div[contains(@class,'stui-content__thumb')]//img/@data-original",
+      "description": "//meta[@name='description']/@content",
+      "status": "//span[contains(@class,'pic-text')]"
+    },
+    "episodes": {
+      "lineList": "//div[contains(@id,'playlist')]",
+      "lineName": "//ul[contains(@class,'nav-tabs')]//a[contains(@href,'#playlist')]",
+      "list": ".//a[contains(@href,'/xzyxvp/')]"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "duanjun",
+        "title": "短剧"
+      },
+      {
+        "id": "dianshijun",
+        "title": "电视剧"
+      },
+      {
+        "id": "dianyingn",
+        "title": "电影"
+      },
+      {
+        "id": "dongmann",
+        "title": "动漫"
+      },
+      {
+        "id": "zongyin",
+        "title": "综艺"
+      },
+      {
+        "id": "guochanjun",
+        "title": "国产剧"
+      },
+      {
+        "id": "gangjun",
+        "title": "港剧"
+      },
+      {
+        "id": "hanjun",
+        "title": "韩剧"
+      },
+      {
+        "id": "rijun",
+        "title": "日剧"
+      },
+      {
+        "id": "oumeijun",
+        "title": "欧美剧"
+      },
+      {
+        "id": "taijun",
+        "title": "台剧"
+      },
+      {
+        "id": "haiwaijun",
+        "title": "海外剧"
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最近更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": false
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.xzyx168.com/"
+  },
+  "enabled": true
+}
