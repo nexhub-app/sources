@@ -20,7 +20,7 @@
 3. **`btoa`/`atob` 沙箱有宽松 polyfill**（>0xFF 码位截断）：全 ASCII payload 放心用；任意字节串转 base64 用 `String.fromCharCode` 循环 + `btoa`。
 4. **`__meta` 链上限 4 跳**（每一跳都计入，含第一个 meta）。预取失败非致命（raw=''，脚本仍执行）——所以「脚本端点 + 哑路由 `/`」是合法形态：脚本完全自取数据。
 5. `__fetchResponseType: 'text'` 让预取返回原始文本。三种场景必需：加密响应、内嵌 JSON 的 HTML、**大整数 JSON**（§3）。
-6. **处理器首参形态要看清**：单条 meta 预取的处理器收到 `[data, headers]` JSON 数组（headers 供提取响应头凭证/令牌），批量 meta 才是裸响应列表。明确知道是单条跳的处理器用 `Array.isArray(raw) ? raw[0] : raw` 归一化——批量场景的响应体本就可能是数组，盲目归一化会吞掉批量数据。
+6. **处理器入参形态归一**：单条 meta 预取的处理器有两代引擎形态——新引擎逐参 `(响应体, 响应头, context)`，旧引擎打包成数组 `([响应体, 响应头], context)`（headers 供提取响应头凭证/令牌）；批量 meta 是裸响应列表。单条跳的处理器开头一律 `Array.isArray(raw) ? raw[0] : raw` 归一化，两代引擎通吃——不归一的话旧引擎下顶层没有 `data`，预取 200 数据完整也恒空产出；批量场景的响应体本就可能是数组，别盲目归一化。详见 script-protocol.md §3。
 
 ## 2. 签名/加密四套路（形态学）
 

@@ -221,6 +221,9 @@ function pickLive(raw, context) {               // 跳2回：各候选 m3u8 文�
 | 返回 `[object Promise]` | async / 未 await | 改 `__meta` 两步 |
 | 报超时 | 串行请求太多 | `__fetchUrls` 批量 + `__fetchConcurrency` |
 | 首次正常、第二次空 | 脚本依赖模块级变量 | 用 `context.storage` |
+| 预取 200 数据完整、处理器恒 `List[0]` | 处理器把旧引擎的打包数组 `[响应体, 响应头]` 当响应体，顶层没有 `data` | 处理器开头形态归一（`script-protocol.md` §3） |
+| 列表/搜索全空、离线沙箱与真机结论相反 | 沙箱直接喂响应体，真机旧引擎喂的是打包数组——离线复现要喂同形态 | 同上；归一后两形态通吃 |
+| 依赖令牌的端点第一跳只有空壳（200 + code/msg 齐全但 `data=null`） | 路由级预取不带脚本 storage 里现取的令牌，只带声明式鉴权 | 正常态；带权取流走 `__meta` 二跳 + `__fetchHeaders`（`script-protocol.md` §3） |
 
 ## 8. 改动纪律
 

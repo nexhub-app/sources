@@ -100,7 +100,7 @@ python scripts/validate_source.py 源.json
 4. 漫画章节把 `id` 取成章节链接，`images` 路由写 `{chapterId}` 即可直通该章。
 5. `webview-html` 端点**不要**写 `script`：渲染后的 HTML 只交给声明式引擎。
 6. 要嗅探播放地址才用 `webview` + IIFE 脚本，脚本必须自己 `return` 字符串。
-7. JS 里对象叫 `context`（不是 `ctx`）；拿二次请求的数据用 `__meta` 两步。**入口函数（parseVideo/parseList 等）一律写同步**：签名/哈希用脚本内嵌纯 JS 实现现算（`references/duanju-patterns.md` §2.5），不依赖 `context.crypto` 的异步桥——async 入口在引擎层只有三档降级兜底（Dart-Future 识别 + handlePromise，桌面端已实证可落地，真机/鸿蒙桥未验），签名站不要赌。`context.crypto` 仅限脚本内部 `await` 与 `__processor`。单条 meta 的处理器首参是 `[data, headers]` 数组，需归一化。加密/签名站先读 `references/duanju-patterns.md`；聚合多线路影视站的探活式样见 `references/troubleshoot.md` §6.1。
+7. JS 里对象叫 `context`（不是 `ctx`）；拿二次请求的数据用 `__meta` 两步。**入口函数（parseVideo/parseList 等）一律写同步**：签名/哈希用脚本内嵌纯 JS 实现现算（`references/duanju-patterns.md` §2.5），不依赖 `context.crypto` 的异步桥——async 入口在引擎层只有三档降级兜底（Dart-Future 识别 + handlePromise，桌面端已实证可落地，真机/鸿蒙桥未验），签名站不要赌。`context.crypto` 仅限脚本内部 `await` 与 `__processor`。单条 meta 的处理器入参有两代引擎形态（逐参 / 打包数组），开头一律形态归一，归一后两代通吃（`references/script-protocol.md` §3）；二跳地址是相对 url 时先拼 baseUrl 补全，否则链式二跳静默不触发。加密/签名站先读 `references/duanju-patterns.md`；聚合多线路影视站的探活式样见 `references/troubleshoot.md` §6.1。
 8. `animeSource` 必须有 `routes.latest`，否则校验直接拒绝。
 9. 图片 403 / 全是占位图 → 先补 `antiHotlinking.referer`；脚本源封面全挂且图片直开 200 → 脚本返回了相对路径，须在脚本内补全绝对地址（图片层把非 http(s) 当本地文件，永不发请求；列表与详情两处都要）。
 10. 改内置源（`plugins/builtin/`）必须 `version` +1；该目录被 gitignore、需重编译才进包。
