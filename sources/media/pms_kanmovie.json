@@ -1,0 +1,231 @@
+{
+  "id": "pms_kanmovie",
+  "version": 1,
+  "name": "西瓜影视",
+  "type": "animeSource",
+  "responseType": "html",
+  "ageRating": "general",
+  "site": {
+    "domain": "www.kanmovie.com",
+    "baseUrl": "https://www.kanmovie.com",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.kanmovie.com",
+        "baseUrl": "https://www.kanmovie.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "script": "/* 聚合影视前端源脚本 —— 第 1 段：常量与工具\n   架构：站方聚合 suggest（搜索页1并入）+ 上游资源站并发扇出 + 静态类型表分类\n   + 三段式选集合并 + 播放中转页解析。入口同步；二次请求走 __meta；ES5。 */\n\nvar AG_BASE = '';\nvar AG_PAGE = 1;\nvar AG_CAT = '';\nvar AG_AREA = '';\nvar AG_YEAR = '';\nvar AG_ORDER = '';\nvar AG_ID = '';\nvar AG_SUGGEST = null;\n\n/* 上游资源站清单：k=聚合站 apiId 前缀（sourceKey~vodId），a=上游接口地址。\n   前 15 个为列表扇出集（实测可达），其余仅详情可达（搜索页1 suggest 兜底来源）。 */\nvar AG_SRC = [\n  { k: 'bfzy.tv', a: 'https://bfzyapi.com/api.php/provide/vod' },\n  { k: 'lzizy.net', a: 'https://cj.lziapi.com/api.php/provide/vod' },\n  { k: 'jszyapi.com', a: 'https://jszyapi.com/api.php/provide/vod' },\n  { k: 'jinyingzy.com', a: 'https://jyzyapi.com/provide/vod/from/jinyingyun/at/json' },\n  { k: 'www.maoyanzy.com', a: 'https://api.maoyanapi.top/api.php/provide/vod' },\n  { k: '360zy.com', a: 'https://360zyzz.com/api.php/provide/vod' },\n  { k: 'www.subozy.com', a: 'https://subocaiji.com/api.php/provide/vod' },\n  { k: 'ffzyapi.com', a: 'https://api.ffzyapi.com/api.php/provide/vod' },\n  { k: 'zuida.xyz', a: 'https://api.zuidapi.com/api.php/provide/vod' },\n  { k: 'www.huyaapi.com', a: 'https://www.huyaapi.com/api.php/provide/vod' },\n  { k: 'api.guangsuapi.com', a: 'https://api.guangsuapi.com/api.php/provide/vod' },\n  { k: 'www.hongniuzy.com', a: 'https://www.hongniuzy2.com/api.php/provide/vod' },\n  { k: 'xinlangapi.com', a: 'https://api.xinlangapi.com/xinlangapi.php/provide/vod' },\n  { k: 'iqiyizyapi.com', a: 'https://iqiyizyapi.com/api.php/provide/vod' },\n  { k: 'p2100.net', a: 'https://p2100.net/api.php/provide/vod' },\n  { k: 'www.moduzy.net', a: 'https://www.mdzyapi.com/api.php/provide/vod' },\n  { k: 'caiji.moduapi.cc', a: 'https://caiji.moduapi.cc/api.php/provide/vod' },\n  { k: 'www.haohuazy.com', a: 'https://hhzyapi.com/api.php/provide/vod' },\n  { k: 'api.ukuapi88.com', a: 'https://api.ukuapi88.com/api.php/provide/vod' },\n  { k: 'wujinzy.com', a: 'https://api.wujinapi.com/api.php/provide/vod' }\n];\n\nvar AG_LOOKUP = {};\n(function () {\n  for (var i = 0; i < AG_SRC.length; i++) {\n    if (AG_SRC[i].k && AG_SRC[i].a && AG_SRC[i].a.indexOf('http') === 0) {\n      AG_LOOKUP[AG_SRC[i].k] = AG_SRC[i].a;\n    }\n  }\n})();\n\nvar AG_FANOUT = [];\n(function () {\n  for (var i = 0; i < 15 && i < AG_SRC.length; i++) {\n    AG_FANOUT.push(AG_SRC[i]);\n  }\n})();\n\n/* —— 构建期蒸馏的类型表 {sourceKey: {type_id: 根分类}}（build_source.mjs 注入）—— */\n/*__TYPE_TABLES__*/\n\n/* ---------- 通用工具 ---------- */\n\nfunction _agTxt(s) {\n  if (s == null) return '';\n  return String(s)\n    .replace(/<[^>]*>/g, ' ')\n    .replace(/&[a-z]+;/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction _agBody(raw) {\n  return Array.isArray(raw) ? raw[0] : raw;\n}\n\nfunction _agJson(raw) {\n  var v = _agBody(raw);\n  if (v == null) return null;\n  if (typeof v === 'string') {\n    try { return JSON.parse(v); } catch (e) { return null; }\n  }\n  return v;\n}\n\nfunction _agNum(n, d) {\n  var v = parseInt(n, 10);\n  return isNaN(v) ? (d || 0) : v;\n}\n\nfunction _agJoin(base, q) {\n  return String(base) + (String(base).indexOf('?') >= 0 ? '&' : '?') + q;\n}\n\nfunction _agIso(t) {\n  return String(t || '').replace(' ', 'T');\n}\n\nfunction _agTrimSlash(s) {\n  return String(s || '').replace(/\\/+$/, '');\n}\n\nfunction _agMeta(urls, processor) {\n  return {\n    __meta: true,\n    __fetchUrls: urls,\n    __fetchResponseType: 'json',\n    __fetchConcurrency: 6,\n    __processor: processor\n  };\n}\n\nfunction _agResolve(base, rel) {\n  var r = String(rel || '');\n  if (/^https?:\\/\\//i.test(r)) return r;\n  if (r.indexOf('//') === 0) return 'https:' + r;\n  if (r.indexOf('/') === 0) {\n    var m = String(base).match(/^https?:\\/\\/[^\\/]+/);\n    return m ? m[0] + r : r;\n  }\n  var cut = String(base).lastIndexOf('/');\n  return base.slice(0, cut + 1) + r;\n}\n\nfunction _agEncPath(u) {\n  return String(u || '').replace(/[^A-Za-z0-9\\-._~:\\/\\?#\\[\\]@!$&'()*+,;=%]/g, function (c) {\n    return encodeURIComponent(c);\n  });\n}\n\nvar AG_TT = {\n'360zy.com':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','20':'电影','21':'电影','22':'电影','23':'电影','24':'电影','25':'电影','26':'电影','27':'电影','28':'电影','29':'电影','30':'电视剧','31':'电视剧','32':'电视剧','33':'电视剧','34':'综艺','35':'综艺','36':'综艺','37':'综艺','38':'动漫','39':'动漫','40':'动漫','43':'电影','45':'电影'},\n'api.guangsuapi.com':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','20':'电影','21':'电视剧','22':'电视剧','23':'电视剧','37':'综艺','38':'综艺','39':'综艺','40':'综艺','41':'动漫','42':'动漫','43':'动漫'},\n'bfzy.tv':{'20':'电影','21':'电影','22':'电影','23':'电影','24':'电影','25':'电影','26':'电影','27':'电影','28':'电影','29':'电影','30':'电视剧','31':'电视剧','32':'电视剧','33':'电视剧','34':'电视剧','35':'电视剧','36':'电视剧','37':'电视剧','38':'电视剧','39':'动漫','40':'动漫','41':'动漫','42':'动漫','43':'动漫','44':'动漫','45':'综艺','46':'综艺','47':'综艺','48':'综艺','49':'综艺','50':'电影','51':'电影','67':'电影'},\n'ffzyapi.com':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','20':'电影','21':'电视剧','22':'电视剧','23':'电视剧','24':'电视剧','25':'综艺','26':'综艺','27':'综艺','28':'综艺','29':'动漫','30':'动漫','31':'动漫','32':'动漫','33':'动漫','34':'电影','36':'电视剧'},\n'iqiyizyapi.com':{'1':'动漫','2':'动漫','3':'动漫','4':'动漫','5':'电影','6':'动漫','7':'电影','8':'电视剧','9':'综艺','10':'电影','11':'电影','12':'电影','13':'电影','14':'电影','15':'电影','16':'电影','17':'电影','18':'电影','19':'电影','20':'电影','21':'电影','22':'电影','23':'电影','24':'电影','25':'电影','26':'电视剧','27':'电视剧','28':'电视剧','29':'电视剧','30':'电视剧','31':'电视剧','32':'电视剧','33':'电视剧','34':'综艺','35':'综艺','36':'综艺','37':'综艺','38':'电视剧','40':'动漫'},\n'jinyingzy.com':{'1':'电视剧','2':'电影','3':'电视剧','4':'电视剧','5':'电视剧','6':'电视剧','7':'电视剧','9':'电影','10':'电影','11':'电影','12':'电影','13':'电影','14':'电影','15':'电影','16':'电影','17':'动漫','20':'电视剧','23':'电影','24':'动漫','25':'动漫','26':'动漫','27':'综艺','28':'电视剧','36':'综艺','37':'综艺','38':'综艺','39':'综艺'},\n'jszyapi.com':{'1':'电视剧','2':'电影','3':'电视剧','4':'电视剧','5':'电视剧','6':'电视剧','7':'电视剧','9':'电影','10':'电影','11':'电影','12':'电影','13':'电影','14':'电影','15':'电影','16':'电影','17':'动漫','20':'电视剧','23':'电影','24':'动漫','25':'动漫','26':'动漫','27':'综艺','28':'电视剧','30':'综艺','31':'综艺','32':'综艺','33':'综艺','34':'电影','35':'电影','36':'电影','37':'电影'},\n'lzizy.net':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','20':'电影','21':'电视剧','22':'电视剧','23':'电视剧','24':'电视剧','25':'综艺','26':'综艺','27':'综艺','28':'综艺','29':'动漫','30':'动漫','31':'动漫','32':'动漫','33':'动漫','34':'电影','35':'电影','45':'电影','49':'电影'},\n'p2100.net':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','5':'电影','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电视剧','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','17':'电视剧','18':'电视剧','21':'电影','22':'电影','28':'电影'},\n'www.hongniuzy.com':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','20':'电影','36':'动漫','37':'动漫','38':'动漫','39':'综艺','40':'综艺','41':'综艺','42':'综艺'},\n'www.huyaapi.com':{'1':'电视剧','2':'电影','3':'电视剧','4':'电视剧','5':'电视剧','6':'电视剧','7':'电视剧','9':'电影','10':'电影','11':'电影','12':'电影','13':'电影','14':'电影','15':'电影','16':'电影','17':'动漫','20':'电视剧','23':'电影','24':'动漫','25':'动漫','26':'动漫','27':'综艺','28':'电视剧','38':'综艺','39':'综艺','40':'综艺','41':'综艺'},\n'www.maoyanzy.com':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','20':'电影','21':'电影','22':'电影','23':'电影','24':'电影','25':'电影','26':'电影','27':'电影','28':'电影','29':'电影','30':'电视剧','31':'电视剧','32':'电视剧','33':'电视剧','34':'综艺','35':'综艺','36':'综艺','37':'综艺','38':'动漫','39':'动漫','40':'动漫','43':'电影','45':'电影','54':'电影','55':'动漫'},\n'www.subozy.com':{'1':'电影','2':'电视剧','3':'动漫','4':'综艺','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电影','14':'电视剧','15':'电视剧','16':'电视剧','17':'电视剧','18':'电视剧','20':'电视剧','21':'电视剧','24':'动漫','25':'动漫','26':'动漫','33':'综艺','34':'综艺','35':'综艺','36':'综艺'},\n'xinlangapi.com':{'1':'电影','2':'电视剧','3':'动漫','4':'综艺','5':'电影','6':'电影','7':'电影','8':'电影','9':'电影','10':'电影','11':'电影','12':'电影','13':'电视剧','14':'电视剧','15':'电视剧','16':'电视剧','17':'电影','18':'电视剧','20':'电视剧','21':'电视剧','38':'动漫','39':'动漫','40':'动漫','41':'电影','42':'电影','43':'电影','44':'电影','45':'综艺','46':'综艺','47':'综艺','48':'综艺'},\n'zuida.xyz':{'1':'电影','2':'电视剧','3':'综艺','4':'动漫','25':'综艺','26':'综艺','27':'综艺','28':'综艺','29':'动漫','30':'动漫','31':'动漫','39':'动漫','44':'动漫','45':'动漫','62':'电影','63':'动漫','70':'电影','71':'电影'},\n};\n/* ---------- 列表条目构造与合并（第 2 段）---------- */\n\nfunction _agMacItem(key, it) {\n  var apiId = key + '~' + (it.vod_id != null ? it.vod_id : '');\n  var cls = String(it.vod_class || '');\n  return {\n    id: apiId,\n    title: String(it.vod_name || '').trim(),\n    cover: String(it.vod_pic || ''),\n    detailUrl: AG_BASE + '/detail/' + apiId,\n    status: String(it.vod_remarks || ''),\n    year: String(it.vod_year || ''),\n    tags: cls ? cls.split(',') : [],\n    updatedAt: _agIso(it.vod_time),\n    _t: String(it.vod_time || ''),\n    _h: _agNum(it.vod_hits, 0),\n    _s: _agNum(parseFloat(it.vod_score), 0),\n    _c: cls,\n    _ty: String(it.type_id != null ? it.type_id : '')\n  };\n}\n\nfunction _agSuggestItem(s) {\n  var key = String(s.sourceKey || '');\n  var apiId = key + '~' + (s.vodId != null ? s.vodId : '');\n  var cls = String(s.class || '');\n  return {\n    id: apiId,\n    title: String(s.name || '').trim(),\n    cover: String(s.pic || s.picThumb || ''),\n    detailUrl: AG_BASE + '/detail/' + apiId,\n    status: String(s.remarks || ''),\n    year: String(s.year || ''),\n    tags: cls ? cls.split(',') : [],\n    updatedAt: _agIso(s.time),\n    _t: _agIso(s.time || ''),\n    _h: _agNum(s.hits, 0),\n    _s: _agNum(parseFloat(s.score), 0),\n    _c: cls,\n    _ty: ''\n  };\n}\n\n/* 去重（同名同年保第一条）+ 清理 _ 开头内部字段 + 截断 */\nfunction _agFinish(items, cap) {\n  var seen = {};\n  var out = [];\n  for (var i = 0; i < items.length; i++) {\n    var it = items[i];\n    if (!it || !it.id || !it.title) continue;\n    var nk = it.title + '|' + (it.year || '');\n    if (seen[nk]) continue;\n    seen[nk] = 1;\n    var clean = {};\n    for (var f in it) {\n      if (f.charAt(0) !== '_') clean[f] = it[f];\n    }\n    out.push(clean);\n    if (cap > 0 && out.length >= cap) break;\n  }\n  return out;\n}\n\n/* 扇出响应展开：raws 顺序对齐 AG_FANOUT，失败项（null）跳过 */\nfunction _agSpread(raws) {\n  var out = [];\n  if (!Array.isArray(raws)) return out;\n  for (var j = 0; j < raws.length && j < AG_FANOUT.length; j++) {\n    var data = _agJson(raws[j]);\n    if (!data || !data.list) continue;\n    var key = AG_FANOUT[j].k;\n    var list = data.list;\n    for (var t = 0; t < list.length; t++) {\n      if (list[t]) out.push(_agMacItem(key, list[t]));\n    }\n  }\n  return out;\n}\n\nfunction _agSortBy(all, key) {\n  if (key === 'hit') {\n    all.sort(function (a, b) { return (b._h || 0) - (a._h || 0); });\n  } else if (key === 'score') {\n    all.sort(function (c, d) { return (d._s || 0) - (c._s || 0); });\n  } else {\n    all.sort(function (a, b) { return String(b._t || '').localeCompare(String(a._t || '')); });\n  }\n}\n\n/* ---------- 端点：latest ---------- */\n\nfunction parseList(raw, context) {\n  AG_BASE = _agTrimSlash(context && context.baseUrl);\n  AG_PAGE = _agNum(context && context.page, 1);\n  var urls = [];\n  for (var i = 0; i < AG_FANOUT.length; i++) {\n    urls.push(_agJoin(AG_FANOUT[i].a, 'ac=videolist&pg=' + AG_PAGE));\n  }\n  return _agMeta(urls, 'procLatest');\n}\n\nfunction procLatest(raws) {\n  var all = _agSpread(raws);\n  _agSortBy(all, 'time');\n  return _agFinish(all, 40);\n}\n\n/* ---------- 端点：search ---------- */\n\n/* 路由已预取站方聚合 suggest（responseType json → raw 即解析对象），第 1 页并入 */\nfunction parseSearch(raw, context) {\n  AG_BASE = _agTrimSlash(context.baseUrl);\n  AG_PAGE = _agNum(context.page, 1);\n  var kw = String(context.keyword || '').trim();\n  AG_SUGGEST = (raw && raw.list) ? raw.list : [];\n  var urls = [];\n  for (var i = 0; i < AG_FANOUT.length; i++) {\n    urls.push(_agJoin(AG_FANOUT[i].a, 'ac=videolist&wd=' + encodeURIComponent(kw) + '&pg=' + AG_PAGE));\n  }\n  return _agMeta(urls, 'procSearch');\n}\n\nfunction procSearch(raws) {\n  var all = [];\n  if (AG_PAGE === 1 && AG_SUGGEST && AG_SUGGEST.length) {\n    for (var i = 0; i < AG_SUGGEST.length; i++) {\n      var s = AG_SUGGEST[i];\n      if (s && AG_LOOKUP[String(s.sourceKey || '')]) all.push(_agSuggestItem(s));\n    }\n  }\n  var fan = _agSpread(raws);\n  for (var j = 0; j < fan.length; j++) all.push(fan[j]);\n  _agSortBy(all, 'time');\n  return _agFinish(all, 60);\n}\n\n/* ---------- 端点：category ---------- */\n\nfunction parseCategory(raw, context) {\n  AG_BASE = _agTrimSlash(context.baseUrl);\n  AG_PAGE = _agNum(context.page, 1);\n  AG_CAT = String(context.category || '');\n  AG_AREA = String(context.area || '');\n  AG_YEAR = String(context.year || '');\n  AG_ORDER = String(context.order || '');\n  var by = AG_ORDER === 'time' ? 'time' : (AG_ORDER === 'hit' ? 'hits' : (AG_ORDER === 'score' ? 'score' : ''));\n  var urls = [];\n  for (var i = 0; i < AG_FANOUT.length; i++) {\n    var q = 'ac=videolist&pg=' + AG_PAGE;\n    if (AG_AREA) q += '&area=' + encodeURIComponent(AG_AREA);\n    if (AG_YEAR) q += '&year=' + encodeURIComponent(AG_YEAR);\n    if (by) q += '&by=' + by;\n    urls.push(_agJoin(AG_FANOUT[i].a, q));\n  }\n  return _agMeta(urls, 'procCategory');\n}\n\n/* 单波扇出 + 静态类型表判定分类（未知类型走 class 文本正则兜底），不匹配即过滤 */\nfunction procCategory(raws) {\n  var all = [];\n  var spread = _agSpread(raws);\n  for (var i = 0; i < spread.length; i++) {\n    var rec = spread[i];\n    var tbl = (AG_TT && AG_TT[rec.id.slice(0, rec.id.lastIndexOf('~'))]) || {};\n    var cat = tbl[rec._ty] || _agCatOfText(rec._c);\n    if (cat === AG_CAT) all.push(rec);\n  }\n  _agSortBy(all, AG_ORDER || 'time');\n  return _agFinish(all, 40);\n}\n\n/* 分类文本兜底正则（取自聚合站前端同类映射） */\nfunction _agCatOfText(text) {\n  var s = String(text || '');\n  if (!s) return '';\n  if (/电影|动作片|爱情片|喜剧片|科幻片|恐怖片|剧情片|战争片|惊悚片|犯罪片|悬疑片|奇幻片|灾难片|纪录片|动画电影/.test(s)) return '电影';\n  if (/电视剧|连续剧|剧集|国产剧|港剧|台剧|日剧|韩剧|美剧|泰剧|海外剧|日韩剧|马泰剧/.test(s)) return '电视剧';\n  if (/动漫|动画|番剧|少儿/.test(s)) return '动漫';\n  if (/综艺|真人秀|脱口秀|晚会/.test(s)) return '综艺';\n  return '';\n}\n\n/* ---------- 端点：detail / episodes / video（第 3 段）---------- */\n\nfunction _agSplitId(apiId) {\n  var s = String(apiId || '');\n  var cut = s.lastIndexOf('~');\n  return cut > 0 ? { key: s.slice(0, cut), vodId: s.slice(cut + 1) } : { key: '', vodId: '' };\n}\n\nfunction parseDetail(raw, context) {\n  AG_BASE = _agTrimSlash(context.baseUrl);\n  AG_ID = String(context.id || '');\n  var p = _agSplitId(AG_ID);\n  var api = AG_LOOKUP[p.key];\n  if (!api) return { id: AG_ID, title: '' };\n  return {\n    __meta: true,\n    __fetchUrl: _agJoin(api, 'ac=videolist&ids=' + encodeURIComponent(p.vodId)),\n    __fetchResponseType: 'json',\n    __processor: 'procDetail'\n  };\n}\n\nfunction procDetail(raw) {\n  var data = _agJson(raw);\n  var v = data && data.list && data.list[0];\n  if (!v) return { id: AG_ID, title: '' };\n  var cls = String(v.vod_class || '');\n  /* 选集计数 = 各线路集数最大值 */\n  var cnt = 0;\n  var urlLines = String(v.vod_play_url || '').split('$$$');\n  for (var i = 0; i < urlLines.length; i++) {\n    var segs = String(urlLines[i] || '').split('#');\n    var n = 0;\n    for (var j = 0; j < segs.length; j++) {\n      if (segs[j] && segs[j].indexOf('http') >= 0) n++;\n    }\n    cnt = n > cnt ? n : cnt;\n  }\n  return {\n    id: AG_ID,\n    title: _agTxt(v.vod_name),\n    cover: String(v.vod_pic || ''),\n    description: _agTxt(v.vod_content),\n    actors: _agTxt(v.vod_actor),\n    director: _agTxt(v.vod_director),\n    status: String(v.vod_remarks || ''),\n    tags: cls ? cls.split(',') : [],\n    updatedAt: _agIso(v.vod_time),\n    episodeCount: cnt\n  };\n}\n\nfunction parseEpisodes(raw, context) {\n  AG_ID = String(context.id || '');\n  AG_BASE = _agTrimSlash(context.baseUrl);\n  var p = _agSplitId(AG_ID);\n  var api = AG_LOOKUP[p.key];\n  if (!api) return [];\n  return {\n    __meta: true,\n    __fetchUrl: _agJoin(api, 'ac=videolist&ids=' + encodeURIComponent(p.vodId)),\n    __fetchResponseType: 'json',\n    __processor: 'procEpisodes'\n  };\n}\n\n/* 三段式选集合并：$$$ 分线路 / # 分集 / $ 分标题与地址。\n   线路按「首集直连媒体优先」稳定排序，跨线路按集号去重（先到先得）。 */\nfunction procEpisodes(raw) {\n  var data = _agJson(raw);\n  var v = data && data.list && data.list[0];\n  if (!v) return [];\n  var froms = String(v.vod_play_from || '').split('$$$');\n  var urllines = String(v.vod_play_url || '').split('$$$');\n  var lines = [];\n  for (var li = 0; li < urllines.length; li++) {\n    var name = _agTxt(froms[li] || '');\n    if (!name) name = '线路' + (li + 1);\n    var segs = String(urllines[li] || '').split('#');\n    var eps = [];\n    for (var ei = 0; ei < segs.length; ei++) {\n      var seg = segs[ei];\n      if (!seg) continue;\n      var cut = seg.indexOf('$');\n      var t = cut >= 0 ? seg.slice(0, cut) : '';\n      var u = cut >= 0 ? seg.slice(cut + 1) : '';\n      if (u.indexOf('http') !== 0) continue;\n      eps.push({ t: _agTxt(t) || ('第' + (ei + 1) + '集'), u: u });\n    }\n    if (eps.length) lines.push({ name: name, eps: eps });\n  }\n  function _agDirectScore(u) {\n    return /\\.(m3u8|mp4)(\\?|#|$)/i.test(String(u || '')) ? 0 : 1;\n  }\n  lines.sort(function (a, b) {\n    var sa = _agDirectScore(a.eps[0] && a.eps[0].u);\n    var sb = _agDirectScore(b.eps[0] && b.eps[0].u);\n    return sa - sb;\n  });\n  var seen = {};\n  var out = [];\n  for (var li2 = 0; li2 < lines.length; li2++) {\n    var eps2 = lines[li2].eps;\n    for (var ei2 = 0; ei2 < eps2.length; ei2++) {\n      var e = eps2[ei2];\n      var nk = String(e.t).replace(/\\D/g, '') || String(ei2 + 1);\n      if (seen[nk]) continue;\n      seen[nk] = 1;\n      out.push({\n        id: AG_ID + '#' + li2 + '#' + ei2,\n        title: e.t,\n        url: _agEncPath(e.u),\n        number: _agNum(nk, ei2 + 1) || (ei2 + 1)\n      });\n    }\n  }\n  return out;\n}\n\n/* 播放：预取体是集 URL 的响应（直链=播放列表文本→直接回原 URL；中转页→解析真实地址） */\nfunction parseVideo(raw, context) {\n  var u = String((context && context.url) || '');\n  AG_BASE = _agTrimSlash(context && context.baseUrl);\n  var body = typeof raw === 'string' ? raw : '';\n  if (body.indexOf('#EXTM3U') >= 0) return u;\n  /* 形态A：var main = \"/xxx/index.m3u8?sign=...\"（根相对，按中转页 origin 补全） */\n  var m = body.match(/var\\s+main\\s*=\\s*\"([^\"]+)\"/);\n  if (m) return _agResolve(u, m[1]);\n  /* 形态B：player_aaaa 配置对象（url/encrypt，与内置影视源同款） */\n  var i = body.indexOf('player_aaaa');\n  if (i >= 0) {\n    var k = body.indexOf('{', i);\n    if (k >= 0) {\n      var depth = 0;\n      var end = -1;\n      for (var j = k; j < body.length; j++) {\n        var ch = body.charAt(j);\n        if (ch === '{') depth++;\n        else if (ch === '}') {\n          depth--;\n          if (depth === 0) { end = j + 1; break; }\n        }\n      }\n      if (end > 0) {\n        var cfg = null;\n        try { cfg = JSON.parse(body.substring(k, end)); } catch (e2) { cfg = null; }\n        if (cfg && cfg.url) {\n          var v2 = String(cfg.url);\n          var enc = cfg.encrypt || 0;\n          if (enc == 2) {\n            try { v2 = atob(v2); } catch (e3) { }\n            try { v2 = decodeURIComponent(v2); } catch (e4) { }\n          } else if (enc == 1) {\n            try { v2 = decodeURIComponent(v2); } catch (e5) { }\n          }\n          if (v2.indexOf('http') === 0) return v2;\n          return _agResolve(u, v2);\n        }\n      }\n    }\n  }\n  /* 兜底：正文第一个 m3u8/mp4 直链 */\n  var any = body.match(/https?:\\/\\/[^\"'\\s,]+?\\.(?:m3u8|mp4)[^\"'\\s,]*/i);\n  if (any) return any[0];\n  return u;\n}\n",
+    "overrides": {
+      "latest": {
+        "type": "script",
+        "function": "parseList"
+      },
+      "search": {
+        "type": "script",
+        "function": "parseSearch"
+      },
+      "category": {
+        "type": "script",
+        "function": "parseCategory"
+      },
+      "detail": {
+        "type": "script",
+        "function": "parseDetail"
+      },
+      "episodes": {
+        "type": "script",
+        "function": "parseEpisodes"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/robots.txt",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/api/suggest?q={keyword}&limit=10",
+      "method": "get",
+      "responseType": "json"
+    },
+    "category": {
+      "url": "/robots.txt",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "电影",
+        "title": "电影"
+      },
+      {
+        "id": "电视剧",
+        "title": "电视剧"
+      },
+      {
+        "id": "动漫",
+        "title": "动漫"
+      },
+      {
+        "id": "综艺",
+        "title": "综艺"
+      }
+    ]
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "area",
+        "title": "地区",
+        "param": "area",
+        "options": [
+          {
+            "value": "",
+            "label": "全部"
+          },
+          {
+            "value": "大陆",
+            "label": "大陆"
+          },
+          {
+            "value": "香港",
+            "label": "香港"
+          },
+          {
+            "value": "台湾",
+            "label": "台湾"
+          },
+          {
+            "value": "美国",
+            "label": "美国"
+          },
+          {
+            "value": "韩国",
+            "label": "韩国"
+          },
+          {
+            "value": "日本",
+            "label": "日本"
+          },
+          {
+            "value": "泰国",
+            "label": "泰国"
+          },
+          {
+            "value": "英国",
+            "label": "英国"
+          },
+          {
+            "value": "法国",
+            "label": "法国"
+          }
+        ]
+      },
+      {
+        "id": "year",
+        "title": "年份",
+        "param": "year",
+        "options": [
+          {
+            "value": "",
+            "label": "全部"
+          },
+          {
+            "value": "2026",
+            "label": "2026"
+          },
+          {
+            "value": "2025",
+            "label": "2025"
+          },
+          {
+            "value": "2024",
+            "label": "2024"
+          },
+          {
+            "value": "2023",
+            "label": "2023"
+          },
+          {
+            "value": "2022",
+            "label": "2022"
+          },
+          {
+            "value": "2021",
+            "label": "2021"
+          },
+          {
+            "value": "2020",
+            "label": "2020"
+          },
+          {
+            "value": "2019",
+            "label": "2019"
+          },
+          {
+            "value": "2018",
+            "label": "2018"
+          }
+        ]
+      },
+      {
+        "id": "order",
+        "title": "排序",
+        "param": "order",
+        "options": [
+          {
+            "value": "",
+            "label": "默认"
+          },
+          {
+            "value": "time",
+            "label": "最新"
+          },
+          {
+            "value": "hit",
+            "label": "最热"
+          },
+          {
+            "value": "score",
+            "label": "评分"
+          }
+        ]
+      }
+    ]
+  },
+  "antiHotlinking": {
+    "referer": "https://www.kanmovie.com/"
+  },
+  "description": "聚合影视源：站方聚合搜索 + 多上游资源站扇出（分类/最新），多线路选集合并，中转页自动解析直链。",
+  "enabled": true,
+  "enabledExplore": true
+}
