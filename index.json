@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:16:14.453Z",
-  "count": 35,
+  "generatedAt": "2026-11-08T02:16:43.200Z",
+  "count": 36,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -379,6 +379,22 @@
       "version": 6,
       "baseUrl": "https://www.7sefun.top",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_7sefun.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_duanju55",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "五五短剧",
+      "version": 4,
+      "baseUrl": "https://www.duanju55.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_duanju55.json",
       "builtin": true,
       "desc": {
         "zh": "",
