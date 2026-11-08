@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:22:24.666Z",
-  "count": 41,
+  "generatedAt": "2026-11-08T02:23:02.520Z",
+  "count": 42,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -555,6 +555,22 @@
       "version": 2,
       "baseUrl": "https://www.zywest263.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_huasheng.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_yaguo",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "芽果短剧",
+      "version": 2,
+      "baseUrl": "https://app.whjzjx.cn",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_yaguo.json",
       "builtin": true,
       "desc": {
         "zh": "",
