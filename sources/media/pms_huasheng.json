@@ -1,0 +1,183 @@
+{
+  "id": "pms_huasheng",
+  "version": 2,
+  "name": "花生短剧",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "ageRating": "general",
+  "enabledExplore": true,
+  "description": "花生短剧：目录页与详情页为服务端渲染 HTML，播放页把 m3u8 明文写进播放器 iframe 的初始化脚本。v2：分类改走站内筛选接口（站方唯一类型，真实浏览维度是年份与排序），启用年份/排序筛选面板并新增热播板块；视频取址改为多候选按清晰度标签择优（该站素材码率约 0.4~0.9 Mbps，清晰度上限取决于站方素材本身）。",
+  "site": {
+    "domain": "www.zywest263.com",
+    "baseUrl": "https://www.zywest263.com",
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "www.zywest263.com",
+        "baseUrl": "https://www.zywest263.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "builtin"
+      },
+      "search": {
+        "type": "builtin"
+      },
+      "category": {
+        "type": "builtin"
+      },
+      "detail": {
+        "type": "builtin"
+      },
+      "episodes": {
+        "type": "builtin"
+      },
+      "video": {
+        "type": "script",
+        "function": "parseVideo",
+        "script": "// 播放页把真实地址直接拼在 player 容器的 iframe 初始化字符串里：\n// document.getElementById('players').innerHTML = '<iframe src=\"/player/mui-player.php?标题,https://.../master.m3u8,下一页\">'\n// 取址策略（v2）：收集页面全部 m3u8/mp4 明文地址（排除播放器壳路径），按\n// 「路径分辨率标签降序 + m3u8 优先」排序取最优，防止站点在同页埋多档地址时\n// 取到低清（路径标签 1080/720 与真实码率无关，只作同页多候选间的相对依据）。\n// 无明文地址时回退 player_aaaa 配置（含 encrypt 1/2 解码）。\nfunction _hsAtob(s){var k='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';var o='';s=String(s).replace(/[^A-Za-z0-9+\\/=]/g,'').replace(/=+$/,'');for(var i=0;i<s.length;i+=4){var a=k.indexOf(s.charAt(i)),b=k.indexOf(s.charAt(i+1)),c=i+2<s.length?k.indexOf(s.charAt(i+2)):-1,d=i+3<s.length?k.indexOf(s.charAt(i+3)):-1;if(c<0)c=0;if(d<0)d=0;o+=String.fromCharCode((a<<2)|(b>>4));if(i+2<s.length)o+=String.fromCharCode(((b&15)<<4)|(c>>2));if(i+3<s.length)o+=String.fromCharCode(((c&3)<<6)|d);}return o;}\nfunction _hsPlayer(html){var i=html.indexOf('player_aaaa');if(i<0)return '';var k=html.indexOf('{',i);if(k<0)return '';var d=0,e=-1;for(var j=k;j<html.length;j++){var c=html.charAt(j);if(c=='{')d++;else if(c=='}'){d--;if(d==0){e=j+1;break;}}}if(e<0)return '';var cfg=JSON.parse(html.substring(k,e));var u=cfg.url||'';var enc=cfg.encrypt||0;if(enc==2){u=_hsAtob(u);try{u=decodeURIComponent(u);}catch(x){}}else if(enc==1){try{u=decodeURIComponent(u);}catch(x){}}return u;}\nfunction _hsRes(u){var m=String(u).toLowerCase().match(/\\/(4k|2160|1440|2k|1080|720|540|480|360|240)(?:p|kb)?\\//);if(!m)return 0;var t={'4k':2160,'2160':2160,'2k':1440,'1440':1440,'1080':1080,'720':720,'540':540,'480':480,'360':360,'240':240};return t[m[1]]||0;}\nfunction parseVideo(html){try{var all=html.match(/https?:\\/\\/[^\"'\\s,]+?\\.(?:m3u8|mp4)[^\"'\\s,]*/g)||[];var cands=[];for(var i=0;i<all.length;i++){if(all[i].indexOf('/player/')<0)cands.push(all[i]);}if(cands.length){cands.sort(function(a,b){var ra=_hsRes(a),rb=_hsRes(b);if(ra!==rb)return rb-ra;var ha=a.indexOf('.m3u8')>=0?1:0,hb=b.indexOf('.m3u8')>=0?1:0;return hb-ha;});return cands[0];}var u=_hsPlayer(html);if(u&&u.indexOf('http')===0)return u;return '';}catch(e){return '';}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/zywtype/27-{page}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search.html?page={page}&searchword={keyword}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/search.html?page={page}&searchtype=5&tid={category}&year={year?}&order={order?}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "/zywview/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "/zywview/{id}.html",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": "//li[contains(@class,'vodlist__item')]",
+      "id": "substring-before(substring-after(.//a[contains(@class,'vodlist__thumb')]/@href,'/zywview/'),'.html')",
+      "title": ".//a[contains(@class,'vodlist__thumb')]/@title",
+      "cover": ".//a[contains(@class,'vodlist__thumb')]/@data-original",
+      "status": ".//span[contains(@class,'pic-text')]"
+    },
+    "search": {
+      "list": "//li[contains(@class,'vodlist__item')]",
+      "id": "substring-before(substring-after(.//a[contains(@class,'vodlist__thumb')]/@href,'/zywview/'),'.html')",
+      "title": ".//a[contains(@class,'vodlist__thumb')]/@title",
+      "cover": ".//a[contains(@class,'vodlist__thumb')]/@data-original",
+      "status": ".//span[contains(@class,'pic-text')]"
+    },
+    "category": {
+      "list": "//li[contains(@class,'vodlist__item')]",
+      "id": "substring-before(substring-after(.//a[contains(@class,'vodlist__thumb')]/@href,'/zywview/'),'.html')",
+      "title": ".//a[contains(@class,'vodlist__thumb')]/@title",
+      "cover": ".//a[contains(@class,'vodlist__thumb')]/@data-original",
+      "status": ".//span[contains(@class,'pic-text')]"
+    },
+    "detail": {
+      "title": "//h1[contains(@class,'title')]",
+      "cover": "//div[contains(@class,'content__thumb')]//img/@data-original",
+      "description": "substring-after(//p[contains(@class,'desc')],'简介：')",
+      "status": "//div[contains(@class,'content__thumb')]//span[contains(@class,'pic-text')]"
+    },
+    "episodes": {
+      "list": "//ul[contains(@class,'playlink')]//a[contains(@href,'/zywplay/')]"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {
+        "id": "27",
+        "title": "短剧"
+      }
+    ]
+  },
+  "filters": {
+    "route": "category",
+    "groups": [
+      {
+        "id": "year",
+        "title": "年份",
+        "param": "year",
+        "options": [
+          { "value": "", "label": "全部" },
+          { "value": "2026", "label": "2026" },
+          { "value": "2025", "label": "2025" },
+          { "value": "2024", "label": "2024" },
+          { "value": "2023", "label": "2023" },
+          { "value": "2022", "label": "2022" },
+          { "value": "2021", "label": "2021" },
+          { "value": "2020", "label": "2020" },
+          { "value": "2019", "label": "2019" },
+          { "value": "2018", "label": "2018" },
+          { "value": "2017", "label": "2017" },
+          { "value": "2016", "label": "2016" },
+          { "value": "2015", "label": "2015" },
+          { "value": "2014", "label": "2014" },
+          { "value": "2013", "label": "2013" }
+        ]
+      },
+      {
+        "id": "order",
+        "title": "排序",
+        "param": "order",
+        "options": [
+          { "value": "", "label": "默认" },
+          { "value": "time", "label": "最新" },
+          { "value": "hit", "label": "最热" }
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "latest",
+      "title": "最近更新",
+      "route": "latest",
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "hot",
+      "title": "热播榜",
+      "route": "category",
+      "style": "grid",
+      "limit": 18,
+      "more": true,
+      "params": {
+        "category": "27",
+        "order": "hit"
+      }
+    }
+  ],
+  "antiHotlinking": {
+    "referer": "https://www.zywest263.com/"
+  },
+  "enabled": true
+}
