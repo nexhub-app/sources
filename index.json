@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:17:39.008Z",
-  "count": 38,
+  "generatedAt": "2026-11-08T02:19:36.919Z",
+  "count": 39,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -545,6 +545,22 @@
         "en": ""
       },
       "ageRating": "mature"
+    },
+    {
+      "id": "media/pms_fanguo",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "饭果短剧",
+      "version": 1,
+      "baseUrl": "https://xifan-api-cn.youlishipin.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_fanguo.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
     },
     {
       "id": "novel/novel_linovelib",
