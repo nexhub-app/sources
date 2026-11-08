@@ -1,0 +1,441 @@
+{
+  "id": "pms_javchu",
+  "version": 17,
+  "mediaHostRewrite": {
+    "vdownload.hembed.com": "1497203185.rsc.cdn77.org"
+  },
+  "name": "JavChu 源",
+  "author": "community",
+  "type": "animeSource",
+  "responseType": "html",
+  "useWebview": false,
+  "site": {
+    "domain": "javchu.com",
+    "baseUrl": "https://javchu.com",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.6",
+      "Cache-Control": "no-cache"
+    },
+    "mirrors": [
+      {
+        "name": "主站",
+        "domain": "javchu.com",
+        "baseUrl": "https://javchu.com"
+      }
+    ]
+  },
+  "parser": {
+    "type": "hybrid",
+    "overrides": {
+      "latest": {
+        "type": "html"
+      },
+      "search": {
+        "type": "html"
+      },
+      "detail": {
+        "type": "html"
+      },
+      "episodes": {
+        "type": "script",
+        "script": "function episodes(raw, context){try{\nvar base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://javchu.com';\nfunction abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}\nif(typeof raw==='string'&&raw){\nvar out=[];\nvar re=/<div[^>]*class=\"playlist-hover-wrap\"[^>]*data-href=\"([^\"]+)\"[^>]*>/gi;var m;\nwhile((m=re.exec(raw))){var href=abs(m[1]);if(href&&href.indexOf('watch')>=0){var ti='';var mm=raw.slice(m.index).match(/<h4[^>]*class=\"video-title\"[^>]*>\\s*<a[^>]*>([\\s\\S]*?)<\\/a>/i);if(mm)ti=(mm[1]||'').replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim();out.push({title:ti||'分集',url:href});}}\nif(out.length)return out;\n}\nvar du=(context&&typeof context.detailUrl==='string'&&context.detailUrl.indexOf('http')===0)?context.detailUrl:'';\nif(!du&&typeof raw==='string'&&raw){var cm=raw.match(/<link[^>]+rel=\"canonical\"[^>]+href=\"([^\"]+)\"/i)||raw.match(/property=\"og:url\"[^>]+content=\"([^\"]+)\"/i);if(cm)du=cm[1];}\nif(!du&&typeof raw==='string'&&raw){var cm2=raw.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(cm2)du=abs(cm2[1]);}\nreturn du?[{title:'正片',url:du}]:[];\n}catch(e){return [];}}"
+      },
+      "category": {
+        "type": "html"
+      },
+      "video": {
+        "type": "script",
+        "script": "function video(raw, context){try{var org=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://javchu.com';var cu=(context&&typeof context.url==='string')?context.url:'';var om=cu.match(/^(https?:\\/\\/[^\\/]+)/);if(om)org=om[1];function abs(u){if(!u)return '';u=String(u).trim();if(!u)return '';if(u.indexOf('//')===0)return 'https:'+u;if(u.indexOf('http://')===0||u.indexOf('https://')===0)return u;if(u.charAt(0)==='/')return org+u;return org+'/'+u;}function fixCdn(u){u=u.replace(/^(https?:)?\\/\\/t\\d+\\.cdn2020\\.com(?=[\\/:]|$)/i,function(m0,m1){return (m1?m1:'')+'//t33.cdn2020.com';});u=u.replace(/^(https?:)?\\/\\/vdownload\\.hembed\\.com(?=[\\/:]|$)/i,function(m0,m1){return (m1?m1:'')+'//1497203185.rsc.cdn77.org';});return u;}var seg=(typeof raw==='string')?raw:'';var vm=seg.match(/<video[^>]*id=[\"']player[\"'][^>]*>([\\s\\S]*?)<\\/video>/i);if(vm)seg=vm[1];var list=[];var re=/<source\\b[^>]*>/gi;var m;while((m=re.exec(seg))){var tag=m[0];var sm=tag.match(/src\\s*=\\s*[\"']([^\"']+)[\"']/i);if(!sm)continue;var s=fixCdn(abs(sm[1]));if(!s)continue;var zm=tag.match(/size\\s*=\\s*[\"']([^\"']+)[\"']/i);var n=zm?zm[1].replace(/[^0-9]/g,''):'';var p=parseInt(n,10);if(isNaN(p))p=0;var nm=n?(n+'P'):'正片';list.push({url:s,size:p,name:nm});}if(!list.length){var lm=(typeof raw==='string')?raw.match(/<link[^>]*rel=['\\x22]preload['\\x22][^>]*>/i):null;if(lm&&lm[0].indexOf('video')>=0){var hm=lm[0].match(/href\\s*=\\s*[\"']([^\"']+)[\"']/i);if(hm){var lh=fixCdn(abs(hm[1]));if(lh)list.push({url:lh,size:0,name:'正片'});}}}if(!list.length){var cm=raw?raw.match(/const source\\s*=\\s*['\"]([^'\"]+)['\"]/):null;if(cm){var s2=fixCdn(abs(cm[1]));if(s2)list.push({url:s2,size:0,name:'正片'});}}if(!list.length){var pm=raw?raw.match(/<video[^>]*\\ssrc\\s*=\\s*[\"']([^\"']+)[\"']/i):null;if(pm){var s3=fixCdn(abs(pm[1]));if(s3)list.push({url:s3,size:0,name:'正片'});}}if(!list.length){var um2=(typeof raw==='string')?raw.match(/https?:\\/\\/[^\"'<>\\s]*?\\.(?:m3u8|mp4)(?:\\?[^\"'<>\\s]*)?/gi):null;if(um2){var seen={};for(var ui=0;ui<um2.length&&ui<8;ui++){var u2=fixCdn(abs(um2[ui]));if(u2&&!seen[u2]){seen[u2]=1;list.push({url:u2,size:0,name:'正片'});}}}}if(!list.length)return {url:'',type:'mp4',urls:[]};list.sort(function(a,b){return b.size-a.size;});var t=list[0].url.indexOf('.m3u8')>=0?'m3u8':'mp4';return {url:list[0].url,type:t,urls:list.map(function(e){return {name:e.name,url:e.url};})};}catch(e){return {url:'',type:'mp4',urls:[]};}}"
+      },
+      "folders": {
+        "type": "script",
+        "script": "function folders(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://javchu.com';if(typeof raw!=='string'||!raw)return [];var m=raw.match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);var uid='';if(m){var hm=m[0].match(/href=\"([^\"]*)\"/i);if(hm){var pm=hm[1].match(/\\/user\\/(\\d+)/);if(pm)uid=pm[1];}}if(!uid)return [];return [{title:'喜歡的影片',url:base+'/user/'+uid+'/likes',value:'likes',count:0},{title:'稍後再看',url:base+'/user/'+uid+'/saves',value:'saves',count:0}];}catch(e){return [];}}"
+      },
+      "favList": {
+        "type": "script",
+        "script": "function favList(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://javchu.com';if(typeof raw!=='string'||!raw)return [];function abs(h){if(!h)return '';if(h.indexOf('http')===0)return h;if(h.indexOf('/')===0)return base+h;return base+'/'+h;}var block=raw;var hm=block.match(/<div[^>]*class=\"horizontal-row\"/i);if(hm)block=raw.slice(hm.index);var positions=[];var re=/<div[^>]*class=\"user-tab-item-wrapper[^\"]*\"/gi;var m;while((m=re.exec(block)))positions.push(m.index);if(!positions.length)return [];var cards=[];for(var i=0;i<positions.length;i++){var seg=block.slice(positions[i],i+1<positions.length?positions[i+1]:block.length);var am=seg.match(/href=\"([^\"]*watch[^\"]*)\"/i);if(!am)continue;var href=abs(am[1].replace(/&amp;/g,'&'));var cm=href.match(/watch\\?v=(\\d+)/);if(!cm)continue;var tm=seg.match(/<h4[^>]*class=\"video-title\"[^>]*>([\\s\\S]*?)<\\/h4>/i)||seg.match(/<div[^>]*class=\"title\"[^>]*>([\\s\\S]*?)<\\/div>/i);var title=tm?tm[1].replace(/<[^>]+>/g,'').replace(/\\s+/g,' ').trim():'';var ivm=seg.match(/<img[^>]*src=\"([^\"]+)\"/i);var cover=ivm?abs(ivm[1].replace(/&amp;/g,'&')):'';cards.push({id:cm[1],title:title||'未命名',cover:cover,detailUrl:href});}return cards;}catch(e){return [];}}"
+      },
+      "favoritesAdd": {
+        "type": "script",
+        "script": "function favoritesAdd(raw, context){try{var base=(context&&typeof context.baseUrl==='string'&&context.baseUrl)?context.baseUrl:'https://javchu.com';var du=(context&&typeof context.detailUrl==='string')?context.detailUrl:'';var um=du.match(/watch\\?v=(\\d+)/);if(!um)return [];var code=um[1];if(typeof raw!=='string'||!raw)return [];var m=raw.match(/<a[^>]*id=\"user-modal-trigger\"[^>]*>/i);var uid='';if(m){var hm=m[0].match(/href=\"([^\"]*)\"/i);if(hm){var pm=hm[1].match(/\\/user\\/(\\d+)/);if(pm)uid=pm[1];}}var cm=raw.match(/<input[^>]*name=\"_token\"[^>]*>/i);var csrf='';if(cm){var vm=cm[0].match(/value=\"([^\"]*)\"/i);if(vm)csrf=vm[1];}if(!uid||!csrf)return [];var body='like-foreign-id='+code+'&like-status=&_token='+encodeURIComponent(csrf)+'&like-user-id='+uid+'&like-is-positive=1';return {__meta:true,__fetchUrl:base+'/like',__fetchMethod:'post',__fetchBody:body,__fetchHeaders:{'content-type':'application/x-www-form-urlencoded'},__fetchResponseType:'text',__processor:'favoritesAddStep2'};}catch(e){return [];}}\nfunction favoritesAddStep2(resp, context){try{if(typeof resp==='string'&&resp.length>0&&!/name=[\"']email[\"']/.test(resp))return [{id:'1',title:'ok'}];return [];}catch(e){return [];}}"
+      }
+    }
+  },
+  "routes": {
+    "latest": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "search": {
+      "url": "/search?query={keyword?}&page={page}&genre={genre?}&sort={sort?}&date={date?}&duration={duration?}&tags[]={tags?}&broad={broad?}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "detail": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "episodes": {
+      "url": "{detailUrl}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "category": {
+      "url": "/search?tags[]={category}&page={page}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "video": {
+      "url": "{url}",
+      "method": "get",
+      "responseType": "html"
+    },
+    "favorites": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    },
+    "favoritesAdd": {
+      "url": "/",
+      "method": "get",
+      "responseType": "html"
+    }
+  },
+  "selectors": {
+    "latest": {
+      "list": ".content-padding-new div.horizontal-card, .content-padding div.horizontal-card, div[class^=horizontal-card]",
+      "id": "a@href, ./@data-href",
+      "detailUrl": "./@data-href, ./@href, //a/@href",
+      "title": ".title, .video-title, .home-rows-videos-title, .owl-home-rows-title",
+      "cover": "img.main-thumb@src, img@src"
+    },
+    "search": {
+      "list": ".content-padding-new div.horizontal-card, .content-padding div.horizontal-card, div[class^=horizontal-card], //div[contains(@class,'home-rows-videos-wrapper')]/*",
+      "id": "a@href, ./@data-href",
+      "detailUrl": "./@data-href, ./@href, //a/@href",
+      "title": ".title, .video-title, .home-rows-videos-title, .owl-home-rows-title",
+      "cover": "img.main-thumb@src, img@src"
+    },
+    "detail": {
+      "title": "#shareBtn-title, meta[property=\"og:title\"]@content, .video-title",
+      "cover": "video#player@poster, meta[property=\"og:image\"]@content",
+      "description": ".video-caption-text, .video-caption",
+      "tags": ".video-tags-wrapper .single-video-tag a, .single-video-tag a, .single-video-tag"
+    },
+    "episodes": {
+      "list": "#playlist-scroll .playlist-hover-wrap",
+      "title": ".video-title, .title",
+      "url": "./@data-href"
+    },
+    "category": {
+      "list": ".content-padding-new div.horizontal-card, .content-padding div.horizontal-card, div[class^=horizontal-card], //div[contains(@class,'home-rows-videos-wrapper')]/*",
+      "id": "a@href, ./@data-href",
+      "detailUrl": "./@data-href, ./@href, //a/@href",
+      "title": ".title, .video-title, .home-rows-videos-title, .owl-home-rows-title",
+      "cover": "img.main-thumb@src, img@src"
+    }
+  },
+  "category": {
+    "dynamicCategories": false,
+    "categoryEntries": [
+      {"id": "無碼", "title": "无码"},
+      {"id": "人妻", "title": "人妻"},
+      {"id": "風俗娘", "title": "风俗娘"},
+      {"id": "痴女", "title": "痴女"},
+      {"id": "痴漢", "title": "痴汉"},
+      {"id": "調教", "title": "调教"},
+      {"id": "性奴隸", "title": "性奴隶"},
+      {"id": "巨乳", "title": "巨乳"}
+    ]
+  },
+  "filters": {
+    "route": "search",
+    "groups": [
+      {
+        "id": "tags",
+        "title": "题材",
+        "route": "search",
+        "param": "tags",
+        "multiSelect": true,
+        "options": [
+          {"value": "無碼", "label": "无码"},
+          {"value": "人妻", "label": "人妻"},
+          {"value": "風俗娘", "label": "风俗娘"},
+          {"value": "痴女", "label": "痴女"},
+          {"value": "痴漢", "label": "痴汉"},
+          {"value": "調教", "label": "调教"},
+          {"value": "性奴隸", "label": "性奴隶"},
+          {"value": "巨乳", "label": "巨乳"},
+          {"value": "中文字幕", "label": "中文字幕"}
+        ]
+      },
+      {
+        "id": "sort",
+        "title": "排序",
+        "route": "search",
+        "param": "sort",
+        "options": [
+          {"value": "最新上市", "label": "最新上市"},
+          {"value": "最新上傳", "label": "最新上传"},
+          {"value": "本日排行", "label": "本日排行"},
+          {"value": "本週排行", "label": "本周排行"},
+          {"value": "本月排行", "label": "本月排行"},
+          {"value": "觀看次數", "label": "观看次数"},
+          {"value": "讚好比例", "label": "赞好比例"},
+          {"value": "時長最長", "label": "时长最长"},
+          {"value": "他們在看", "label": "他们在看"}
+        ]
+      },
+      {
+        "id": "date",
+        "title": "发布时间",
+        "route": "search",
+        "param": "date",
+        "options": [
+          {"value": "過去 24 小時", "label": "过去 24 小时"},
+          {"value": "過去 2 天", "label": "过去 2 天"},
+          {"value": "過去 1 週", "label": "过去 1 周"},
+          {"value": "過去 1 個月", "label": "过去 1 个月"},
+          {"value": "過去 3 個月", "label": "过去 3 个月"},
+          {"value": "過去 1 年", "label": "过去 1 年"}
+        ]
+      },
+      {
+        "id": "duration",
+        "title": "时长",
+        "route": "search",
+        "param": "duration",
+        "options": [
+          {"value": "1 分鐘 +", "label": "1 分钟以上"},
+          {"value": "5 分鐘 +", "label": "5 分钟以上"},
+          {"value": "10 分鐘 +", "label": "10 分钟以上"},
+          {"value": "20 分鐘 +", "label": "20 分钟以上"},
+          {"value": "30 分鐘 +", "label": "30 分钟以上"},
+          {"value": "60 分鐘 +", "label": "60 分钟以上"},
+          {"value": "0 - 10 分鐘", "label": "0 - 10 分钟"},
+          {"value": "0 - 20 分鐘", "label": "0 - 20 分钟"}
+        ]
+      },
+      {
+        "id": "broad",
+        "title": "放送",
+        "route": "search",
+        "param": "broad",
+        "options": [
+          {"value": "on", "label": "有"},
+          {"value": "", "label": "無"}
+        ]
+      }
+    ]
+  },
+  "homeSections": [
+    {
+      "id": "nomask",
+      "title": "无码",
+      "route": "search",
+      "params": {"tags": "無碼", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "hitozuma",
+      "title": "人妻",
+      "route": "search",
+      "params": {"tags": "人妻", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "fuzoku",
+      "title": "风俗娘",
+      "route": "search",
+      "params": {"tags": "風俗娘", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "chijo",
+      "title": "痴女",
+      "route": "search",
+      "params": {"tags": "痴女", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "chikan",
+      "title": "痴汉",
+      "route": "search",
+      "params": {"tags": "痴漢", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "kyoiku",
+      "title": "调教",
+      "route": "search",
+      "params": {"tags": "調教", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "dorei",
+      "title": "性奴隶",
+      "route": "search",
+      "params": {"tags": "性奴隸", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "kyonyu",
+      "title": "巨乳",
+      "route": "search",
+      "params": {"tags": "巨乳", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "chinese-subtitle",
+      "title": "中文字幕",
+      "route": "search",
+      "params": {"tags": "中文字幕", "sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "latest-release",
+      "title": "最新上市",
+      "route": "search",
+      "params": {"sort": "最新上市"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "latest-upload",
+      "title": "最新上传",
+      "route": "search",
+      "params": {"sort": "最新上傳"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    },
+    {
+      "id": "watching-now",
+      "title": "他们在看",
+      "route": "search",
+      "params": {"sort": "他們在看"},
+      "style": "grid",
+      "limit": 18,
+      "more": true
+    }
+  ],
+  "stealthMode": false,
+  "antiHotlinking": {},
+  "ageRating": "mature",
+  "enabled": true,
+  "enabledExplore": true,
+  "isHidden": false,
+  "network": {
+    "hosts": [
+      { "ip": "172.67.187.141", "host": "javchu.com", "enabled": true },
+      { "ip": "104.21.7.70", "host": "javchu.com", "enabled": true },
+      { "ip": "195.181.172.3", "host": "1497203185.rsc.cdn77.org", "enabled": true },
+      { "ip": "195.181.172.6", "host": "1497203185.rsc.cdn77.org", "enabled": true },
+      { "ip": "195.181.175.40", "host": "1497203185.rsc.cdn77.org", "enabled": true }
+    ],
+    "ech": {
+      "enabled": true,
+      "echConfigList": "AEX+DQBBJgAgACBLqW6dHS0WNGRPgllF7G7nzY8QUnW4XzMNwtXaA+YFBQAEAAEAAQASY2xvdWRmbGFyZS1lY2guY29tAAA="
+    },
+    "sni": {
+      "enabled": true,
+      "domainSni": {
+        "javchu.com": "-",
+        ".javchu.com": "-"
+      }
+    },
+    "cookieDomains": [
+      "javchu.com",
+      ".javchu.com"
+    ],
+    "dns": {
+      "mode": "system",
+      "servers": [],
+      "dohUrl": "",
+      "dotHost": "",
+      "dotPort": 853,
+      "cacheEnabled": true
+    }
+  },
+  "comments": {
+    "login": {
+      "url": "https://javchu.com/login",
+      "checkCookie": "hanime1_session"
+    },
+    "routes": {
+      "list": {
+        "url": "/loadComment?type=video&id={id}",
+        "method": "get",
+        "responseType": "json"
+      },
+      "replies": {
+        "url": "/loadReplies?id={commentId}",
+        "method": "get",
+        "responseType": "json"
+      }
+    },
+    "selectors": {
+      "items": "$.comments",
+      "embeddedHtml": true,
+      "container": "#comment-start",
+      "chunkSize": 4,
+      "commentId": "substring-after(//div[starts-with(@id,'reply-section-wrapper')]/@id, 'wrapper-')",
+      "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), '\u00a0')",
+      "avatar": "//a/img/@src",
+      "content": "//div[@class='comment-index-text'][2]",
+      "time": "//div[@class='comment-index-text'][1]//span",
+      "likeCount": "//div[@id='comment-like-form-wrapper']/span[2]",
+      "replyCount": "//div[@class='load-replies-btn']",
+      "hasMore": "//nh-comments-end",
+      "routeSelectors": {
+        "replies": {
+          "items": "$.replies",
+          "container": "div[id^='reply-start']",
+          "chunkSize": 2,
+          "commentId": null,
+          "author": "substring-before(//div[@class='comment-index-text'][1]//a/text(), '\u00a0')",
+          "avatar": "//a/img/@src",
+          "content": "//div[@class='comment-index-text'][2]",
+          "time": "//div[@class='comment-index-text'][1]//span",
+          "likeCount": "//div[@id='comment-like-form-wrapper']/span[2]",
+          "hasMore": "//nh-comments-end"
+        }
+      }
+    }
+  },
+  "webFavorite": {
+    "enabled": true,
+    "title": "網絡收藏",
+    "route": "favorites",
+    "listEntry": "favList",
+    "folders": true,
+    "requireLogin": true,
+    "addRoute": "favoritesAdd",
+    "add": {
+      "route": "favoritesAdd"
+    }
+  }
+}
