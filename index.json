@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:15:33.308Z",
-  "count": 34,
+  "generatedAt": "2026-11-08T02:16:14.453Z",
+  "count": 35,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -193,6 +193,22 @@
         "en": ""
       },
       "ageRating": "mature"
+    },
+    {
+      "id": "media/pms_168ys",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "168影院",
+      "version": 2,
+      "baseUrl": "https://www.xzyx168.com",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_168ys.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
     },
     {
       "id": "media/pms_m233",
