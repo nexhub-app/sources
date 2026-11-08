@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-08T02:19:36.919Z",
-  "count": 39,
+  "generatedAt": "2026-11-08T02:21:48.406Z",
+  "count": 40,
   "sources": [
     {
       "id": "manga/manga_baozimh",
@@ -475,6 +475,22 @@
       "version": 2,
       "baseUrl": "https://www.mgnacg.com",
       "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_mgnacg.json",
+      "builtin": true,
+      "desc": {
+        "zh": "",
+        "en": ""
+      },
+      "ageRating": "general"
+    },
+    {
+      "id": "media/pms_kuaikaw",
+      "category": "media",
+      "type": "media",
+      "format": "nexhub",
+      "name": "河果短剧",
+      "version": 1,
+      "baseUrl": "https://www.kuaikaw.cn",
+      "rawUrl": "https://cdn.jsdelivr.net/gh/nexhub-app/sources@main/sources/media/pms_kuaikaw.json",
       "builtin": true,
       "desc": {
         "zh": "",
